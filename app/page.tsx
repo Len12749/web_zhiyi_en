@@ -10,11 +10,11 @@ const features = [
   {
     id: 'pdf-to-markdown',
     title: 'PDF解析',
-    description: '将PDF解析成可编辑的Markdown文本，保留图片，同时支持翻译（自动检测源语言），可以选择把表格解析成markdown格式或图片格式。',
+    description: '将PDF解析成可编辑的Markdown文本，保留图片，同时支持翻译（自动检测源语言），可以选择把表格解析成markdown格式或图片格式。加翻译共8积分/页。',
     icon: FileText,
     href: '/pdf-to-markdown',
     gradient: 'from-blue-500 to-cyan-500',
-    points: '5积分/页',
+    points: '5-8积分/页',
   },
   {
     id: 'image-to-markdown',
@@ -32,7 +32,7 @@ const features = [
     icon: Languages,
     href: '/markdown-translation',
     gradient: 'from-green-500 to-emerald-500',
-    points: '5积分/千字符',
+    points: '5积分/KB',
   },
   {
     id: 'pdf-translation',
@@ -300,8 +300,9 @@ export default function HomePage() {
                 <ul className="space-y-3">
                   {[
                     { service: 'PDF解析', cost: '5积分/页' },
+                    { service: 'PDF解析+翻译', cost: '8积分/页' },
                     { service: '图片转Markdown', cost: '5积分/张' },
-                    { service: 'Markdown翻译', cost: '5积分/千字符' },
+                    { service: 'Markdown翻译', cost: '5积分/KB' },
                     { service: 'PDF翻译', cost: '3积分/页' },
                     { service: '格式转换', cost: '2积分/页' },
                   ].map((item, index) => (

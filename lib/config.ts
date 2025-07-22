@@ -38,7 +38,7 @@ export const config = {
     // 消费标准
     pdfToMarkdown: 5,      // PDF解析每页
     imageToMarkdown: 5,    // 图片转markdown每张
-    markdownTranslation: 5, // Markdown翻译每千字符
+    markdownTranslation: 5, // Markdown翻译每KB
     pdfTranslation: 3,     // PDF翻译每页
     formatConversion: 2,   // 格式转换每页
   },

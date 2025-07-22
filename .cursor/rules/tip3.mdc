@@ -17,3 +17,4 @@ supabase:https://supabase.com/docs/guides/local-development
 不用shadcn/ui，纯用Tailwind css
 
 不允许使用任何模拟数据和测试脚本！你的一切编码都是为了最终效果，不用模拟数据和测试脚本！
+禁止使用估算！禁止使用估算！

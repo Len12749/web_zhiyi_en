@@ -70,24 +70,32 @@ export function generateRandomString(length: number): string {
 }
 
 // 计算文件处理积分
-export function calculatePoints(taskType: string, fileSize: number, pageCount?: number): number {
+export function calculatePoints(taskType: string, fileSize: number, pageCount?: number, enableTranslation?: boolean): number {
   switch (taskType) {
     case 'pdf-to-markdown':
-      return Math.max(1, Math.ceil((pageCount || 1) * 5));
+      if (!pageCount) return 0; // 必须有实际页数
+      const basePoints = pageCount * 5;
+      // 如果启用翻译，额外收取3积分/页
+      const translationPoints = enableTranslation ? pageCount * 3 : 0;
+      return basePoints + translationPoints;
     case 'image-to-markdown':
       return 5; // 每张图片5积分
     case 'markdown-translation':
-      // 按文件大小估算字符数，每1KB约500中文字符，每千字符5积分
-      const estimatedChars = Math.ceil(fileSize / 1024) * 500;
-      return Math.max(1, Math.ceil(estimatedChars / 1000) * 5);
+      // 按文件大小计费：1KB = 5积分
+      const sizeInKB = Math.ceil(fileSize / 1024);
+      return Math.max(1, sizeInKB * 5);
     case 'pdf-translation':
-      return Math.max(1, Math.ceil((pageCount || 1) * 3));
+      if (!pageCount) return 0; // 必须有实际页数
+      return pageCount * 3; // 按页数计费，每页3积分
     case 'format-conversion':
-      return Math.max(1, Math.ceil((pageCount || 1) * 2));
+      if (!pageCount) return 0; // 必须有实际页数
+      return pageCount * 2;
     default:
       return 1;
   }
 }
+
+
 
 // 进度百分比格式化
 export function formatProgress(progress: number): string {
