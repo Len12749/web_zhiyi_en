@@ -1,0 +1,19 @@
+---
+description: "智译平台设计稿"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+我给你提供了如下技术栈的文档：
+next.js:https://nextjs.org/docs
+Tailwind css:https://devdocs.io/tailwindcss/
+framer:https://motion.dev/docs
+supabase:https://supabase.com/docs/guides/local-development
+
+请你一定保证严格按照技术栈来做
+不要使用任何自定义组件！
+不要使用任何自定义组件！
+不要使用任何自定义组件！
+不用shadcn/ui，纯用Tailwind css
+
+不允许使用任何模拟数据和测试脚本！你的一切编码都是为了最终效果，不用模拟数据和测试脚本！

@@ -1,0 +1,282 @@
+---
+description: "智译平台设计稿"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# 智译平台设计稿
+
+
+
+## 前端技术栈
+
+坚决不要自定义UI，严格使用我们提供的技术栈：
+
+- Next.js（React）
+- Tailwind CSS与shadcn/ui
+- Framer Motion 
+
+
+
+## 后端技术栈
+
+- **数据库**: PostgreSQL，部署在本地Supabase Docker镜像中，支持用户数据存储与管理.
+
+- **ORM工具**: 使用Drizzle ORM进行数据库操作，简化SQL与数据交互。
+
+- **用户认证**: Clerk，简化用户认证与账户管理，包括邮箱注册、登录、密码重置等功能。
+
+
+
+## 部署架构
+
+文件结构如下：
+
+```
+web/
+├── actions/                          # 后端业务逻辑（必须）
+│   ├── auth/                        # 用户认证相关操作
+│   ├── files/                       # 文件管理操作
+│   ├── tasks/                       # 任务管理操作
+│   ├── points/                      # 积分相关操作
+│   └── notifications/               # 通知相关操作
+│
+├── app/                             # 前端应用（Next.js App Router）
+│   ├── (auth)/                      # 认证相关页面
+│   ├── api/                         # API 路由
+│   │   ├── sse/                     # SSE 连接端点
+│   │   ├── tasks/                   # 任务相关 API
+│   │   ├── files/                   # 文件相关 API
+│   │   └── user/                    # 用户相关 API
+│   ├── [功能模块]/                   # 各功能页面
+│   │   ├── page.tsx                 # 页面组件
+│   │   └── _components/             # 页面专用组件
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+│
+├── components/                      # 全局共享组件
+│   ├── ui/                         # 基础 UI 组件
+│   ├── layout/                     # 布局组件
+│   ├── common/                     # 通用业务组件
+│   └── providers/                  # 全局 Provider
+│
+├── db/                             # 数据库相关（统一管理）
+│   ├── migrations/                 # 数据库迁移文件
+│   ├── schema/                     # 存放数据库模式定义文件
+│   ├── index.ts                    # 数据库连接和基础操作
+│   └── queries/                    # 复杂查询封装
+│
+├── lib/                            # 工具函数和配置
+│   ├── hooks/                      # 自定义 React hooks
+│   ├── sse/                        # SSE 相关工具
+│   ├── processing/                 # 文件处理相关工具
+│   ├── external/                   # 外部服务集成
+│   ├── utils.ts                    # 通用工具函数
+│   ├── config.ts                   # 应用配置
+│   └── constants.ts                # 常量定义
+│
+├── public/                         # 静态资源
+├── types/                          # TypeScript 类型定义
+└── 配置文件（根目录）
+```
+
+我会提供后端核心五大服务的文件。
+
+我们将在一台电脑上运行前后端服务，然后用nginx反向代理。
+
+
+
+## 数据库、用户验证等配置文件
+
+```
+# 数据库连接URL - 本地Supabase实例
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Clerk认证密钥 
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_d2hvbGUtYmFkZ2VyLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_V7jMW0scmVZa8MMFdCis97Bzqjx38RL99TnWoZ2maa
+
+# Clerk重定向URL
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+# Supabase本地密钥
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+SUPABASE_URL=http://127.0.0.1:54321
+```
+
+
+
+## 文件大小限制
+
+PDF限制300M同时800页。
+
+
+
+## 延时保护
+
+延时保护即前端等待多久之后会给用户直接报错，我们设定为一小时。
+
+注意检查那些默认设置，即如果你不去说明，则可能默认为多少时长的地方。
+
+
+
+## 导航栏
+
+导航栏要求载入以下内容：
+
+- logo（智译二字即可）
+- 首页
+- PDF解析
+- 图片转Markdown
+- Markdown翻译
+- PDF翻译
+- 格式转换
+- 文件历史
+
+右侧放入：
+
+- 通知中心
+- 个人中心
+
+
+
+## 首页内容
+
+### 核心功能介绍（六个）
+
+- PDF解析
+- 图片转Markdown
+- Markdown翻译
+- PDF翻译
+- 格式转换
+- 文件历史
+
+其中我告诉你是干啥的，你去总结对应写介绍：
+
+- 将PDF解析成可编辑的Markdown文本，保留图片，同时支持翻译（自动检测源语言），可以选择把表格解析成markdown格式或图片格式。
+- 利用大模型将上传的图片解析成Markdown文本。
+- 将Markdown进行翻译，保留原排版。
+- 将PDF进行翻译，保留原排版。
+- 将Markdown转换成word，pdf，html，latex等不同格式。
+- 所有被处理过的文件将会保留七天，七天内可供下载和主动删除。
+
+### 功能展示
+
+每个功能设计两个放图片的地方，暂时占位，我以后会补上图片。
+
+### 积分系统介绍
+
+介绍如何使用积分去进行服务。
+
+1元为100积分，登录即送20积分，每日签到领取5积分，特殊节日免费赠送小额积分。
+
+PDF解析一页5积分，图片转markdown一页5积分，markdown翻译每千字符5积分，pdf翻译每页3积分，格式转换每页2积分。
+
+
+
+## PDF解析
+
+选择和上传文件，可选表格处理方式（必选一个）：markdown或图片。
+
+可选翻译，选择之后提供目标语言、翻译输出选项（至少选择一个）：原文、译文、双语对照
+
+注意！查看其对应的后端支持的语言是否和前端提供给用户的一致！
+
+其中，可以点击上传的整个框来选择文件或者拖放。
+
+最后，我们会把它打包成一个压缩包zip返回给用户
+
+
+
+## 图片转Markdown
+
+直接涉及选择和上传文件即可。
+
+
+
+## Markdown翻译
+
+选择和上传文件。
+
+源语言、目标语言选项。注意！我们不支持自动检测源语言。
+
+注意！查看其对应的后端支持的语言是否和前端提供给用户的一致！
+
+
+
+## PDF翻译
+
+选择和上传文件。
+
+源语言、目标语言选项。注意！我们不支持自动检测源语言。
+
+注意！查看其对应的后端支持的语言是否和前端提供给用户的一致！
+
+
+
+## 格式转换
+
+选择和上传文件。
+
+目标格式：word，html，pdf，latex
+
+
+
+## 文件历史
+
+用户上传过的文件都可以在这里找到，存储七天。
+
+用户可主动提前删除记录。
+
+可以下载并批量操作文件。
+
+用户可以看到文件的实时状态（即，上传中、处理中、成功、失败）
+
+
+
+## 六大板块统一说明
+
+六个核心板块的设计风格要保持高度一致，包括配色和样式、动画等方面。
+
+界面要实时显示当前状态，是上传中还是处理中还是结束。
+
+当处理结束后，给用户反馈一个下载按钮，用户选择下载再发送回去。
+
+上传中、上传成功/上传失败、处理中、处理成功/处理失败   都要及时反馈。
+
+并且要加上全局通知，即用户无论在网页的哪个地方都能够看到通知。
+
+
+
+## 个人中心
+
+显示当前登录账号。
+
+积分余额（获取和消费说明）。
+
+获得积分：兑换码、每日签到。
+
+快捷操作：六大板块的跳转。
+
+
+
+## 通知中心
+
+记录通知。
+
+
+
+## 后端修改用户积分工具
+
+设计一个无限积分，即该用户可以任意使用。
+
+设计一个工具，里面可以创造和管理兑换码，兑换码只能使用一次，a用了b就不能用。
+
+工具可以修改某人的积分，还可以设置某人为无限积分。
+
+这个操作直接提供一个python脚本即可，不需要其他复杂逻辑。

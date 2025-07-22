@@ -1,0 +1,777 @@
+---
+description: "智译平台开发规范"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+
+
+# 智译平台开发规范 (.cursorrules)
+
+基于 Next.js 15 + SSE 异步架构的文档处理服务平台，使用 TypeScript 开发，集成 Clerk 认证系统。
+
+重要：任何编码开始钱都要先理解现有代码的文件结构后在合理位置进行编码，杜绝单纯的增量开发。
+
+## 核心架构原则
+
+### SSE 异步架构
+
+- **所有业务操作**必须使用 Server-Sent Events (SSE) 实现实时反馈
+- **禁止轮询**：不允许使用 setInterval 或 setTimeout 进行状态轮询
+- **任务驱动**：所有文件处理操作都必须创建 processing_tasks 记录并通过 SSE 推送状态
+- **SSE连接是临时的技术实现**，不应该持久化到数据库
+- **连接管理属于内存操作**，应该用Map等数据结构管理
+- **任务推送只需要用户ID+任务ID**，不需要单独的连接表
+
+### 前后端分离
+
+- **前端逻辑**：放在 `app/` 目录下，包含页面、组件、API 路由
+- **后端逻辑**：放在 `actions/` 目录下，包含数据库操作、业务逻辑封装
+- **工具函数**：放在 `lib/` 目录下，包含可复用的工具和 hooks
+- 所有数据库操作放在 `db/` 目录，使用 Drizzle ORM
+
+### 项目结构
+
+```
+web/
+├── actions/                          # 后端业务逻辑（必须）
+│   ├── auth/                        # 用户认证相关操作
+│   ├── files/                       # 文件管理操作
+│   ├── tasks/                       # 任务管理操作
+│   ├── points/                      # 积分相关操作
+│   └── notifications/               # 通知相关操作
+│
+├── app/                             # 前端应用（Next.js App Router）
+│   ├── (auth)/                      # 认证相关页面
+│   ├── api/                         # API 路由
+│   │   ├── sse/                     # SSE 连接端点
+│   │   ├── tasks/                   # 任务相关 API
+│   │   ├── files/                   # 文件相关 API
+│   │   └── user/                    # 用户相关 API
+│   ├── [功能模块]/                   # 各功能页面
+│   │   ├── page.tsx                 # 页面组件
+│   │   └── _components/             # 页面专用组件
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+│
+├── components/                      # 全局共享组件
+│   ├── ui/                         # 基础 UI 组件
+│   ├── layout/                     # 布局组件
+│   ├── common/                     # 通用业务组件
+│   └── providers/                  # 全局 Provider
+│
+├── db/                             # 数据库相关（统一管理）
+│   ├── migrations/                 # 数据库迁移文件
+│   ├── schema/                     # 存放数据库模式定义文件
+│   ├── index.ts                    # 数据库连接和基础操作
+│   └── queries/                    # 复杂查询封装
+│
+├── lib/                            # 工具函数和配置
+│   ├── hooks/                      # 自定义 React hooks
+│   ├── sse/                        # SSE 相关工具
+│   ├── processing/                 # 文件处理相关工具
+│   ├── external/                   # 外部服务集成
+│   ├── utils.ts                    # 通用工具函数
+│   ├── config.ts                   # 应用配置
+│   └── constants.ts                # 常量定义
+│
+├── public/                         # 静态资源
+├── types/                          # TypeScript 类型定义
+└── 配置文件（根目录）
+```
+
+
+
+### ❌ 绝对禁止
+
+1. **src/ 文件夹**：不允许使用 src 包装，直接使用 app/, actions/, lib/ 等
+2. **混合语言**：禁止在项目中出现 Python、PHP 等其他语言脚本
+3. **数据库文件散布**：禁止在根目录放置数据库操作文件
+4. **直接数据库操作**：禁止在页面组件中直接调用数据库
+
+## 开发规范
+
+### 文件命名规范
+
+#### Actions 文件命名
+
+```
+actions/
+├── auth/user-actions.ts           # 用户操作
+├── files/file-actions.ts          # 文件操作
+├── tasks/task-actions.ts          # 任务操作
+├── tasks/processing-actions.ts    # 处理操作
+└── points/point-actions.ts        # 积分操作
+```
+
+#### 组件文件命名
+
+```
+app/pdf-to-markdown/
+├── page.tsx                       # 页面组件
+└── _components/                   # 页面专用组件
+    ├── upload-zone.tsx            # kebab-case
+    ├── processing-status.tsx      # kebab-case
+    └── result-display.tsx         # kebab-case
+
+components/
+├── ui/button.tsx                  # 基础组件 kebab-case
+├── common/file-upload-zone.tsx    # 通用组件 kebab-case
+└── providers/sse-provider.tsx     # Provider kebab-case
+```
+
+#### API 路由命名
+
+```
+app/api/
+├── sse/tasks/[taskId]/route.ts    # SSE 端点
+├── tasks/create/route.ts          # 任务创建
+├── tasks/[taskId]/route.ts        # 任务详情
+├── files/upload/route.ts          # 文件上传
+└── user/points/route.ts           # 用户积分
+```
+
+
+
+#### 环境变量配置
+
+```bash
+# 数据存储路径（项目外）
+DATA_STORAGE_PATH=""
+
+# 后端业务端口
+......
+
+
+# 数据库连接URL - 本地Supabase实例
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Clerk认证密钥 
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_d2hvbGUtYmFkZ2VyLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_V7jMW0scmVZa8MMFdCis97Bzqjx38RL99TnWoZ2maa
+
+# Clerk重定向URL
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+# Supabase本地密钥
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+SUPABASE_URL=http://127.0.0.1:54321
+```
+
+
+
+### 用户文件数据存储结构
+
+```
+${DATA_STORAGE_PATH}/
+├── uploads/                       # 用户上传文件
+│   └── [user_id]/
+│       └── [business_type]/       # 业务类型分类
+│           └── [date]/            # 日期分类
+│               └── [task_id]/     # 任务ID分类
+│                   ├── original/  # 原始文件
+│                   └── metadata.json # 元数据文件
+│
+├── processed/                     # 处理结果文件
+│   └── [user_id]/
+│       └── [business_type]/       # 业务类型分类
+│           └── [task_id]/         # 任务结果
+│               ├── result/        # 处理结果文件
+│               ├── intermediate/  # 中间文件（可选）
+│               └── metadata.json  # 结果元数据
+│
+├── temp/                         # 临时处理文件
+│   └── [task_id]/                # 按任务分类
+│       ├── working/              # 工作目录
+│       └── cache/                # 缓存文件
+│
+└── archive/                      # 归档文件（可选）
+    └── [user_id]/
+        └── [business_type]/
+            └── [year]/
+                └── [month]/
+
+# 业务类型分类：
+# - pdf-to-markdown    : PDF解析转Markdown
+# - translation        : 文档翻译
+# - image-to-markdown  : 图片转Markdown  
+# - format-conversion  : 格式转换
+# - preserve-layout-translation : PDF保留排版翻译
+```
+
+### 核心数据表结构
+
+```sql
+-- 1. 用户表
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    clerk_id VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    points INTEGER DEFAULT 20 NOT NULL,
+    has_infinite_points BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2. 处理任务表
+CREATE TABLE processing_tasks (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    
+    -- 任务信息
+    task_type VARCHAR(50) NOT NULL, -- pdf_to_markdown, translation, etc.
+    task_status VARCHAR(20) DEFAULT 'pending' NOT NULL, -- pending, processing, completed, failed
+    progress_percent INTEGER DEFAULT 0,
+    status_message TEXT,
+    
+    -- 输入文件
+    input_filename VARCHAR(255) NOT NULL,
+    input_file_size BIGINT NOT NULL,
+    input_storage_path VARCHAR(500) NOT NULL, -- 外部存储路径
+    
+    -- 处理参数
+    processing_params JSONB DEFAULT '{}',
+    
+    -- 外部服务
+    external_task_id VARCHAR(255),
+    
+    -- 积分
+    estimated_points INTEGER DEFAULT 0,
+    actual_points_used INTEGER DEFAULT 0,
+    
+    -- 结果
+    result_storage_path VARCHAR(500),
+    result_file_size BIGINT,
+    result_filename VARCHAR(255), -- 供下载的文件名
+    
+    -- 错误处理
+    error_code VARCHAR(50),
+    error_message TEXT,
+    retry_count INTEGER DEFAULT 0,
+    
+    -- 时间管理
+    created_at TIMESTAMP DEFAULT NOW(),
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    expires_at TIMESTAMP DEFAULT (NOW() + INTERVAL '7 days'),
+    
+    FOREIGN KEY (user_id) REFERENCES users(clerk_id) ON DELETE CASCADE
+);
+
+-- 3. 积分交易表
+CREATE TABLE point_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    task_id INTEGER,
+    amount INTEGER NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
+    description TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    
+    FOREIGN KEY (user_id) REFERENCES users(clerk_id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES processing_tasks(id) ON DELETE SET NULL
+);
+
+-- 4. 用户签到表
+CREATE TABLE user_checkins (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    checkin_date DATE NOT NULL,
+    points_earned INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT NOW(),
+    
+    UNIQUE(user_id, checkin_date),
+    FOREIGN KEY (user_id) REFERENCES users(clerk_id) ON DELETE CASCADE
+);
+
+-- 5. 兑换码表
+CREATE TABLE redeem_codes (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    points_value INTEGER NOT NULL,
+    max_uses INTEGER,
+    current_uses INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+-- 6. 兑换记录表
+CREATE TABLE code_redemptions (
+    id SERIAL PRIMARY KEY,
+    code_id INTEGER NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    points_earned INTEGER NOT NULL,
+    transaction_id INTEGER,
+    created_at TIMESTAMP DEFAULT NOW(),
+    
+    UNIQUE(code_id, user_id),
+    FOREIGN KEY (code_id) REFERENCES redeem_codes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(clerk_id) ON DELETE CASCADE,
+    FOREIGN KEY (transaction_id) REFERENCES point_transactions(id)
+);
+```
+
+## 主要架构/关系图
+
+
+
+### 用户认证和初始化流程
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Clerk as Clerk认证
+    participant Frontend as 前端应用
+    participant InitAPI as 用户初始化API
+    participant DB as 数据库
+
+    User->>Clerk: 访问应用/登录
+    Clerk->>Frontend: 用户认证状态
+    
+    alt 用户已登录
+        Frontend->>InitAPI: POST /api/user/init<br/>{clerkId, email}
+        InitAPI->>DB: 查询用户是否存在
+        
+        alt 用户不存在
+            InitAPI->>DB: 创建用户记录<br/>初始积分20
+            InitAPI->>DB: 记录积分交易<br/>INITIAL类型
+            InitAPI->>DB: 记录活动日志<br/>"用户注册"
+            InitAPI->>Frontend: 201 - 用户创建成功
+        else 用户已存在
+            InitAPI->>Frontend: 200 - 用户已存在
+        end
+        
+        Frontend->>User: 显示个人中心/应用主页
+    else 用户未登录
+        Frontend->>User: 重定向到登录页面
+        User->>Clerk: 进行登录/注册
+        Clerk->>Frontend: 认证成功
+        Frontend->>InitAPI: 自动初始化用户
+    end
+```
+
+
+
+
+
+### 基于SSE的文档处理服务通用流程
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Frontend as 前端
+    participant TaskAPI as 任务创建API
+    participant SSEAPI as SSE连接API
+    participant SSEManager as SSE连接管理器<br/>(内存)
+    participant TaskProcessor as 任务处理器
+    participant ExternalService as 外部处理服务
+    participant Storage as 外部文件存储
+    participant DB as 数据库
+
+    User->>Frontend: 上传文件+处理参数
+    Frontend->>TaskAPI: POST /api/tasks/create
+    
+    TaskAPI->>DB: 验证用户积分
+    alt 积分不足
+        TaskAPI->>Frontend: 402 - 积分不足
+        Frontend->>User: 显示积分不足提示
+    else 积分充足
+        TaskAPI->>Storage: 保存输入文件
+        TaskAPI->>DB: 创建processing_tasks记录<br/>status: pending
+        TaskAPI->>TaskProcessor: 异步启动处理 (不等待)
+        TaskAPI->>Frontend: 200 - 返回taskId和sseUrl
+        
+        Frontend->>SSEAPI: GET /api/sse/tasks/{taskId}
+        SSEAPI->>DB: 验证任务归属权限
+        SSEAPI->>SSEManager: 注册SSE连接
+        SSEAPI->>Frontend: 建立SSE流连接
+        SSEManager->>Frontend: 推送当前任务状态
+        
+        par 异步任务处理
+            TaskProcessor->>DB: 更新状态: processing
+            TaskProcessor->>SSEManager: 推送状态更新事件
+            SSEManager->>Frontend: SSE推送: 处理开始
+            
+            TaskProcessor->>ExternalService: 调用外部处理服务
+            ExternalService->>TaskProcessor: 返回处理结果或taskId
+            
+            alt 需要监控外部任务
+                loop 状态监控
+                    TaskProcessor->>ExternalService: 查询任务状态
+                    TaskProcessor->>SSEManager: 推送进度更新
+                    SSEManager->>Frontend: SSE推送: 进度更新
+                end
+            end
+            
+            alt 处理成功
+                TaskProcessor->>Storage: 保存结果文件
+                TaskProcessor->>DB: 更新任务状态: completed<br/>扣除积分
+                TaskProcessor->>SSEManager: 推送完成事件
+                SSEManager->>Frontend: SSE推送: 任务完成+下载URL
+                Frontend->>User: 显示下载按钮
+            else 处理失败
+                TaskProcessor->>DB: 更新任务状态: failed<br/>返还积分(如已扣除)
+                TaskProcessor->>SSEManager: 推送失败事件
+                SSEManager->>Frontend: SSE推送: 任务失败+错误信息
+                Frontend->>User: 显示错误信息
+            end
+        end
+        
+        User->>Frontend: 点击下载
+        Frontend->>TaskAPI: GET /api/tasks/{taskId}/download
+        TaskAPI->>Storage: 获取结果文件
+        TaskAPI->>User: 返回文件流
+    end
+```
+
+
+
+
+
+### 积分系统完整流程
+
+```mermaid
+flowchart TD
+    Start([用户操作]) --> CheckAction{操作类型}
+    
+    %% 积分消费流程
+    CheckAction -->|文档处理| ConsumeFlow[积分消费流程]
+    ConsumeFlow --> CalcPoints[计算所需积分<br/>- PDF解析: 2积分/页<br/>- 翻译: 1积分/千字符<br/>- 格式转换: 1积分/文件<br/>- 图片识别: 2积分/图片<br/>- PDF保留排版翻译: 3积分/页]
+    CalcPoints --> CheckBalance{检查积分余额}
+    CheckBalance -->|积分不足| InsufficientPoints[返回积分不足错误]
+    CheckBalance -->|积分充足| DeductPoints[扣除积分<br/>记录交易]
+    DeductPoints --> ProcessTask[执行任务]
+    ProcessTask --> TaskResult{任务结果}
+    TaskResult -->|成功| TaskSuccess[任务完成<br/>积分已消费]
+    TaskResult -->|失败| RefundPoints[返还积分<br/>记录返还交易]
+    
+    %% 积分获得流程
+    CheckAction -->|每日签到| CheckinFlow[签到流程]
+    CheckinFlow --> CheckToday{今日是否已签到}
+    CheckToday -->|已签到| AlreadyChecked[返回已签到提示]
+    CheckToday -->|未签到| DoCheckin[执行签到<br/>+1积分]
+    DoCheckin --> RecordCheckin[记录签到记录<br/>记录积分交易]
+    RecordCheckin --> CheckinSuccess[签到成功]
+    
+    CheckAction -->|兑换码兑换| RedeemFlow[兑换码流程]
+    RedeemFlow --> ValidateCode{验证兑换码}
+    ValidateCode -->|无效| InvalidCode[返回兑换码无效]
+    ValidateCode -->|有效| CheckCodeUsage{检查使用限制}
+    CheckCodeUsage -->|已达上限| CodeLimitReached[返回使用次数限制]
+    CheckCodeUsage -->|可使用| AddPoints[增加积分<br/>记录兑换记录]
+    AddPoints --> RedeemSuccess[兑换成功]
+    
+    CheckAction -->|新用户注册| RegisterFlow[注册流程]
+    RegisterFlow --> CreateUser[创建用户<br/>初始20积分]
+    CreateUser --> InitialTransaction[记录初始积分交易<br/>INITIAL类型]
+    InitialTransaction --> RegisterSuccess[注册完成]
+    
+    %% 积分查询
+    CheckAction -->|查询积分| QueryFlow[积分查询]
+    QueryFlow --> GetUserPoints[获取用户积分余额]
+    GetUserPoints --> GetTransactions[获取交易记录]
+    GetTransactions --> GetActivities[获取活动记录]
+    GetActivities --> ReturnPointsInfo[返回积分信息]
+    
+    %% 样式设置
+    classDef processStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef decisionStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef successStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef errorStyle fill:#ffebee,stroke:#c62828,stroke-width:2px
+    
+    class ConsumeFlow,CheckinFlow,RedeemFlow,RegisterFlow,QueryFlow processStyle
+    class CheckAction,CheckBalance,CheckToday,ValidateCode,CheckCodeUsage,TaskResult decisionStyle
+    class TaskSuccess,CheckinSuccess,RedeemSuccess,RegisterSuccess,ReturnPointsInfo successStyle
+    class InsufficientPoints,AlreadyChecked,InvalidCode,CodeLimitReached,RefundPoints errorStyle
+```
+
+
+
+
+
+### 文件管理生命周期流程
+
+```mermaid
+flowchart TD
+    Upload([文件上传]) --> Validate{文件验证}
+    Validate -->|格式错误| FormatError[返回格式错误]
+    Validate -->|大小超限| SizeError[返回大小超限错误]
+    Validate -->|验证通过| SaveToStorage[保存到外部存储<br/>生成存储路径]
+    
+    SaveToStorage --> CreateTask[创建processing_tasks记录<br/>状态: pending]
+    CreateTask --> ProcessingStates{任务处理状态}
+    
+    ProcessingStates -->|处理中| Processing[状态: processing<br/>进度: 0-99%]
+    Processing --> Monitor[SSE状态监控]
+    Monitor --> ProcessingStates
+    
+    ProcessingStates -->|处理完成| Completed[状态: completed<br/>保存结果文件路径]
+    Completed --> Available[文件可下载<br/>有效期7天]
+    
+    ProcessingStates -->|处理失败| Failed[状态: failed<br/>记录错误信息]
+    Failed --> CleanupFailed[清理失败文件]
+    
+    Available --> DownloadReq{下载请求}
+    DownloadReq -->|用户下载| AuthCheck{权限验证}
+    AuthCheck -->|无权限| AccessDenied[返回403错误]
+    AuthCheck -->|有权限| ServeFile[从存储获取文件<br/>返回文件流]
+    ServeFile --> LogAccess[记录下载日志]
+    
+    DownloadReq -->|文件过期| ExpiredCheck{检查过期时间}
+    ExpiredCheck -->|已过期| CleanupExpired[清理过期文件<br/>删除存储文件]
+    ExpiredCheck -->|未过期| ServeFile
+    
+    Available --> HistoryQuery[文件历史查询]
+    HistoryQuery --> FilterFiles[按用户过滤<br/>按时间排序]
+    FilterFiles --> FormatResponse[格式化文件信息<br/>状态映射]
+    FormatResponse --> ReturnHistory[返回文件历史]
+    
+    Available --> DeleteReq{删除请求}
+    DeleteReq --> DeleteAuth{删除权限验证}
+    DeleteAuth -->|无权限| DeleteDenied[返回删除权限错误]
+    DeleteAuth -->|有权限| DeleteRecord[删除数据库记录]
+    DeleteRecord --> DeleteStorage[删除存储文件]
+    DeleteStorage --> DeleteSuccess[删除成功]
+    
+    %% 后台清理任务
+    CleanupExpired --> ScheduledCleanup[定时清理任务]
+    ScheduledCleanup --> ScanExpired[扫描过期文件]
+    ScanExpired --> BatchDelete[批量删除过期文件]
+    
+    %% 样式设置
+    classDef processStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef decisionStyle fill:#fff8e1,stroke:#ff8f00,stroke-width:2px
+    classDef successStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef errorStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef storageStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    
+    class SaveToStorage,CreateTask,Processing,ServeFile,LogAccess,FormatResponse storageStyle
+    class Validate,ProcessingStates,DownloadReq,ExpiredCheck,AuthCheck,DeleteReq,DeleteAuth decisionStyle
+    class Available,ReturnHistory,DeleteSuccess,LogAccess successStyle
+    class FormatError,SizeError,Failed,AccessDenied,DeleteDenied,CleanupExpired,CleanupFailed errorStyle
+```
+
+
+
+
+
+
+
+### SSE异步架构技术实现
+
+
+
+```mermaid
+sequenceDiagram
+    participant Browser as 浏览器
+    participant Frontend as React前端
+    participant TaskAPI as 任务API
+    participant SSEEndpoint as SSE端点
+    participant SSEManager as SSE管理器<br/>(内存Map)
+    participant TaskProcessor as 任务处理器<br/>(独立进程)
+    participant DB as 数据库
+    participant ExternalSvc as 外部服务
+
+    Note over Browser,ExternalSvc: 1. 任务提交阶段
+    Browser->>Frontend: 用户上传文件
+    Frontend->>TaskAPI: POST /api/tasks/create
+    TaskAPI->>DB: 创建processing_tasks记录
+    TaskAPI->>Frontend: 返回{taskId, sseUrl}
+    TaskAPI->>TaskProcessor: 异步启动处理(完全独立)
+    Note over TaskProcessor: 🔥 关键：任务处理完全独立于前端连接
+    
+    Note over Browser,ExternalSvc: 2. SSE连接建立阶段(可选)
+    Frontend->>SSEEndpoint: GET /api/sse/tasks/{taskId}
+    SSEEndpoint->>DB: 验证任务权限
+    SSEEndpoint->>SSEManager: 注册连接 Map.set(connectionId, controller)
+    SSEEndpoint->>Frontend: 建立EventSource连接
+    SSEEndpoint->>Frontend: data: {type: "status_update", taskId, status: "pending"}
+    
+    Note over Browser,ExternalSvc: 3. 并行处理阶段
+    par 任务处理线程(持续运行)
+        Note over TaskProcessor,ExternalSvc: ✅ 无论前端连接状态如何，任务持续处理
+        TaskProcessor->>DB: 更新状态 "processing"
+        TaskProcessor->>SSEManager: pushToTask(taskId, statusEvent)
+        alt 有活跃SSE连接
+            SSEManager->>Frontend: SSE推送: status update
+        else 无活跃连接
+            Note over SSEManager: 静默处理，状态已保存到DB
+        end
+        
+        TaskProcessor->>ExternalSvc: 调用外部处理服务
+        ExternalSvc-->>TaskProcessor: 返回外部taskId
+        
+        loop 状态监控(持续进行)
+            TaskProcessor->>ExternalSvc: 查询处理状态
+            TaskProcessor->>DB: 更新进度到数据库
+            TaskProcessor->>SSEManager: pushToTask(taskId, progressEvent)
+            alt 有活跃SSE连接
+                SSEManager->>Frontend: SSE推送: progress update
+            else 无活跃连接
+                Note over SSEManager: 进度已保存，用户稍后可查询
+            end
+        end
+        
+        ExternalSvc-->>TaskProcessor: 处理完成通知
+        TaskProcessor->>DB: 更新状态 "completed" + 扣除积分
+        TaskProcessor->>SSEManager: pushToTask(taskId, completedEvent)
+        alt 有活跃SSE连接
+            SSEManager->>Frontend: SSE推送: task completed
+        else 无活跃连接
+            Note over SSEManager: 任务完成，结果已保存，等待用户查询
+        end
+    and SSE连接管理(可选服务)
+        loop 每30秒
+            alt 连接存在
+                SSEEndpoint->>Frontend: data: {type: "heartbeat"}
+            end
+        end
+        loop 每分钟
+            SSEManager->>SSEManager: cleanupExpiredConnections()
+            Note over SSEManager: 清理断开的连接，不影响任务处理
+        end
+    end
+    
+    Note over Browser,ExternalSvc: 4. 用户离开页面(任务继续)
+    Browser->>Frontend: 用户关闭页面/浏览器
+    Frontend->>SSEEndpoint: EventSource.close()
+    SSEEndpoint->>SSEManager: 移除连接 Map.delete(connectionId)
+    Note over TaskProcessor: ✅ 任务处理继续，不受影响
+    Note over DB: ✅ 任务状态持续更新到数据库
+    Note over ExternalSvc: ✅ 外部服务处理继续
+    
+    Note over Browser,ExternalSvc: 5. 用户重新连接查看状态
+    Browser->>Frontend: 用户重新打开页面
+    Frontend->>TaskAPI: GET /api/tasks/{taskId}/status
+    TaskAPI->>DB: 查询最新任务状态
+    TaskAPI->>Frontend: 返回当前状态和进度
+    alt 任务已完成
+        Frontend->>Browser: 显示下载按钮
+    else 任务进行中
+        Frontend->>SSEEndpoint: 重新建立SSE连接
+        Note over Frontend: 继续实时监听剩余进度
+    end
+    
+    Note over Browser,ExternalSvc: 6. 结果下载(任何时候)
+    Browser->>Frontend: 用户点击下载
+    Frontend->>TaskAPI: GET /api/tasks/{taskId}/download
+    TaskAPI->>DB: 验证权限和状态
+    alt 任务已完成
+        TaskAPI->>Browser: 返回文件流
+    else 任务未完成
+        TaskAPI->>Frontend: 返回"任务处理中"提示
+    end
+    
+    Note over Browser,ExternalSvc: 🎯 关键架构原则
+    Note over TaskProcessor: 任务处理器独立运行，不依赖前端连接
+    Note over DB: 数据库作为状态同步的唯一真实来源
+    Note over SSEManager: SSE仅用于实时推送，断开不影响任务
+    Note over TaskAPI: 支持随时查询任务状态，支持断点续连
+```
+
+
+
+### 数据库关系
+
+
+
+
+
+```mermaid
+erDiagram
+    users {
+        int id PK
+        string clerk_id UK "Clerk认证ID"
+        string email "用户邮箱"
+        int points "积分余额"
+        boolean has_infinite_points "无限积分标识"
+        timestamp created_at "创建时间"
+        timestamp updated_at "更新时间"
+    }
+    
+    processing_tasks {
+        int id PK
+        string user_id FK "用户ID"
+        string task_type "任务类型"
+        string task_status "任务状态"
+        int progress_percent "进度百分比"
+        string status_message "状态消息"
+        string input_filename "输入文件名"
+        bigint input_file_size "输入文件大小"
+        string input_storage_path "输入存储路径"
+        jsonb processing_params "处理参数"
+        string external_task_id "外部任务ID"
+        int estimated_points "预估积分"
+        int actual_points_used "实际使用积分"
+        string result_storage_path "结果存储路径"
+        bigint result_file_size "结果文件大小"
+        string result_filename "结果文件名"
+        string error_code "错误代码"
+        string error_message "错误消息"
+        int retry_count "重试次数"
+        timestamp created_at "创建时间"
+        timestamp started_at "开始时间"
+        timestamp completed_at "完成时间"
+        timestamp expires_at "过期时间"
+    }
+    
+    point_transactions {
+        int id PK
+        string user_id FK "用户ID"
+        int task_id FK "关联任务ID"
+        int amount "积分变动"
+        string transaction_type "交易类型"
+        string description "描述"
+        timestamp created_at "创建时间"
+    }
+    
+    user_checkins {
+        int id PK
+        string user_id FK "用户ID"
+        date checkin_date "签到日期"
+        int points_earned "获得积分"
+        timestamp created_at "创建时间"
+    }
+    
+    redeem_codes {
+        int id PK
+        string code UK "兑换码"
+        int points_value "积分价值"
+        int max_uses "最大使用次数"
+        int current_uses "当前使用次数"
+        boolean is_active "是否激活"
+        timestamp expires_at "过期时间"
+        timestamp created_at "创建时间"
+    }
+    
+    code_redemptions {
+        int id PK
+        int code_id FK "兑换码ID"
+        string user_id FK "用户ID"
+        int points_earned "获得积分"
+        int transaction_id FK "交易记录ID"
+        timestamp created_at "创建时间"
+    }
+    
+    %% 关系定义
+    users ||--o{ processing_tasks : "用户创建任务"
+    users ||--o{ point_transactions : "用户积分交易"
+    users ||--o{ user_checkins : "用户签到记录"
+    users ||--o{ code_redemptions : "用户兑换记录"
+    
+    processing_tasks ||--o{ point_transactions : "任务产生交易"
+    
+    redeem_codes ||--o{ code_redemptions : "兑换码被使用"
+    
+    point_transactions ||--o| code_redemptions : "兑换产生交易"
+```
+
+
+
+
+
