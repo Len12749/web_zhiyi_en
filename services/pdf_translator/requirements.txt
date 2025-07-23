@@ -1,0 +1,34 @@
+# 核心依赖
+torch
+torchvision
+transformers==4.30 
+PyPDF2
+PyMuPDF
+matplotlib
+Pillow==8.4.0
+numpy<2.0.0
+opencv-python
+opencv-python-headless==4.8.1.78
+requests
+tqdm
+pyyaml
+
+# 机器学习相关
+timm
+scipy
+shapely 
+pyclipper
+scikit-image
+onnxruntime==1.15.1
+einops
+tensorboard
+Shapely==1.8.4
+sentencepiece
+networkx
+
+# 模型相关
+detectron2
+
+# 工具
+mypy 
+pytest

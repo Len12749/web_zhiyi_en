@@ -37,25 +37,33 @@ export async function GET(
 
     // 创建SSE流
     const stream = new ReadableStream({
-      start(controller) {
+      async start(controller) {
         const connectionId = generateRandomString(16);
         
         // 注册SSE连接
         sseConnectionManager.addConnection(connectionId, userId, taskId, controller);
 
-        // 发送初始状态
+        // 获取最新任务状态（而不是使用可能过时的taskResult）
+        const latestTaskResult = await getTaskById(taskId);
+        const currentTask = latestTaskResult.task || taskResult.task;
+
+        console.log(`SSE连接建立 [${taskId}]: 当前状态=${currentTask.taskStatus}, 进度=${currentTask.progressPercent}%`);
+
+        // 发送最新状态
         const initialMessage = {
           type: "status_update",
           data: {
             taskId,
-            status: taskResult.task.taskStatus,
-            progress: taskResult.task.progressPercent,
-            message: taskResult.task.statusMessage,
+            status: currentTask.taskStatus,
+            progress: currentTask.progressPercent,
+            message: currentTask.statusMessage,
           }
         };
 
         const data = `data: ${JSON.stringify(initialMessage)}\n\n`;
         controller.enqueue(new TextEncoder().encode(data));
+
+        console.log(`SSE初始状态已发送 [${taskId}]: ${currentTask.taskStatus}`);
 
         // 设置连接关闭处理
         request.signal.addEventListener('abort', () => {

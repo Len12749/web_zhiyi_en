@@ -1,0 +1,391 @@
+===== 翻译块 1 =====\n\n===== 翻译设置: en → zh =====\n\n===== 原文内容 =====\n\n# 开发手册：学术文档处理平台内测版
+
+将文件的元数据（Metadata）和文件内容（Content）分离开存储
+
+## 项目概述
+
+### 项目目标
+
+该项目旨在为学术工作者提供一款基于大模型的文档处理与翻译平台。通过这一平台，用户可以高效地进行文档解析、翻译、格式转换等工作，提升学术工作效率。
+
+### 项目核心功能
+
+1. **PDF转文本解析**：将PDF文件解析为Markdown文本与图片，并打包成zip文件。用户可以下载该zip文件，其中包含Markdown文件和图片。
+2. **文本文件翻译**：基于大语言模型（LLM），提供多语言互译功能。
+3. **保留排版翻译**：翻译时保持原始排版格式。
+4. **图片转Markdown文本**：将手写图片内容识别并转换为Markdown格式文本。
+5. **文件格式转换**：用户可以上传Markdown文件并转换为Word、HTML、PDF或LaTeX等格式。
+6. **用户管理**：用户注册、登录、积分系统等。
+
+---
+
+## 技术架构
+
+### 前端技术栈
+
+- **框架**: 使用Next.js（基于React），提供高效的SSR与页面加载性能。
+- **UI框架**: Tailwind CSS与shadcn/ui，为前端提供灵活的响应式设计。
+- **动画库**:Framer Motion ，增强用户体验，提供流畅的动画效果。
+
+### 后端技术栈
+
+- **数据库**: PostgreSQL，部署在本地Supabase Docker镜像中，支持用户数据存储与管理。
+- **ORM工具**: 使用Drizzle ORM进行数据库操作，简化SQL与数据交互。
+- **用户认证**: Clerk，简化用户认证与账户管理，包括邮箱注册、登录、密码重置等功能。
+- **私网连接**（一开始时不用考虑）: 使用Tailscale进行私有网络连接，确保安全与隐私。
+
+### 部署架构
+
+- **开发环境**: 本地开发与测试。
+- **生产环境**: 云服务器，使用Nginx进行反向代理部署。
+- **服务容器化**: 使用Docker对各大服务进行容器化部署，以确保独立模块管理。
+
+---
+
+## 核心功能模块
+
+[TABLE_ID_1]
+
+### 文件管理功能
+
+- **文件存储周期**: 每个用户的文件保留7天，超过7天后自动清除。
+- **功能**:
+  - 查看历史记录。
+  - 文件分类与标签。
+  - 搜索功能，快速查找文件。
+  - 数据导出功能，用户可以下载个人文件历史。
+
+---
+
+## 用户管理与认证
+
+- **注册与登录**: 使用Clerk提供邮箱注册、登录和找回密码功能。
+- **积分系统**: 注册时赠送20积分，积分用于功能使用（如PDF解析、文档翻译等）。
+- **账户管理**:
+  - 修改个人信息。
+  - 注销账户功能。
+
+---
+
+## 用户界面设计
+
+- **响应式设计**: 优化桌面端体验，并支持移动端适配。
+- **仪表盘**:
+  - 显示积分使用情况。
+  - 查看最近活动记录。
+  - 快速访问常用功能（如上传文档、查看历史记录等）。
+- **通知中心**:
+  - 系统通知。
+  - 处理完成通知。
+  - 消息设置
+
+---
+
+#### 仪表盘
+
+*   个人使用统计
+*   最近活动
+*   快速访问常用功能
+*   积分/额度使用情况
+
+---
+
+## 数据隐私与管理
+
+### 数据生命周期
+
+- **历史数据**: 用户文件保留7天，超过7天会自动删除。
+- **数据导出**: 用户可以导出自己的数据以备份。
+
+### 隐私保护
+
+- **加密存储**: 所有用户数据都经过加密处理，确保隐私安全。
+- **敏感信息脱敏**: 保护用户的敏感信息（如账户、支付信息等）。
+
+---
+
+## 积分系统设计
+
+### 积分规则
+
+- **初始积分**: 用户注册时赠送20积分。
+- **兑换码**: 用户可以使用兑换码增加积分。
+- **积分消耗**:
+  - PDF解析: 2积分/页
+  - 文档翻译: 1积分/千字符
+  - 文件转换: 0.5积分/文件
+
+---
+
+## 内测版功能范围
+
+- **注册与登录**:
+  - 仅支持邮箱注册与登录。
+  - 注册后用户可以获取20积分并激活兑换码。
+- **用户管理**:
+  - 用户可以管理个人信息，修改密码，注销账户。
+- **文档处理功能**:
+  - 上传PDF文件进行解析，返回zip文件（Markdown + 图片），用户可以下载该zip文件。
+  - 用户上传解析后的Markdown文件，并可以将其转换为Word、HTML、PDF或LaTeX等格式（依托文件格式转换功能）。
+  - 支持Markdown文件的翻译功能。
+  - pdf保留原版翻译功能。
+  - 手写图片识别功能。
+- **文件管理与分类**:
+  - 支持文件分类与标签功能。
+  - 支持文件历史记录查看与搜索。
+- **支付系统**（暂不添加）
+
+---
+
+## 开发与部署流程
+
+1. **本地开发**: 使用Docker容器进行后端服务管理，前端使用Next.js进行开发。
+2. **测试环境**: 在本地环境进行功能验证与测试，确保各项功能正常。
+3. **云端部署**: 完成内测后，将系统部署至云服务器，使用Nginx进行反向代理。
+
+---
+
+### 平台兼容性
+
+*   优化桌面电脑体验
+*   支持主流浏览器(`Chrome`、`Firefox`、`Safari`、`Edge`)
+*   基本的移动端响应式设计
+
+---
+
+### 性能需求
+
+*   页面加载时间: <3秒
+*   文件上传大小限制: 单文件300MB
+
+---
+
+### 用户旅程示例
+
+#### 个人用户旅程
+
+1.  用户通过微信/邮箱注册账户
+2.  选择个人基础订阅并支付（支付功能暂时无需实现）
+3.  上传`PDF`论文进行解析
+4.  查看解析结果并导出为`Markdown`
+5.  使用翻译功能将文档翻译为中文
+6.  保存翻译结果到个人文件库
+7.  在7天内导出处理结果
+
+---
+
+```
+# 数据库连接URL - 本地Supabase实例
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Clerk认证密钥 
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_d2hvbGUtYmFkZ2VyLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_V7jMW0scmVZa8MMFdCis97Bzqjx38RL99TnWoZ2maa
+
+# Clerk重定向URL
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+# Supabase本地密钥
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+SUPABASE_URL=http://127.0.0.1:54321
+```\n\n===== 翻译提示词 =====\n\n请将英语文本翻译成中文。确保专业术语的准确翻译，保持Markdown格式和数学公式的正确性，保留表格占位符[TABLE_ID_数字]不变。请只输出翻译文本，不要添加任何解释或注释：
+
+# 开发手册：学术文档处理平台内测版
+
+将文件的元数据（Metadata）和文件内容（Content）分离开存储
+
+## 项目概述
+
+### 项目目标
+
+该项目旨在为学术工作者提供一款基于大模型的文档处理与翻译平台。通过这一平台，用户可以高效地进行文档解析、翻译、格式转换等工作，提升学术工作效率。
+
+### 项目核心功能
+
+1. **PDF转文本解析**：将PDF文件解析为Markdown文本与图片，并打包成zip文件。用户可以下载该zip文件，其中包含Markdown文件和图片。
+2. **文本文件翻译**：基于大语言模型（LLM），提供多语言互译功能。
+3. **保留排版翻译**：翻译时保持原始排版格式。
+4. **图片转Markdown文本**：将手写图片内容识别并转换为Markdown格式文本。
+5. **文件格式转换**：用户可以上传Markdown文件并转换为Word、HTML、PDF或LaTeX等格式。
+6. **用户管理**：用户注册、登录、积分系统等。
+
+---
+
+## 技术架构
+
+### 前端技术栈
+
+- **框架**: 使用Next.js（基于React），提供高效的SSR与页面加载性能。
+- **UI框架**: Tailwind CSS与shadcn/ui，为前端提供灵活的响应式设计。
+- **动画库**:Framer Motion ，增强用户体验，提供流畅的动画效果。
+
+### 后端技术栈
+
+- **数据库**: PostgreSQL，部署在本地Supabase Docker镜像中，支持用户数据存储与管理。
+- **ORM工具**: 使用Drizzle ORM进行数据库操作，简化SQL与数据交互。
+- **用户认证**: Clerk，简化用户认证与账户管理，包括邮箱注册、登录、密码重置等功能。
+- **私网连接**（一开始时不用考虑）: 使用Tailscale进行私有网络连接，确保安全与隐私。
+
+### 部署架构
+
+- **开发环境**: 本地开发与测试。
+- **生产环境**: 云服务器，使用Nginx进行反向代理部署。
+- **服务容器化**: 使用Docker对各大服务进行容器化部署，以确保独立模块管理。
+
+---
+
+## 核心功能模块
+
+[TABLE_ID_1]
+
+### 文件管理功能
+
+- **文件存储周期**: 每个用户的文件保留7天，超过7天后自动清除。
+- **功能**:
+  - 查看历史记录。
+  - 文件分类与标签。
+  - 搜索功能，快速查找文件。
+  - 数据导出功能，用户可以下载个人文件历史。
+
+---
+
+## 用户管理与认证
+
+- **注册与登录**: 使用Clerk提供邮箱注册、登录和找回密码功能。
+- **积分系统**: 注册时赠送20积分，积分用于功能使用（如PDF解析、文档翻译等）。
+- **账户管理**:
+  - 修改个人信息。
+  - 注销账户功能。
+
+---
+
+## 用户界面设计
+
+- **响应式设计**: 优化桌面端体验，并支持移动端适配。
+- **仪表盘**:
+  - 显示积分使用情况。
+  - 查看最近活动记录。
+  - 快速访问常用功能（如上传文档、查看历史记录等）。
+- **通知中心**:
+  - 系统通知。
+  - 处理完成通知。
+  - 消息设置
+
+---
+
+#### 仪表盘
+
+*   个人使用统计
+*   最近活动
+*   快速访问常用功能
+*   积分/额度使用情况
+
+---
+
+## 数据隐私与管理
+
+### 数据生命周期
+
+- **历史数据**: 用户文件保留7天，超过7天会自动删除。
+- **数据导出**: 用户可以导出自己的数据以备份。
+
+### 隐私保护
+
+- **加密存储**: 所有用户数据都经过加密处理，确保隐私安全。
+- **敏感信息脱敏**: 保护用户的敏感信息（如账户、支付信息等）。
+
+---
+
+## 积分系统设计
+
+### 积分规则
+
+- **初始积分**: 用户注册时赠送20积分。
+- **兑换码**: 用户可以使用兑换码增加积分。
+- **积分消耗**:
+  - PDF解析: 2积分/页
+  - 文档翻译: 1积分/千字符
+  - 文件转换: 0.5积分/文件
+
+---
+
+## 内测版功能范围
+
+- **注册与登录**:
+  - 仅支持邮箱注册与登录。
+  - 注册后用户可以获取20积分并激活兑换码。
+- **用户管理**:
+  - 用户可以管理个人信息，修改密码，注销账户。
+- **文档处理功能**:
+  - 上传PDF文件进行解析，返回zip文件（Markdown + 图片），用户可以下载该zip文件。
+  - 用户上传解析后的Markdown文件，并可以将其转换为Word、HTML、PDF或LaTeX等格式（依托文件格式转换功能）。
+  - 支持Markdown文件的翻译功能。
+  - pdf保留原版翻译功能。
+  - 手写图片识别功能。
+- **文件管理与分类**:
+  - 支持文件分类与标签功能。
+  - 支持文件历史记录查看与搜索。
+- **支付系统**（暂不添加）
+
+---
+
+## 开发与部署流程
+
+1. **本地开发**: 使用Docker容器进行后端服务管理，前端使用Next.js进行开发。
+2. **测试环境**: 在本地环境进行功能验证与测试，确保各项功能正常。
+3. **云端部署**: 完成内测后，将系统部署至云服务器，使用Nginx进行反向代理。
+
+---
+
+### 平台兼容性
+
+*   优化桌面电脑体验
+*   支持主流浏览器(`Chrome`、`Firefox`、`Safari`、`Edge`)
+*   基本的移动端响应式设计
+
+---
+
+### 性能需求
+
+*   页面加载时间: <3秒
+*   文件上传大小限制: 单文件300MB
+
+---
+
+### 用户旅程示例
+
+#### 个人用户旅程
+
+1.  用户通过微信/邮箱注册账户
+2.  选择个人基础订阅并支付（支付功能暂时无需实现）
+3.  上传`PDF`论文进行解析
+4.  查看解析结果并导出为`Markdown`
+5.  使用翻译功能将文档翻译为中文
+6.  保存翻译结果到个人文件库
+7.  在7天内导出处理结果
+
+---
+
+```
+# 数据库连接URL - 本地Supabase实例
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Clerk认证密钥 
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_d2hvbGUtYmFkZ2VyLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_V7jMW0scmVZa8MMFdCis97Bzqjx38RL99TnWoZ2maa
+
+# Clerk重定向URL
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+# Supabase本地密钥
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+SUPABASE_URL=http://127.0.0.1:54321
+```\n\n===== API错误 =====\n\n错误: API调用失败 (模型: deepseek-ai/DeepSeek-V3, 状态码: 500), 响应: {"error":{"message":"litellm.InternalServerError: InternalServerError: OpenAIException - Connection error.. Received Model Group=deepseek-ai/DeepSeek-V3\nAvailable Model Group Fallbacks=None","type":null,"param":null,"code":"500"}}\n\n

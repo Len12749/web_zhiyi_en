@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FileText, Image, Languages, FileImage, RefreshCw, History, ArrowRight, Zap, Shield, Clock } from 'lucide-react';
+import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -38,7 +38,7 @@ const features = [
     id: 'pdf-translation',
     title: 'PDF翻译',
     description: '将PDF进行翻译，保留原排版，支持多语言翻译，保持文档的原始格式和布局。',
-    icon: FileImage,
+    icon: Globe,
     href: '/pdf-translation',
     gradient: 'from-orange-500 to-red-500',
     points: '3积分/页',

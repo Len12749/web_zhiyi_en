@@ -12,6 +12,7 @@ import {
   FileText, 
   Image, 
   Languages, 
+  Globe,
   RefreshCw,
   History,
   Zap
@@ -62,7 +63,7 @@ export default function DashboardPage() {
     {
       title: 'PDF翻译',
       description: '保留排版的PDF翻译',
-      icon: RefreshCw,
+      icon: Globe,
       href: '/pdf-translation',
       color: 'bg-orange-500',
     },

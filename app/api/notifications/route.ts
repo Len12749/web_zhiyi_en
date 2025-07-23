@@ -29,11 +29,21 @@ export async function GET(request: NextRequest) {
         status: result.success ? 200 : 500 
       });
     } else {
-      // 获取通知列表
-      const result = await getUserNotifications();
-      return NextResponse.json(result, { 
-        status: result.success ? 200 : 500 
-      });
+      // 获取通知列表和未读数量
+      const limit = parseInt(url.searchParams.get('limit') || '10');
+      const notificationsResult = await getUserNotifications(limit);
+      
+      if (!notificationsResult.success) {
+        return NextResponse.json(notificationsResult, { status: 500 });
+      }
+      
+      const unreadResult = await getUnreadNotificationsCount();
+      
+      return NextResponse.json({
+        success: true,
+        notifications: notificationsResult.notifications,
+        unreadCount: unreadResult.success ? unreadResult.count : 0,
+      }, { status: 200 });
     }
   } catch (error) {
     console.error("通知API错误:", error);

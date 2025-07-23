@@ -14,7 +14,7 @@ import {
   Repeat
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints } from '@/lib/utils';
+import { calculatePoints, formatFileSize } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
 
 // 文件限制
@@ -70,41 +70,60 @@ export default function FormatConversionPage() {
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.type.includes('text')) {
+      validateAndSetFile(file);
+    }
+  }, []);
+
+  const validateAndSetFile = (file: File) => {
+    console.log('选择的文件:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
+    
+    // 检查文件扩展名 - 只支持Markdown格式
+    const validExtensions = ['.md', '.markdown'];
+    const fileName = file.name.toLowerCase();
+    const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!hasValidExtension) {
+      setErrorMessage(`请选择Markdown文件。支持的格式：${validExtensions.join(', ')}`);
+      return;
+    }
+    
+    // 检查文件是否为空
+    if (file.size === 0) {
+      setErrorMessage('不能上传空文件，请选择有内容的文件。');
+      return;
+    }
+    
         // 检查文件大小
         if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的Markdown文件。`);
+      setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的文件。`);
           return;
         }
         
         setSelectedFile(file);
         setErrorMessage(''); // 清除之前的错误消息
-      } else {
-        setErrorMessage('请选择Markdown文件（.md或.markdown格式）');
-      }
-    }
-  }, []);
+    console.log('文件验证通过，已设置文件');
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.type.includes('text')) {
-        // 检查文件大小
-        if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的Markdown文件。`);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setErrorMessage(''); // 清除之前的错误消息
-      } else {
-        setErrorMessage('请选择Markdown文件（.md或.markdown格式）');
-      }
+      validateAndSetFile(file);
     }
   };
 
   const startProcessing = async () => {
     if (!selectedFile || !user) return;
+
+    console.log('开始处理文件:', {
+      fileName: selectedFile.name,
+      fileSize: selectedFile.size,
+      fileType: selectedFile.type
+    });
 
     setProcessingStatus({
       taskId: null,
@@ -118,17 +137,28 @@ export default function FormatConversionPage() {
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('taskType', 'format-conversion');
+      
+      console.log('发送上传请求...');
 
       const uploadResponse = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('上传响应状态:', uploadResponse.status, uploadResponse.statusText);
+
       if (!uploadResponse.ok) {
-        throw new Error('文件上传失败');
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        console.error('上传失败:', errorData);
+        throw new Error(errorData.message || '文件上传失败');
       }
 
       const uploadResult = await uploadResponse.json();
+      console.log('上传结果:', uploadResult);
+      
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.message || '文件上传失败');
+      }
 
       // 2. 构建处理参数
       const processingParams = {
@@ -161,6 +191,16 @@ export default function FormatConversionPage() {
         // 4. 建立SSE连接监听状态更新
         const eventSource = new EventSource(result.sseUrl);
         
+        // 设置1小时超时保护
+        const timeoutId = setTimeout(() => {
+          eventSource.close();
+          setProcessingStatus(prev => ({
+            ...prev,
+            status: 'failed',
+            message: '处理超时（1小时），请重试或联系支持',
+          }));
+        }, 3600000); // 1小时 = 3600000毫秒
+        
         eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
           
@@ -174,13 +214,19 @@ export default function FormatConversionPage() {
             }));
 
             if (data.data.status === 'completed' || data.data.status === 'failed') {
+              clearTimeout(timeoutId);
               eventSource.close();
+              
+              // 任务完成后立即刷新通知
+              const refreshEvent = new CustomEvent('refreshNotifications');
+              window.dispatchEvent(refreshEvent);
             }
           }
         };
 
         eventSource.onerror = (error) => {
           console.error('SSE连接错误:', error);
+          clearTimeout(timeoutId);
           eventSource.close();
         };
 
@@ -267,7 +313,7 @@ export default function FormatConversionPage() {
                           {selectedFile.name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                          {formatFileSize(selectedFile.size)}
                         </p>
                       </div>
                       <Button
@@ -296,13 +342,13 @@ export default function FormatConversionPage() {
                         <input
                           id="markdown-file-input"
                           type="file"
-                          accept=".md,.markdown,.txt"
+                          accept=".md,.markdown"
                           onChange={handleFileChange}
                           className="hidden"
                         />
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        支持.md、.markdown格式，最大 100MB
+                        仅支持 .md、.markdown 格式，最大 100MB
                       </p>
                     </div>
                   )}
@@ -418,7 +464,7 @@ export default function FormatConversionPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">大小：</span>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                            {formatFileSize(selectedFile.size)}
                           </span>
                         </div>
                       </div>

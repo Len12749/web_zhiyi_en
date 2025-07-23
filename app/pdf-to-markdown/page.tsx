@@ -47,7 +47,7 @@ export default function PDFToMarkdownPage() {
   // 处理参数
   const [tableFormat, setTableFormat] = useState<'markdown' | 'image'>('markdown');
   const [enableTranslation, setEnableTranslation] = useState(false);
-  const [targetLanguage, setTargetLanguage] = useState('en');
+  const [targetLanguage, setTargetLanguage] = useState('zh');
   const [translationOutput, setTranslationOutput] = useState<('original' | 'translated' | 'bilingual')[]>(['original']);
   const [detectedPageCount, setDetectedPageCount] = useState<number>(0);
   const [isDetectingPages, setIsDetectingPages] = useState<boolean>(false);
@@ -252,6 +252,16 @@ export default function PDFToMarkdownPage() {
         // 4. 建立SSE连接监听状态更新
         const eventSource = new EventSource(result.sseUrl);
         
+        // 设置1小时超时保护
+        const timeoutId = setTimeout(() => {
+          eventSource.close();
+          setProcessingStatus(prev => ({
+            ...prev,
+            status: 'failed',
+            message: '处理超时（1小时），请重试或联系支持',
+          }));
+        }, 3600000); // 1小时 = 3600000毫秒
+        
         eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
           
@@ -265,13 +275,19 @@ export default function PDFToMarkdownPage() {
             }));
 
             if (data.data.status === 'completed' || data.data.status === 'failed') {
+              clearTimeout(timeoutId);
               eventSource.close();
+              
+              // 任务完成后立即刷新通知
+              const refreshEvent = new CustomEvent('refreshNotifications');
+              window.dispatchEvent(refreshEvent);
             }
           }
         };
 
         eventSource.onerror = (error) => {
           console.error('SSE连接错误:', error);
+          clearTimeout(timeoutId);
           eventSource.close();
         };
 

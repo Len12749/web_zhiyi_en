@@ -56,14 +56,14 @@ export const config = {
     timeout: 30000,
   },
   
-  // 外部服务配置
+  // 外部服务配置 - 匹配实际部署的端口
   external: {
     // core_module 服务端口配置
-    pdfToMarkdown: 'http://localhost:8001',
-    imageToMarkdown: 'http://localhost:8002', 
-    markdownTranslation: 'http://localhost:8003',
-    pdfTranslation: 'http://localhost:8004',
-    formatConversion: 'http://localhost:8005',
+    formatConversion: 'http://localhost:8001',     // 格式转换
+    pdfToMarkdown: 'http://localhost:8002',        // PDF转Markdown
+    markdownTranslation: 'http://localhost:8003',  // Markdown翻译
+    imageToMarkdown: 'http://localhost:8004',      // 图片转Markdown
+    pdfTranslation: 'http://localhost:8005',       // PDF翻译
   },
 } as const; 
  

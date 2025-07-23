@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Providers } from '../components/providers';
 import { Navigation } from '../components/layout/navigation';
+import GlobalNotification from '../components/common/global-notification';
 import React from 'react';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -34,6 +35,7 @@ export default function RootLayout({
             <main>
               {children}
             </main>
+            <GlobalNotification />
           </Providers>
         </body>
       </html>

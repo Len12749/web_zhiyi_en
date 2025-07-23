@@ -1,0 +1,30 @@
+translator:
+  type: litellm
+  base_url: http://localhost:4000/v1
+  api_key: sk-litellm-master-key-2024
+  model: deepseek-ai/DeepSeek-V3
+  # 并行配置
+  max_workers: 10          # 翻译API并行线程数
+  batch_size: 10          # 批量处理大小
+  timeout: 900            # 单个请求超时时间（秒）
+
+layout:
+  type: 'dit'
+  device: 'cpu'
+  DPI: 200
+
+ocr:
+  type: 'paddle'
+  device: 'cpu'
+
+font:
+  type: 'simple'
+
+# 全局并行配置
+parallel:
+  enable_page_parallel: true     # 是否启用页面级并行
+  max_page_workers: 4           # 页面级并行线程数
+  enable_text_parallel: true    # 是否启用文本块级并行
+  resource_allocation:
+    gpu_queue_size: 2           # GPU任务队列大小
+    cpu_intensive_workers: 6    # CPU密集型任务线程数

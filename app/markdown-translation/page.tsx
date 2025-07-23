@@ -15,7 +15,7 @@ import {
   Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints } from '@/lib/utils';
+import { calculatePoints, formatFileSize } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
 
 // Markdown文件限制
@@ -43,8 +43,8 @@ export default function MarkdownTranslationPage() {
   });
 
   // 翻译参数
-  const [sourceLanguage, setSourceLanguage] = useState('zh');
-  const [targetLanguage, setTargetLanguage] = useState('en');
+  const [sourceLanguage, setSourceLanguage] = useState('en');
+  const [targetLanguage, setTargetLanguage] = useState('zh');
   const [detectedWordCount, setDetectedWordCount] = useState<number>(0);
   const [isDetectingWords, setIsDetectingWords] = useState<boolean>(false);
 
@@ -90,6 +90,43 @@ export default function MarkdownTranslationPage() {
     }
   }, []);
 
+  const validateAndSetFile = (file: File) => {
+    console.log('选择的文件:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
+    
+    // 检查文件扩展名
+    const validExtensions = ['.md', '.markdown', '.txt'];
+    const fileName = file.name.toLowerCase();
+    const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!hasValidExtension) {
+      setErrorMessage(`请选择Markdown文件。支持的格式：${validExtensions.join(', ')}`);
+      return;
+    }
+    
+    // 检查文件是否为空
+    if (file.size === 0) {
+      setErrorMessage('不能上传空文件，请选择有内容的文件。');
+      return;
+    }
+    
+    // 检查文件大小
+    if (file.size > MAX_FILE_SIZE) {
+      setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的文件。`);
+      return;
+    }
+    
+    setSelectedFile(file);
+    setErrorMessage(''); // 清除之前的错误消息
+    // 检测字符数
+    detectWordCount(file);
+    console.log('文件验证通过，已设置文件');
+  };
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -97,40 +134,14 @@ export default function MarkdownTranslationPage() {
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.type.includes('text')) {
-        // 检查文件大小
-        if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的Markdown文件。`);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setErrorMessage(''); // 清除之前的错误消息
-        // 检测字符数
-        detectWordCount(file);
-      } else {
-        setErrorMessage('请选择Markdown文件（.md或.markdown格式）');
-      }
+      validateAndSetFile(file);
     }
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.type.includes('text')) {
-        // 检查文件大小
-        if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的Markdown文件。`);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setErrorMessage(''); // 清除之前的错误消息
-        // 检测字符数
-        detectWordCount(file);
-      } else {
-        setErrorMessage('请选择Markdown文件（.md或.markdown格式）');
-      }
+      validateAndSetFile(file);
     }
   };
 
@@ -155,11 +166,20 @@ export default function MarkdownTranslationPage() {
         body: formData,
       });
 
+      console.log('上传响应状态:', uploadResponse.status, uploadResponse.statusText);
+
       if (!uploadResponse.ok) {
-        throw new Error('文件上传失败');
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        console.error('上传失败:', errorData);
+        throw new Error(errorData.message || '文件上传失败');
       }
 
       const uploadResult = await uploadResponse.json();
+      console.log('上传结果:', uploadResult);
+      
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.message || '文件上传失败');
+      }
 
       // 2. 构建处理参数
       const processingParams = {
@@ -195,6 +215,16 @@ export default function MarkdownTranslationPage() {
         // 4. 建立SSE连接监听状态更新
         const eventSource = new EventSource(result.sseUrl);
         
+        // 设置1小时超时保护
+        const timeoutId = setTimeout(() => {
+          eventSource.close();
+          setProcessingStatus(prev => ({
+            ...prev,
+            status: 'failed',
+            message: '处理超时（1小时），请重试或联系支持',
+          }));
+        }, 3600000); // 1小时 = 3600000毫秒
+        
         eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
           
@@ -208,13 +238,19 @@ export default function MarkdownTranslationPage() {
             }));
 
             if (data.data.status === 'completed' || data.data.status === 'failed') {
+              clearTimeout(timeoutId);
               eventSource.close();
+              
+              // 任务完成后立即刷新通知
+              const refreshEvent = new CustomEvent('refreshNotifications');
+              window.dispatchEvent(refreshEvent);
             }
           }
         };
 
         eventSource.onerror = (error) => {
           console.error('SSE连接错误:', error);
+          clearTimeout(timeoutId);
           eventSource.close();
         };
 
@@ -303,7 +339,7 @@ export default function MarkdownTranslationPage() {
                           {selectedFile.name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                          {formatFileSize(selectedFile.size)}
                         </p>
                       </div>
                       <Button
@@ -454,7 +490,7 @@ export default function MarkdownTranslationPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">大小：</span>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                            {formatFileSize(selectedFile.size)}
                           </span>
                         </div>
                       </div>

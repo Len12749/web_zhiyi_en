@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import { createProcessingTask } from "@/actions/tasks/task-actions";
 import { sseConnectionManager } from "@/lib/sse/connection-manager";
+import { TaskProcessor, TaskType, TaskParams } from "@/lib/processing/task-processor";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,17 +15,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 解析JSON请求体
     const body = await request.json();
     const {
       taskType,
       inputFilename,
       inputFileSize,
       inputStoragePath,
-      processingParams,
+      processingParams = {},
       pageCount
     } = body;
 
-    // 验证必要参数
     if (!taskType || !inputFilename || !inputFileSize || !inputStoragePath) {
       return NextResponse.json(
         { success: false, message: "缺少必要参数" },
@@ -32,7 +33,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 创建任务
+    // 验证文件大小限制 (300MB)
+    const maxFileSize = 300 * 1024 * 1024; // 300MB
+    if (inputFileSize > maxFileSize) {
+      return NextResponse.json(
+        { success: false, message: "文件大小超过限制(300MB)" },
+        { status: 400 }
+      );
+    }
+
+    // 计算所需积分
+    const estimatedPoints = TaskProcessor.calculatePoints(
+      taskType,
+      inputFileSize,
+      processingParams as any
+    );
+
+    // 创建任务记录
     const result = await createProcessingTask(
       taskType,
       inputFilename,
@@ -46,23 +63,31 @@ export async function POST(request: NextRequest) {
       // 构建SSE URL
       const sseUrl = `/api/sse/tasks/${result.taskId}`;
       
-      // TODO: 这里应该异步调用外部处理服务
-      // 暂时先推送一个处理开始的消息
-      setTimeout(() => {
+      // 延迟启动任务处理，给SSE连接建立时间
+      setTimeout(async () => {
+        try {
+          console.log(`⏰ 延迟2秒后开始处理任务 [${result.taskId}]`);
+          await processTaskAsync(result.taskId!, userId, taskType, inputStoragePath, processingParams);
+        } catch (error) {
+          console.error(`异步任务处理失败 [${result.taskId}]:`, error);
+          // 推送失败消息
         sseConnectionManager.pushToTask(result.taskId!, {
           type: "status_update",
           data: {
-            taskId: result.taskId,
-            status: "processing",
-            progress: 10,
-            message: "任务处理已开始",
+              status: "failed",
+              progress: 0,
+              message: error instanceof Error ? error.message : "处理失败",
           }
         });
-      }, 1000);
+        }
+      }, 2000); // 延迟2秒
 
       return NextResponse.json({
-        ...result,
+        success: true,
+        taskId: result.taskId,
+        message: "任务创建成功",
         sseUrl,
+        estimatedPoints,
       }, { status: 201 });
     } else {
       return NextResponse.json(result, { 
@@ -76,5 +101,17 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// 异步任务处理函数
+async function processTaskAsync<T extends TaskType>(
+  taskId: number,
+  userId: string,
+  taskType: T,
+  filePath: string,
+  params: TaskParams[T]
+) {
+  const processor = new TaskProcessor(taskId, userId, taskType);
+  await processor.processTaskFromPath(filePath, params);
 } 
  

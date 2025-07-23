@@ -80,8 +80,9 @@ class SSEConnectionManager {
           connection.controller.enqueue(new TextEncoder().encode(data));
           connection.lastHeartbeat = new Date();
           sentCount++;
+          console.log(`✅ 消息已发送到连接 ${connectionId}: ${fullMessage.type}`);
         } catch (error) {
-          console.error(`向连接 ${connectionId} 推送消息失败:`, error);
+          console.error(`❌ 向连接 ${connectionId} 推送消息失败:`, error);
           connectionsToRemove.push(connectionId);
         }
       }

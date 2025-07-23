@@ -34,19 +34,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证文件类型
+    // 验证文件类型（扩展支持多种MIME类型）
     const allowedTypes = {
       'pdf-to-markdown': ['application/pdf'],
       'pdf-translation': ['application/pdf'],
-      'image-to-markdown': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-      'markdown-translation': ['text/markdown'],
-      'format-conversion': ['text/markdown'],
+      'image-to-markdown': ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'],
+      'markdown-translation': ['text/markdown', 'text/plain', 'application/octet-stream'],
+      'format-conversion': ['text/markdown', 'application/octet-stream'],
+    };
+
+    const allowedExtensions = {
+      'pdf-to-markdown': ['.pdf'],
+      'pdf-translation': ['.pdf'],
+      'image-to-markdown': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'],
+      'markdown-translation': ['.md', '.markdown', '.txt'],
+      'format-conversion': ['.md', '.markdown'],
     };
 
     const allowedTypesForTask = allowedTypes[taskType as keyof typeof allowedTypes];
-    if (!allowedTypesForTask || !allowedTypesForTask.includes(file.type)) {
+    const allowedExtensionsForTask = allowedExtensions[taskType as keyof typeof allowedExtensions];
+    
+    // 获取文件扩展名
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    // 验证文件类型（通过MIME类型或文件扩展名）
+    const isValidType = allowedTypesForTask?.includes(file.type) || 
+                       allowedExtensionsForTask?.includes(fileExtension);
+    
+    if (!isValidType) {
+      console.log(`文件验证失败 - 文件名: ${file.name}, MIME类型: ${file.type}, 扩展名: ${fileExtension}`);
       return NextResponse.json(
-        { success: false, message: "不支持的文件类型" },
+        { success: false, message: `不支持的文件类型。允许的格式：${allowedExtensionsForTask?.join(', ')}` },
         { status: 400 }
       );
     }
@@ -61,6 +79,15 @@ export async function POST(request: NextRequest) {
     };
 
     const maxSize = maxSizes[taskType as keyof typeof maxSizes];
+    
+    // 检查文件是否为空
+    if (file.size === 0) {
+      return NextResponse.json(
+        { success: false, message: "不能上传空文件，请选择有内容的文件" },
+        { status: 400 }
+      );
+    }
+    
     if (file.size > maxSize) {
       return NextResponse.json(
         { success: false, message: `文件大小超出限制，最大 ${maxSize / (1024 * 1024)}MB` },
@@ -160,12 +187,22 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-    } else if (file.type === 'text/markdown') {
+    } else if (taskType === 'markdown-translation' || taskType === 'format-conversion') {
       // Markdown文件默认按文件大小计费，页数检测不是必需的
+      try {
+        const textContent = buffer.toString('utf-8');
+        additionalInfo = {
+          needsPageDetection: false,
+          characterCount: textContent.length,
+          wordCount: textContent.split(/\s+/).filter(word => word.length > 0).length,
+        };
+      } catch (error) {
+        console.error('读取文件内容失败:', error);
       additionalInfo = {
         needsPageDetection: false,
-        characterCount: buffer.toString('utf-8').length,
+          characterCount: file.size, // 使用文件大小作为备选
       };
+      }
     }
 
     return NextResponse.json({

@@ -88,9 +88,8 @@ export function calculatePoints(taskType: string, fileSize: number, pageCount?: 
       if (!pageCount) return 0; // 必须有实际页数
       return pageCount * 3; // 按页数计费，每页3积分
     case 'format-conversion':
-      // 按文件大小计费：1KB = 2积分
-      const formatSizeInKB = Math.ceil(fileSize / 1024);
-      return Math.max(1, formatSizeInKB * 2);
+      // 固定2积分每文件
+      return 2;
     default:
       return 1;
   }
