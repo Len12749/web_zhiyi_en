@@ -7,7 +7,7 @@ import {
   FileText, 
   Image, 
   Languages, 
-  FileImage, 
+  Globe, 
   RefreshCw, 
   History, 
   Bell, 
@@ -17,14 +17,15 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '../ui/theme-toggle';
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
+import { useNotifications } from '@/lib/hooks/use-notifications';
 
 const navigationItems = [
   { href: '/', label: '首页', icon: null },
   { href: '/pdf-to-markdown', label: 'PDF解析', icon: FileText },
   { href: '/image-to-markdown', label: '图片转Markdown', icon: Image },
   { href: '/markdown-translation', label: 'Markdown翻译', icon: Languages },
-  { href: '/pdf-translation', label: 'PDF翻译', icon: FileImage },
+  { href: '/pdf-translation', label: 'PDF翻译', icon: Globe },
   { href: '/format-conversion', label: '格式转换', icon: RefreshCw },
   { href: '/file-history', label: '文件历史', icon: History },
 ];
@@ -32,6 +33,7 @@ const navigationItems = [
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { unreadCount } = useNotifications();
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200/40 dark:border-gray-700/40 bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
@@ -74,7 +76,7 @@ export function Navigation() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-            {/* Mobile Menu Button - 放在最前面 */}
+            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors rounded-md"
@@ -86,35 +88,55 @@ export function Navigation() {
             <div className="hidden md:flex items-center space-x-3">
               <ThemeToggle />
               
-              {/* Notifications */}
-              <Link
-                href="/notifications"
-                className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors rounded-md"
-                aria-label="通知中心"
-              >
-                <Bell className="h-5 w-5" />
-                {/* 通知小红点 - 仅在有未读消息时显示 */}
-                {/* TODO: 这里需要从全局状态或API获取未读消息数量 */}
-              </Link>
-            </div>
+              {/* Always show login/signup buttons for signed out users */}
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+                    登录
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                    注册
+                  </button>
+                </SignUpButton>
+              </SignedOut>
 
-            {/* User Menu - 始终显示 */}
-            <div className="flex items-center space-x-3">
-              <UserButton 
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    avatarBox: "h-8 w-8"
-                  }
-                }}
-              />
-              <Link
-                href="/profile"
-                className="hidden sm:flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors px-2 py-1 rounded-md"
-              >
-                <User className="h-4 w-4" />
-                <span>个人中心</span>
-              </Link>
+              {/* Show additional features for signed in users */}
+              <SignedIn>
+                {/* Notifications */}
+                <Link
+                  href="/notifications"
+                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                  aria-label="通知中心"
+                >
+                  <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+                
+                {/* Personal Center */}
+                <Link
+                  href="/dashboard"
+                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                  aria-label="个人中心"
+                >
+                  <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                </Link>
+                
+                {/* User Button - Always on the right */}
+                <UserButton 
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: "h-8 w-8"
+                    }
+                  }}
+                />
+              </SignedIn>
             </div>
           </div>
         </div>
@@ -160,22 +182,52 @@ export function Navigation() {
                     </div>
                   </div>
                   
-                  <Link
-                    href="/notifications"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <Bell className="h-4 w-4" />
-                    <span>通知中心</span>
-                  </Link>
-                  <Link
-                    href="/profile"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <User className="h-4 w-4" />
-                    <span>个人中心</span>
-                  </Link>
+                  {/* Signed In - Mobile */}
+                  <SignedIn>
+                    <Link
+                      href="/notifications"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Bell className="h-4 w-4" />
+                      <span>通知中心</span>
+                      {unreadCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      <span>个人中心</span>
+                    </Link>
+                  </SignedIn>
+
+                  {/* Signed Out - Mobile */}
+                  <SignedOut>
+                    <SignInButton mode="modal">
+                      <button 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors w-full text-left"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>登录</span>
+                      </button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <button 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors w-full text-left"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>注册</span>
+                      </button>
+                    </SignUpButton>
+                  </SignedOut>
                 </div>
               </div>
             </motion.div>

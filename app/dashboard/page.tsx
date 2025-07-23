@@ -31,6 +31,10 @@ export default function DashboardPage() {
   const [pointsSummary, setPointsSummary] = useState<PointsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkinLoading, setCheckinLoading] = useState(false);
+  const [redeemCode, setRedeemCode] = useState('');
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemMessage, setRedeemMessage] = useState('');
+  const [redeemSuccess, setRedeemSuccess] = useState(false);
 
   // 快捷操作配置
   const quickActions = [
@@ -150,6 +154,62 @@ export default function DashboardPage() {
       alert('签到失败，请稍后重试');
     } finally {
       setCheckinLoading(false);
+    }
+  };
+
+  // 兑换码兑换
+  const handleRedeem = async () => {
+    if (!redeemCode.trim()) return;
+    
+    setRedeemLoading(true);
+    setRedeemMessage('');
+    
+    try {
+      const response = await fetch('/api/points/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: redeemCode.trim() }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // 更新积分信息
+        if (pointsSummary && result.points) {
+          setPointsSummary({
+            ...pointsSummary,
+            currentPoints: pointsSummary.currentPoints + result.points,
+            totalEarned: pointsSummary.totalEarned + result.points,
+          });
+        }
+        
+        setRedeemSuccess(true);
+        setRedeemMessage(`兑换成功！获得 ${result.points || 0} 积分`);
+        setRedeemCode('');
+        
+        // 3秒后清除消息
+        setTimeout(() => {
+          setRedeemMessage('');
+        }, 3000);
+      } else {
+        setRedeemSuccess(false);
+        setRedeemMessage(result.message || '兑换失败');
+        
+        // 5秒后清除错误消息
+        setTimeout(() => {
+          setRedeemMessage('');
+        }, 5000);
+      }
+    } catch (error) {
+      console.error('兑换失败:', error);
+      setRedeemSuccess(false);
+      setRedeemMessage('兑换失败，请稍后重试');
+      
+      setTimeout(() => {
+        setRedeemMessage('');
+      }, 5000);
+    } finally {
+      setRedeemLoading(false);
     }
   };
 
@@ -288,6 +348,69 @@ export default function DashboardPage() {
                   </>
                 )}
               </Button>
+            </motion.div>
+
+            {/* 兑换码卡片 */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white flex items-center">
+                  <Gift className="h-5 w-5 mr-2 text-purple-500" />
+                  兑换码
+                </h3>
+                <TrendingUp className="h-5 w-5 text-purple-500" />
+              </div>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                输入兑换码获得积分奖励
+              </p>
+
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={redeemCode}
+                    onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
+                    placeholder="输入兑换码"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    disabled={redeemLoading}
+                    maxLength={20}
+                  />
+                  <Button
+                    onClick={handleRedeem}
+                    disabled={redeemLoading || !redeemCode.trim()}
+                    size="sm"
+                    className="bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700"
+                  >
+                    {redeemLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                        兑换中
+                      </>
+                    ) : (
+                      '兑换'
+                    )}
+                  </Button>
+                </div>
+                
+                {redeemMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-3 rounded-md text-sm ${
+                      redeemSuccess 
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800' 
+                        : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    }`}
+                  >
+                    {redeemMessage}
+                  </motion.div>
+                )}
+              </div>
             </motion.div>
           </div>
 

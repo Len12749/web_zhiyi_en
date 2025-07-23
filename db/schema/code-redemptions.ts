@@ -13,3 +13,4 @@ export const codeRedemptions = pgTable('code_redemptions', {
 }, (table) => ({
   unq: unique().on(table.codeId, table.userId),
 })); 
+ 

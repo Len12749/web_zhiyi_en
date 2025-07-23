@@ -6,6 +6,7 @@ import { processingTasks } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { calculatePoints } from "@/lib/utils";
 import { updateUserPoints, getCurrentUser } from "@/actions/auth/user-actions";
+import { createNotification } from "@/actions/notifications/notification-actions";
 
 export interface ProcessingTask {
   id: number;
@@ -117,7 +118,42 @@ export async function createProcessingTask(
 }
 
 /**
- * 获取任务详情
+ * 获取用户任务列表
+ */
+export async function getUserTasks(limit: number = 50): Promise<{ success: boolean; tasks?: ProcessingTask[]; message: string }> {
+  try {
+    const { userId } = auth();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "用户未登录"
+      };
+    }
+
+    const tasks = await db
+      .select()
+      .from(processingTasks)
+      .where(eq(processingTasks.userId, userId))
+      .orderBy(desc(processingTasks.createdAt))
+      .limit(limit);
+
+    return {
+      success: true,
+      tasks: tasks as ProcessingTask[],
+      message: "获取任务列表成功"
+    };
+  } catch (error) {
+    console.error("获取用户任务失败:", error);
+    return {
+      success: false,
+      message: "获取任务列表失败"
+    };
+  }
+}
+
+/**
+ * 根据ID获取任务
  */
 export async function getTaskById(taskId: number): Promise<{ success: boolean; task?: ProcessingTask; message: string }> {
   try {
@@ -265,6 +301,25 @@ export async function completeTask(
       })
       .where(eq(processingTasks.id, taskId));
 
+    // 创建完成通知
+    const taskTypeNames: { [key: string]: string } = {
+      'pdf-to-markdown': 'PDF解析',
+      'image-to-markdown': '图片转Markdown',
+      'markdown-translation': 'Markdown翻译',
+      'pdf-translation': 'PDF翻译',
+      'format-conversion': '格式转换'
+    };
+
+    const taskTypeName = taskTypeNames[currentTask.taskType] || '文件处理';
+    
+    await createNotification(
+      currentTask.userId,
+      'success',
+      `${taskTypeName}完成`,
+      `您的文件 "${currentTask.inputFilename}" 已成功处理完成，可以下载了。`,
+      taskId
+    );
+
     return {
       success: true,
       message: "任务完成"
@@ -279,7 +334,7 @@ export async function completeTask(
 }
 
 /**
- * 任务失败处理
+ * 任务失败
  */
 export async function failTask(
   taskId: number,
@@ -287,34 +342,70 @@ export async function failTask(
   errorMessage: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    // 更新任务状态
+    // 获取任务信息
+    const task = await db
+      .select()
+      .from(processingTasks)
+      .where(eq(processingTasks.id, taskId))
+      .limit(1);
+
+    if (task.length === 0) {
+      return {
+        success: false,
+        message: "任务不存在"
+      };
+    }
+
+    const currentTask = task[0];
+
+    // 更新任务为失败状态
     await db
       .update(processingTasks)
       .set({
         taskStatus: "failed",
+        statusMessage: "处理失败",
         errorCode,
         errorMessage,
         completedAt: new Date(),
       })
       .where(eq(processingTasks.id, taskId));
 
+    // 创建失败通知
+    const taskTypeNames: { [key: string]: string } = {
+      'pdf-to-markdown': 'PDF解析',
+      'image-to-markdown': '图片转Markdown',
+      'markdown-translation': 'Markdown翻译',
+      'pdf-translation': 'PDF翻译',
+      'format-conversion': '格式转换'
+    };
+
+    const taskTypeName = taskTypeNames[currentTask.taskType] || '文件处理';
+    
+    await createNotification(
+      currentTask.userId,
+      'error',
+      `${taskTypeName}失败`,
+      `文件 "${currentTask.inputFilename}" 处理失败：${errorMessage}。未消耗积分。`,
+      taskId
+    );
+
     return {
       success: true,
-      message: "任务失败状态已记录"
+      message: "任务标记为失败"
     };
   } catch (error) {
-    console.error("记录任务失败状态失败:", error);
+    console.error("标记任务失败失败:", error);
     return {
       success: false,
-      message: "记录任务失败状态失败"
+      message: "标记任务失败失败"
     };
   }
 }
 
 /**
- * 获取用户的任务历史
+ * 删除任务
  */
-export async function getUserTasks(limit: number = 20): Promise<{ success: boolean; tasks?: ProcessingTask[]; message: string }> {
+export async function deleteTask(taskId: number): Promise<{ success: boolean; message: string }> {
   try {
     const { userId } = auth();
     
@@ -325,23 +416,37 @@ export async function getUserTasks(limit: number = 20): Promise<{ success: boole
       };
     }
 
-    const tasks = await db
+    // 验证任务归属
+    const task = await db
       .select()
       .from(processingTasks)
-      .where(eq(processingTasks.userId, userId))
-      .orderBy(desc(processingTasks.createdAt))
-      .limit(limit);
+      .where(and(
+        eq(processingTasks.id, taskId),
+        eq(processingTasks.userId, userId)
+      ))
+      .limit(1);
+
+    if (task.length === 0) {
+      return {
+        success: false,
+        message: "任务不存在或无权限删除"
+      };
+    }
+
+    // 删除任务
+    await db
+      .delete(processingTasks)
+      .where(eq(processingTasks.id, taskId));
 
     return {
       success: true,
-      tasks: tasks as ProcessingTask[],
-      message: "获取任务历史成功"
+      message: "任务删除成功"
     };
   } catch (error) {
-    console.error("获取用户任务失败:", error);
+    console.error("删除任务失败:", error);
     return {
       success: false,
-      message: "获取用户任务失败"
+      message: "删除任务失败"
     };
   }
 } 

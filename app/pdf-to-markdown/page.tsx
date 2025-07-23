@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { calculatePoints } from '@/lib/utils';
+import { AuthGuard } from '@/components/common/auth-guard';
 
 // PDF文件限制
 const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300MB
@@ -35,6 +36,7 @@ export default function PDFToMarkdownPage() {
   const { user } = useUser();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>({
     taskId: null,
     status: 'idle',
@@ -47,7 +49,56 @@ export default function PDFToMarkdownPage() {
   const [enableTranslation, setEnableTranslation] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState('en');
   const [translationOutput, setTranslationOutput] = useState<('original' | 'translated' | 'bilingual')[]>(['original']);
-  const [estimatedPageCount, setEstimatedPageCount] = useState<number>(0);
+  const [detectedPageCount, setDetectedPageCount] = useState<number>(0);
+  const [isDetectingPages, setIsDetectingPages] = useState<boolean>(false);
+
+  // 精确检测PDF页数
+  const detectPDFPageCount = async (file: File) => {
+    try {
+      setIsDetectingPages(true);
+      setDetectedPageCount(0);
+      
+      // 先上传文件获取页数检测结果
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('taskType', 'pdf-to-markdown');
+      
+      const response = await fetch('/api/files/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('PDF上传失败:', errorText);
+        throw new Error('文件上传失败');
+      }
+      
+      const result = await response.json();
+      console.log('PDF页数检测结果:', result);
+      
+      // 检查响应中的页数信息
+      if (result.pageCount && typeof result.pageCount === 'number') {
+        if (result.pageCount > MAX_PAGES) {
+          throw new Error(`PDF页数超过限制（最大${MAX_PAGES}页，当前${result.pageCount}页）`);
+        }
+        setDetectedPageCount(result.pageCount);
+      } else if (result.success === false) {
+        throw new Error(result.message || '页数检测失败');
+      } else {
+        // 如果没有返回页数，使用默认值1
+        console.warn('未获取到页数信息，使用默认值1');
+        setDetectedPageCount(1);
+      }
+    } catch (error) {
+      console.error('PDF页数检测失败:', error);
+      setErrorMessage(error instanceof Error ? error.message : '页数检测失败，请重新选择文件');
+      setSelectedFile(null);
+      setDetectedPageCount(0);
+    } finally {
+      setIsDetectingPages(false);
+    }
+  };
 
   // 支持的语言列表
   const languages = [
@@ -82,23 +133,16 @@ export default function PDFToMarkdownPage() {
       if (file.type === 'application/pdf') {
         // 检查文件大小
         if (file.size > MAX_FILE_SIZE) {
-          alert(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的PDF文件。`);
-          return;
-        }
-        
-        // 估算PDF页数（1MB约1页）
-        const estimatedPages = Math.max(1, Math.ceil(file.size / (1024 * 1024)));
-        
-        // 检查预估页数
-        if (estimatedPages > MAX_PAGES) {
-          alert(`文件页数可能超出限制。预估页数：${estimatedPages}页，最大支持：${MAX_PAGES}页。`);
+          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的PDF文件。`);
           return;
         }
         
         setSelectedFile(file);
-        setEstimatedPageCount(estimatedPages);
+        setErrorMessage(''); // 清除之前的错误消息
+        // 精确检测PDF页数
+        detectPDFPageCount(file);
       } else {
-        alert('请选择PDF文件');
+        setErrorMessage('请选择PDF文件');
       }
     }
   }, []);
@@ -109,23 +153,16 @@ export default function PDFToMarkdownPage() {
       if (file.type === 'application/pdf') {
         // 检查文件大小
         if (file.size > MAX_FILE_SIZE) {
-          alert(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的PDF文件。`);
-          return;
-        }
-        
-        // 估算PDF页数（1MB约1页）
-        const estimatedPages = Math.max(1, Math.ceil(file.size / (1024 * 1024)));
-        
-        // 检查预估页数
-        if (estimatedPages > MAX_PAGES) {
-          alert(`文件页数可能超出限制。预估页数：${estimatedPages}页，最大支持：${MAX_PAGES}页。`);
+          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的PDF文件。`);
           return;
         }
         
         setSelectedFile(file);
-        setEstimatedPageCount(estimatedPages);
+        setErrorMessage(''); // 清除之前的错误消息
+        // 精确检测PDF页数
+        detectPDFPageCount(file);
       } else {
-        alert('请选择PDF文件');
+        setErrorMessage('请选择PDF文件');
       }
     }
   };
@@ -168,8 +205,14 @@ export default function PDFToMarkdownPage() {
       const uploadResult = await uploadResponse.json();
       
       // 验证PDF页数检测
-      if (uploadResult.needsPageDetection && !uploadResult.pageCount) {
+      if (uploadResult.needsPageDetection && !uploadResult.additionalInfo?.pageCount) {
         throw new Error('PDF页数检测失败，无法计算准确积分。请重试或联系客服。');
+      }
+
+      // 获取实际页数
+      const pageCount = uploadResult.additionalInfo?.pageCount;
+      if (!pageCount) {
+        throw new Error('无法获取PDF页数信息，请重新上传文件。');
       }
       
       // 2. 构建处理参数
@@ -192,7 +235,7 @@ export default function PDFToMarkdownPage() {
           inputFileSize: selectedFile.size,
           inputStoragePath: uploadResult.storagePath,
           processingParams,
-          pageCount: uploadResult.pageCount,
+          pageCount: pageCount,
         }),
       });
 
@@ -255,6 +298,9 @@ export default function PDFToMarkdownPage() {
 
   const resetForm = () => {
     setSelectedFile(null);
+    setErrorMessage('');
+    setDetectedPageCount(0);
+    setIsDetectingPages(false);
     setProcessingStatus({
       taskId: null,
       status: 'idle',
@@ -264,7 +310,8 @@ export default function PDFToMarkdownPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面标题 */}
         <motion.div
@@ -355,7 +402,35 @@ export default function PDFToMarkdownPage() {
                   </div>
                 )}
               </div>
+
+              {/* 错误消息显示 */}
+              {errorMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md"
+                >
+                  <div className="flex items-center">
+                    <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                    <span className="text-sm text-red-600 dark:text-red-400">{errorMessage}</span>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
+
+            {/* 错误消息显示 */}
+            {errorMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800"
+              >
+                <div className="flex items-center">
+                  <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                  <span className="text-sm text-red-600 dark:text-red-400">{errorMessage}</span>
+                </div>
+              </motion.div>
+            )}
 
             {/* 处理状态 */}
             {processingStatus.status !== 'idle' && (
@@ -458,12 +533,12 @@ export default function PDFToMarkdownPage() {
                     </div>
                   </div>
                   
-                  <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-center border border-orange-200 dark:border-orange-800">
-                    <div className="text-orange-800 dark:text-orange-200 font-medium">
-                      页数检测中...
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
+                    <div className="text-green-800 dark:text-green-200 font-medium">
+                      {isDetectingPages ? '页数检测中...' : `检测页数：${detectedPageCount}页`}
                     </div>
-                    <div className="text-orange-600 dark:text-orange-400 text-sm mt-1">
-                      上传后显示准确积分消耗
+                    <div className="text-green-600 dark:text-green-400 text-sm mt-1">
+                      {isDetectingPages ? '检测完成后显示积分消耗' : `本次消耗：${calculatePoints('pdf-to-markdown', selectedFile.size, detectedPageCount, enableTranslation)}积分`}
                     </div>
                   </div>
 
@@ -641,6 +716,7 @@ export default function PDFToMarkdownPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   );
 } 

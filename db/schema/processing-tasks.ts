@@ -42,3 +42,4 @@ export const processingTasks = pgTable('processing_tasks', {
   completedAt: timestamp('completed_at'),
   expiresAt: timestamp('expires_at').defaultNow(), // 默认7天后过期
 }); 
+ 

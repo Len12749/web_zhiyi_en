@@ -11,3 +11,4 @@ export const pointTransactions = pgTable('point_transactions', {
   description: text('description').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
 }); 
+ 

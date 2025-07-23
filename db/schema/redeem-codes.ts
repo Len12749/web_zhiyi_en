@@ -10,3 +10,4 @@ export const redeemCodes = pgTable('redeem_codes', {
   expiresAt: timestamp('expires_at'),
   createdAt: timestamp('created_at').defaultNow(),
 }); 
+ 

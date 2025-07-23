@@ -108,3 +108,4 @@ export const SUPPORTED_LANGUAGES = [
 ] as const;
 
 export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code']; 
+ 

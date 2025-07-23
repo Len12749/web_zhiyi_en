@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
+import { NextRequest, NextResponse } from 'next/server';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { auth } from '@clerk/nextjs';
+import { getPDFPageCount } from '@/lib/external/pdf-utils';
 
 export async function POST(request: NextRequest) {
   try {
+    // 验证用户身份
     const { userId } = auth();
-    
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "用户未登录" },
         { status: 401 }
       );
     }
@@ -21,43 +22,53 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json(
-        { success: false, message: "未找到文件" },
+        { success: false, message: "没有找到文件" },
         { status: 400 }
       );
     }
 
-    // 验证文件类型和大小
+    if (!taskType) {
+      return NextResponse.json(
+        { success: false, message: "没有指定任务类型" },
+        { status: 400 }
+      );
+    }
+
+    // 验证文件类型
     const allowedTypes = {
       'pdf-to-markdown': ['application/pdf'],
-      'image-to-markdown': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-      'markdown-translation': ['text/markdown', 'text/plain'],
       'pdf-translation': ['application/pdf'],
-      'format-conversion': ['text/markdown', 'text/plain'],
+      'image-to-markdown': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+      'markdown-translation': ['text/markdown'],
+      'format-conversion': ['text/markdown'],
     };
 
-    const maxSizes = {
-      'pdf-to-markdown': 300 * 1024 * 1024, // 300MB
-      'image-to-markdown': 50 * 1024 * 1024, // 50MB
-      'markdown-translation': 10 * 1024 * 1024, // 10MB
-      'pdf-translation': 300 * 1024 * 1024, // 300MB
-      'format-conversion': 10 * 1024 * 1024, // 10MB
-    };
-
-    if (!allowedTypes[taskType as keyof typeof allowedTypes]?.includes(file.type)) {
+    const allowedTypesForTask = allowedTypes[taskType as keyof typeof allowedTypes];
+    if (!allowedTypesForTask || !allowedTypesForTask.includes(file.type)) {
       return NextResponse.json(
         { success: false, message: "不支持的文件类型" },
         { status: 400 }
       );
     }
 
-    if (file.size > maxSizes[taskType as keyof typeof maxSizes]) {
+    // 验证文件大小
+    const maxSizes = {
+      'pdf-to-markdown': 300 * 1024 * 1024, // 300MB
+      'pdf-translation': 300 * 1024 * 1024, // 300MB
+      'image-to-markdown': 100 * 1024 * 1024, // 100MB
+      'markdown-translation': 100 * 1024 * 1024, // 100MB
+      'format-conversion': 100 * 1024 * 1024, // 100MB
+    };
+
+    const maxSize = maxSizes[taskType as keyof typeof maxSizes];
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { success: false, message: "文件大小超出限制" },
+        { success: false, message: `文件大小超出限制，最大 ${maxSize / (1024 * 1024)}MB` },
         { status: 400 }
       );
     }
 
-    // 创建存储路径
+    // 获取数据存储路径
     const dataStoragePath = process.env.DATA_STORAGE_PATH || './data';
     const today = new Date().toISOString().split('T')[0];
     const timestamp = Date.now();
@@ -111,10 +122,49 @@ export async function POST(request: NextRequest) {
     let additionalInfo = {};
     
     if (file.type === 'application/pdf') {
-      // TODO: 调用PDF分析工具获取实际页数
-      // 这里需要集成实际的PDF页数检测功能
+      console.log(`开始检测PDF文件页数: ${file.name}`);
+      
+      // 集成PDF页数检测功能
+      const pageCountResult = await getPDFPageCount(filePath, file.size);
+      
+      if (pageCountResult.success && pageCountResult.pageCount !== undefined) {
+        console.log(`PDF页数检测成功: ${pageCountResult.pageCount}页`);
+        
+        // 验证页数限制
+        const maxPages = 800;
+        if (pageCountResult.pageCount > maxPages) {
+          return NextResponse.json(
+            { 
+              success: false, 
+              message: `PDF页数超出限制。当前文件有 ${pageCountResult.pageCount} 页，最多支持 ${maxPages} 页。` 
+            },
+            { status: 400 }
+          );
+        }
+        
+        additionalInfo = {
+          pageCount: pageCountResult.pageCount,
+          needsPageDetection: false,
+          pageDetectionMethod: pageCountResult.error ? 'estimation' : 'precise',
+          pageDetectionNote: pageCountResult.error || undefined,
+        };
+      } else {
+        console.error('PDF页数检测失败:', pageCountResult.error);
+        
+        // 页数检测失败，返回错误
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: `PDF页数检测失败: ${pageCountResult.error}。请确保PDF文件完整且未损坏。` 
+          },
+          { status: 400 }
+        );
+      }
+    } else if (file.type === 'text/markdown') {
+      // Markdown文件默认按文件大小计费，页数检测不是必需的
       additionalInfo = {
-        needsPageDetection: true, // 标记需要页数检测
+        needsPageDetection: false,
+        characterCount: buffer.toString('utf-8').length,
       };
     }
 
@@ -124,7 +174,7 @@ export async function POST(request: NextRequest) {
       storagePath: relativePath,
       fileName: file.name,
       fileSize: file.size,
-      ...additionalInfo,
+      additionalInfo,
     });
 
   } catch (error) {

@@ -1,29 +1,28 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
-import { Upload, FileText, CheckCircle, AlertCircle, RefreshCw, Download, Settings, Loader2 } from 'lucide-react';
+import { 
+  FileText, 
+  Upload, 
+  Settings,
+  Download, 
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  Repeat
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { calculatePoints } from '@/lib/utils';
+import { AuthGuard } from '@/components/common/auth-guard';
 
-// 支持的输入文件格式
-const SUPPORTED_INPUT_TYPES = [
-  'text/markdown',
-  '.md'
-];
-
-// 支持的输出格式
-const OUTPUT_FORMATS = [
-  { value: 'docx', label: 'Word文档 (.docx)' },
-  { value: 'html', label: 'HTML网页 (.html)' },
-  { value: 'pdf', label: 'PDF文档 (.pdf)' },
-  { value: 'latex', label: 'LaTeX文档 (.tex)' },
-];
-
+// 文件限制
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const ACCEPTED_TYPES = ['text/markdown', 'text/plain', 'application/octet-stream'];
 
 interface ProcessingStatus {
-  taskId: string | null;
+  taskId: number | null;
   status: 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
   progress: number;
   message: string;
@@ -31,9 +30,10 @@ interface ProcessingStatus {
 }
 
 export default function FormatConversionPage() {
+  const { user } = useUser();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [outputFormat, setOutputFormat] = useState('docx');
   const [dragActive, setDragActive] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>({
     taskId: null,
     status: 'idle',
@@ -41,6 +41,18 @@ export default function FormatConversionPage() {
     message: '',
   });
 
+  // 格式转换参数
+  const [targetFormat, setTargetFormat] = useState('word');
+
+  // 支持的目标格式
+  const formats = [
+    { code: 'word', name: 'Word文档 (.docx)', icon: '📄' },
+    { code: 'html', name: 'HTML网页 (.html)', icon: '🌐' },
+    { code: 'pdf', name: 'PDF文档 (.pdf)', icon: '📕' },
+    { code: 'latex', name: 'LaTeX文档 (.tex)', icon: '📜' },
+  ];
+
+  // 拖拽处理
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -56,42 +68,53 @@ export default function FormatConversionPage() {
     e.stopPropagation();
     setDragActive(false);
     
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileSelection(files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.type.includes('text')) {
+        // 检查文件大小
+        if (file.size > MAX_FILE_SIZE) {
+          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的Markdown文件。`);
+          return;
+        }
+        
+        setSelectedFile(file);
+        setErrorMessage(''); // 清除之前的错误消息
+      } else {
+        setErrorMessage('请选择Markdown文件（.md或.markdown格式）');
+      }
     }
   }, []);
 
-  const handleFileSelection = useCallback((file: File) => {
-    const isValidType = SUPPORTED_INPUT_TYPES.some(type => 
-      type.startsWith('.') ? file.name.toLowerCase().endsWith(type) : file.type === type
-    );
-
-    if (!isValidType) {
-      alert('不支持的文件格式。请选择 Markdown (.md) 格式的文件。');
-      return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.type.includes('text')) {
+        // 检查文件大小
+        if (file.size > MAX_FILE_SIZE) {
+          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的Markdown文件。`);
+          return;
+        }
+        
+        setSelectedFile(file);
+        setErrorMessage(''); // 清除之前的错误消息
+      } else {
+        setErrorMessage('请选择Markdown文件（.md或.markdown格式）');
+      }
     }
+  };
 
-    if (file.size > MAX_FILE_SIZE) {
-      alert(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的文件。`);
-      return;
-    }
+  const startProcessing = async () => {
+    if (!selectedFile || !user) return;
 
-    setSelectedFile(file);
-  }, []);
-
-  const handleStartConversion = async () => {
-    if (!selectedFile) return;
+    setProcessingStatus({
+      taskId: null,
+      status: 'uploading',
+      progress: 0,
+      message: '正在上传文件...',
+    });
 
     try {
-      setProcessingStatus({
-        taskId: null,
-        status: 'uploading',
-        progress: 10,
-        message: '正在上传文件...',
-      });
-
-      // 1. 上传文件
+      // 1. 先上传文件到存储系统
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('taskType', 'format-conversion');
@@ -107,40 +130,25 @@ export default function FormatConversionPage() {
 
       const uploadResult = await uploadResponse.json();
 
-      // TODO: 集成页数检测
-      const pageCount = uploadResult.additionalInfo?.pageCount || 1; // Markdown默认1页
-      
-      setProcessingStatus(prev => ({
-        ...prev,
-        status: 'uploading',
-        progress: 50,
-        message: '文件上传成功，创建处理任务...',
-      }));
+      // 2. 构建处理参数
+      const processingParams = {
+        targetFormat,
+      };
 
-      // 2. 创建处理任务
-      const taskResponse = await fetch('/api/tasks/create', {
+      // 3. 创建处理任务
+      const response = await fetch('/api/tasks/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           taskType: 'format-conversion',
           inputFilename: selectedFile.name,
           inputFileSize: selectedFile.size,
           inputStoragePath: uploadResult.storagePath,
-          processingParams: {
-            outputFormat,
-          },
-          pageCount,
+          processingParams,
         }),
       });
 
-      if (!taskResponse.ok) {
-        const errorData = await taskResponse.json();
-        throw new Error(errorData.message || '任务创建失败');
-      }
-
-      const result = await taskResponse.json();
+      const result = await response.json();
 
       if (result.success && result.taskId) {
         setProcessingStatus({
@@ -150,7 +158,7 @@ export default function FormatConversionPage() {
           message: '任务已创建，开始转换...',
         });
 
-        // 3. 建立SSE连接监听状态更新
+        // 4. 建立SSE连接监听状态更新
         const eventSource = new EventSource(result.sseUrl);
         
         eventSource.onmessage = (event) => {
@@ -197,6 +205,7 @@ export default function FormatConversionPage() {
 
   const resetForm = () => {
     setSelectedFile(null);
+    setErrorMessage('');
     setProcessingStatus({
       taskId: null,
       status: 'idle',
@@ -206,269 +215,306 @@ export default function FormatConversionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 页面标题 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 text-center"
-        >
-          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-            <RefreshCw className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            格式转换
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            将Markdown文档转换为Word、PDF、HTML、LaTeX等多种格式
-          </p>
-        </motion.div>
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* 页面标题 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 text-center"
+          >
+            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Repeat className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              格式转换
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              将Markdown文件转换为Word、PDF、HTML、LaTeX等不同格式
+            </p>
+          </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 左侧：文件上传 */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* 文件上传区域 */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-            >
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                上传Markdown文件
-              </h2>
-              
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive 
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                {selectedFile ? (
-                  <div className="space-y-4">
-                    <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {selectedFile.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {(selectedFile.size / 1024).toFixed(2)} KB
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => setSelectedFile(null)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      重新选择
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <Upload className="h-12 w-12 text-gray-400 mx-auto" />
-                    <div>
-                      <p className="text-gray-900 dark:text-white font-medium mb-2">
-                        拖拽Markdown文件到这里，或者
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={() => document.getElementById('markdown-file-input')?.click()}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        选择Markdown文件
-                      </Button>
-                      <input
-                        id="markdown-file-input"
-                        type="file"
-                        accept=".md"
-                        onChange={(e) => e.target.files?.[0] && handleFileSelection(e.target.files[0])}
-                        className="hidden"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      支持 Markdown (.md) 格式，最大 100MB
-                    </p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* 处理状态 */}
-            {processingStatus.status !== 'idle' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* 左侧：文件上传 */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* 文件上传区域 */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
                 className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
               >
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  处理状态
-                </h3>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  上传Markdown文件
+                </h2>
                 
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    {processingStatus.status === 'uploading' || processingStatus.status === 'processing' ? (
-                      <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
-                    ) : processingStatus.status === 'completed' ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <AlertCircle className="h-5 w-5 text-red-600" />
-                    )}
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {processingStatus.message}
-                    </span>
-                  </div>
-
-                  {(processingStatus.status === 'processing' || processingStatus.status === 'uploading') && (
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${processingStatus.progress}%` }}
-                      ></div>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                    dragActive 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                >
+                  {selectedFile ? (
+                    <div className="space-y-4">
+                      <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {selectedFile.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => setSelectedFile(null)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        重新选择
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          拖拽Markdown文件到此处，或
+                        </p>
+                        <Button
+                          variant="outline"
+                          onClick={() => document.getElementById('markdown-file-input')?.click()}
+                          className="bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          选择Markdown文件
+                        </Button>
+                        <input
+                          id="markdown-file-input"
+                          type="file"
+                          accept=".md,.markdown,.txt"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        支持.md、.markdown格式，最大 100MB
+                      </p>
                     </div>
                   )}
+                </div>
 
-                  {processingStatus.status === 'completed' && processingStatus.downloadUrl && (
-                    <div className="flex space-x-3">
-                      <Button
-                        onClick={() => window.open(processingStatus.downloadUrl)}
-                        className="flex-1"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        下载结果
-                      </Button>
+                {/* 错误消息显示 */}
+                {errorMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md"
+                  >
+                    <div className="flex items-center">
+                      <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                      <span className="text-sm text-red-600 dark:text-red-400">{errorMessage}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+
+              {/* 处理状态 */}
+              {processingStatus.status !== 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    处理状态
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      {processingStatus.status === 'uploading' || processingStatus.status === 'processing' ? (
+                        <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+                      ) : processingStatus.status === 'completed' ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      )}
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {processingStatus.message}
+                      </span>
+                    </div>
+
+                    {(processingStatus.status === 'processing' || processingStatus.status === 'uploading') && (
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${processingStatus.progress}%` }}
+                        ></div>
+                      </div>
+                    )}
+
+                    {processingStatus.status === 'completed' && processingStatus.downloadUrl && (
+                      <div className="flex space-x-3">
+                        <Button
+                          onClick={() => window.open(processingStatus.downloadUrl)}
+                          className="flex-1"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          下载结果
+                        </Button>
+                        <Button
+                          onClick={resetForm}
+                          variant="outline"
+                        >
+                          处理新文件
+                        </Button>
+                      </div>
+                    )}
+
+                    {processingStatus.status === 'failed' && (
                       <Button
                         onClick={resetForm}
                         variant="outline"
+                        className="w-full"
                       >
-                        处理新文件
+                        重新开始
                       </Button>
-                    </div>
-                  )}
-
-                  {processingStatus.status === 'failed' && (
-                    <Button
-                      onClick={resetForm}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      重新开始
-                    </Button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* 右侧：处理参数 */}
-          <div className="space-y-6">
-            {/* 积分预览 */}
-            {selectedFile && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 shadow-lg border border-blue-200 dark:border-blue-800"
-              >
-                <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  积分消耗预览
-                </h4>
-                
-                <div className="space-y-3">
-                  <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 dark:text-gray-400">文件：</span>
-                        <span className="font-medium text-gray-900 dark:text-white truncate max-w-32" title={selectedFile.name}>
-                          {selectedFile.name}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 dark:text-gray-400">大小：</span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {(selectedFile.size / 1024).toFixed(2)} KB
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
-                  
-                  <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-center border border-orange-200 dark:border-orange-800">
-                    <div className="text-orange-800 dark:text-orange-200 font-medium">
-                      页数检测中...
-                    </div>
-                    <div className="text-orange-600 dark:text-orange-400 text-sm mt-1">
-                      上传后显示准确积分消耗
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                转换设置
-              </h3>
-
-              <div className="space-y-6">
-                {/* 输出格式设置 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    目标格式
-                  </label>
-                  <select
-                    value={outputFormat}
-                    onChange={(e) => setOutputFormat(e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {OUTPUT_FORMATS.map((format) => (
-                      <option key={format.value} value={format.value}>
-                        {format.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 开始转换按钮 */}
-                <Button
-                  onClick={handleStartConversion}
-                  disabled={!selectedFile || processingStatus.status !== 'idle'}
-                  className="w-full"
+            {/* 右侧：格式设置和积分预览 */}
+            <div className="space-y-6">
+              {/* 积分预览 */}
+              {selectedFile && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 shadow-lg border border-blue-200 dark:border-blue-800"
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  开始转换
-                </Button>
-              </div>
-            </motion.div>
+                  <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    积分消耗预览
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400">文件：</span>
+                          <span className="font-medium text-gray-900 dark:text-white truncate max-w-32" title={selectedFile.name}>
+                            {selectedFile.name}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400">大小：</span>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
+                      <div className="text-green-800 dark:text-green-200 font-medium">
+                        本次消耗：2积分
+                      </div>
+                      <div className="text-green-600 dark:text-green-400 text-sm mt-1">
+                        每个文件固定消耗2积分
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
-            {/* 积分说明 */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 text-sm"
-            >
-              <h4 className="font-medium text-gray-900 dark:text-white mb-2">积分消耗说明</h4>
-              <ul className="space-y-1 text-gray-600 dark:text-gray-300">
-                <li>• 格式转换：2积分/页</li>
-                <li>• 支持多种输出格式</li>
-                <li>• 处理失败将返还积分</li>
-              </ul>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <Settings className="h-5 w-5 mr-2" />
+                  转换设置
+                </h3>
+
+                <div className="space-y-6">
+                  {/* 目标格式 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      目标格式
+                    </label>
+                    <div className="space-y-2">
+                      {formats.map(format => (
+                        <label key={format.code} className="flex items-center space-x-3 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="targetFormat"
+                            value={format.code}
+                            checked={targetFormat === format.code}
+                            onChange={(e) => setTargetFormat(e.target.value)}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg">{format.icon}</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {format.name}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 开始处理按钮 */}
+                  <Button
+                    onClick={startProcessing}
+                    disabled={!selectedFile || processingStatus.status === 'processing' || processingStatus.status === 'uploading'}
+                    className="w-full"
+                  >
+                    {processingStatus.status === 'processing' || processingStatus.status === 'uploading' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        转换中...
+                      </>
+                    ) : (
+                      <>
+                        <Repeat className="h-4 w-4 mr-2" />
+                        开始转换
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </motion.div>
+
+              {/* 积分消耗说明 */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800"
+              >
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
+                  积分消耗说明
+                </h4>
+                <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
+                  <li>• 格式转换：2积分/文件</li>
+                  <li>• 支持多种输出格式</li>
+                  <li>• 处理失败将返还积分</li>
+                </ul>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 } 

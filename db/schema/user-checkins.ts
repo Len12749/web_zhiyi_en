@@ -10,3 +10,4 @@ export const userCheckins = pgTable('user_checkins', {
 }, (table) => ({
   unq: unique().on(table.userId, table.checkinDate),
 })); 
+ 

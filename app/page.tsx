@@ -10,11 +10,11 @@ const features = [
   {
     id: 'pdf-to-markdown',
     title: 'PDF解析',
-    description: '将PDF解析成可编辑的Markdown文本，保留图片，同时支持翻译（自动检测源语言），可以选择把表格解析成markdown格式或图片格式。加翻译共8积分/页。',
+    description: '将PDF解析成可编辑的Markdown文本，保留图片，同时支持翻译（自动检测源语言），可以选择把表格解析成markdown格式或图片格式。',
     icon: FileText,
     href: '/pdf-to-markdown',
     gradient: 'from-blue-500 to-cyan-500',
-    points: '5-8积分/页',
+    points: '5积分/页，含翻译8积分/页',
   },
   {
     id: 'image-to-markdown',
@@ -50,7 +50,7 @@ const features = [
     icon: RefreshCw,
     href: '/format-conversion',
     gradient: 'from-indigo-500 to-purple-500',
-    points: '2积分/页',
+    points: '2积分/KB',
   },
   {
     id: 'file-history',
@@ -165,56 +165,22 @@ export default function HomePage() {
                         </span>
                         <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                       </div>
+                      
+                      {/* 预留图片位置 */}
+                      <div className="mt-4 space-y-2">
+                        <div className="h-32 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-slate-600">
+                          <span className="text-gray-400 dark:text-gray-500 text-sm">功能演示图 1</span>
+                        </div>
+                        <div className="h-32 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-slate-600">
+                          <span className="text-gray-400 dark:text-gray-500 text-sm">功能演示图 2</span>
+                        </div>
+                      </div>
                     </div>
                   </Link>
                 </motion.div>
               );
             })}
           </div>
-
-          {/* 功能演示板块 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="mt-20"
-          >
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">功能演示</h2>
-              <p className="text-xl text-gray-600 dark:text-gray-300">直观展示各功能的处理效果</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <motion.div
-                    key={`demo-${feature.id}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.1 * index + 0.8 }}
-                    className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700"
-                  >
-                    <div className="flex items-center mb-4">
-                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${feature.gradient} flex items-center justify-center mr-3`}>
-                        <Icon className="h-4 w-4 text-white" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{feature.title}</h3>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="h-32 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-slate-600">
-                        <span className="text-gray-400 dark:text-gray-500 text-sm">演示图片 1</span>
-                      </div>
-                      <div className="h-32 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-slate-600">
-                        <span className="text-gray-400 dark:text-gray-500 text-sm">演示图片 2</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -269,23 +235,20 @@ export default function HomePage() {
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center">
                   <Zap className="h-5 w-5 mr-2" />
-                  获得途径
+                  获得积分
                 </h3>
                 <ul className="space-y-3">
                   {[
                     { text: '注册即送', points: '20积分' },
                     { text: '每日签到领取', points: '5积分' },
                     { text: '特殊节日免费赠送积分', points: null },
-                    { text: '兑换码兑换', points: null },
-                    { text: '在线充值', points: '1元 = 100积分' },
+                    { text: '兑换码充值', points: null },
                   ].map((item, index) => (
                     <li key={index} className="flex items-center text-gray-700 dark:text-gray-300">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
                       <span className="flex-grow">{item.text}</span>
                       {item.points && (
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">
-                          {item.points}
-                        </span>
+                        <span className="font-semibold text-blue-600 dark:text-blue-400">{item.points}</span>
                       )}
                     </li>
                   ))}
@@ -294,17 +257,17 @@ export default function HomePage() {
               
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold text-green-600 dark:text-green-400 flex items-center">
-                  <Clock className="h-5 w-5 mr-2" />
+                  <Shield className="h-5 w-5 mr-2" />
                   消费标准
                 </h3>
                 <ul className="space-y-3">
                   {[
                     { service: 'PDF解析', cost: '5积分/页' },
-                    { service: 'PDF解析+翻译', cost: '8积分/页' },
+                    { service: 'PDF解析+翻译', cost: '8积分/页（含翻译）' },
                     { service: '图片转Markdown', cost: '5积分/张' },
                     { service: 'Markdown翻译', cost: '5积分/KB' },
                     { service: 'PDF翻译', cost: '3积分/页' },
-                    { service: '格式转换', cost: '2积分/页' },
+                    { service: '格式转换', cost: '2积分/KB' },
                   ].map((item, index) => (
                     <li key={index} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
                       <span>{item.service}</span>
@@ -316,6 +279,9 @@ export default function HomePage() {
             </div>
             
             <div className="border-t border-gray-200 dark:border-slate-700 pt-8 text-center space-y-4">
+              <p className="text-gray-600 dark:text-gray-400 text-lg">
+                <span className="font-semibold">1元 = 100积分</span>
+              </p>
               <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                 <Link href="/profile">
                   查看我的积分

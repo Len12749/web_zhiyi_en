@@ -229,3 +229,4 @@ if (typeof setInterval !== 'undefined') {
     sseConnectionManager.sendHeartbeat();
   }, 30 * 1000);
 } 
+ 
