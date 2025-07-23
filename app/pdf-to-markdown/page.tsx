@@ -263,32 +263,46 @@ export default function PDFToMarkdownPage() {
         }, 3600000); // 1小时 = 3600000毫秒
         
         eventSource.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'status_update') {
-            setProcessingStatus(prev => ({
-              ...prev,
-              status: data.data.status === 'completed' ? 'completed' : 'processing',
-              progress: data.data.progress || prev.progress,
-              message: data.data.message || prev.message,
-              downloadUrl: data.data.status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
-            }));
-
-            if (data.data.status === 'completed' || data.data.status === 'failed') {
-              clearTimeout(timeoutId);
-              eventSource.close();
+          try {
+            const data = JSON.parse(event.data);
+            console.log('🔔 收到SSE消息:', data);
+            
+            if (data.type === 'status_update' && data.data) {
+              const { status, progress, message } = data.data;
+              console.log(`📊 状态更新: ${status} ${progress}% ${message || ''}`);
               
-              // 任务完成后立即刷新通知
-              const refreshEvent = new CustomEvent('refreshNotifications');
-              window.dispatchEvent(refreshEvent);
+              setProcessingStatus(prev => ({
+                ...prev,
+                status: status === 'completed' ? 'completed' : 
+                       status === 'failed' ? 'failed' : 'processing',
+                progress: progress || prev.progress,
+                message: message || prev.message,
+                downloadUrl: status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
+              }));
+
+              if (status === 'completed' || status === 'failed') {
+                console.log('🎯 任务结束，关闭SSE连接');
+                clearTimeout(timeoutId);
+                eventSource.close();
+                
+                // 任务完成后立即刷新通知
+                const refreshEvent = new CustomEvent('refreshNotifications');
+                window.dispatchEvent(refreshEvent);
+              }
             }
+          } catch (parseError) {
+            console.error('❌ SSE消息解析失败:', parseError, event.data);
           }
         };
 
         eventSource.onerror = (error) => {
-          console.error('SSE连接错误:', error);
+          console.error('❌ SSE连接错误:', error);
           clearTimeout(timeoutId);
           eventSource.close();
+        };
+
+        eventSource.onopen = () => {
+          console.log('✅ SSE连接已建立，监听任务:', result.taskId);
         };
 
       } else {

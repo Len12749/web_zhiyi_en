@@ -141,42 +141,7 @@ export default function ImageToMarkdownPage() {
           message: '任务已创建，开始处理...',
         });
 
-        // 2.5. 定期检查任务状态（备用机制）
-        const statusCheckInterval = setInterval(async () => {
-          try {
-            const statusResponse = await fetch(`/api/tasks/${result.taskId}`);
-            if (statusResponse.ok) {
-              const statusData = await statusResponse.json();
-              if (statusData.success && statusData.task) {
-                const task = statusData.task;
-                console.log(`📋 定期状态检查: ${task.taskStatus} ${task.progressPercent}%`);
-                
-                if (task.taskStatus === 'completed') {
-                  console.log('📋 通过状态检查发现任务已完成');
-                  setProcessingStatus(prev => ({
-                    ...prev,
-                    status: 'completed',
-                    progress: 100,
-                    message: '任务完成！',
-                    downloadUrl: `/api/tasks/${result.taskId}/download`,
-                  }));
-                  clearInterval(statusCheckInterval);
-                } else if (task.taskStatus === 'failed') {
-                  console.log('📋 通过状态检查发现任务失败');
-                  setProcessingStatus(prev => ({
-                    ...prev,
-                    status: 'failed',
-                    progress: 0,
-                    message: task.statusMessage || '处理失败',
-                  }));
-                  clearInterval(statusCheckInterval);
-                }
-              }
-            }
-          } catch (error) {
-            console.error('状态检查失败:', error);
-          }
-        }, 3000); // 每3秒检查一次
+
 
         // 3. 建立SSE连接监听状态更新
         console.log(`🔗 建立SSE连接: ${result.sseUrl}`);
@@ -185,7 +150,6 @@ export default function ImageToMarkdownPage() {
         // 设置1小时超时保护
         const timeoutId = setTimeout(() => {
           eventSource.close();
-          clearInterval(statusCheckInterval);
           setProcessingStatus(prev => ({
             ...prev,
             status: 'failed',
@@ -199,6 +163,8 @@ export default function ImageToMarkdownPage() {
           
           if (data.type === 'status_update') {
             console.log('📊 更新状态:', data.data.status, data.data.progress + '%', data.data.message);
+            
+            // 先更新状态
             setProcessingStatus(prev => ({
               ...prev,
               status: data.data.status === 'completed' ? 'completed' : 'processing',
@@ -207,15 +173,16 @@ export default function ImageToMarkdownPage() {
               downloadUrl: data.data.status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
             }));
 
+            // 如果任务完成或失败，立即同步刷新通知
             if (data.data.status === 'completed' || data.data.status === 'failed') {
-              console.log('✅ 任务完成，关闭SSE连接');
-              clearTimeout(timeoutId);
-              clearInterval(statusCheckInterval);
-              eventSource.close();
-              
-              // 任务完成后立即刷新通知
+              console.log('🔔 任务完成，立即同步刷新通知');
+              // 立即触发通知刷新，与状态更新同步
               const refreshEvent = new CustomEvent('refreshNotifications');
               window.dispatchEvent(refreshEvent);
+              
+              console.log('✅ 任务完成，关闭SSE连接');
+              clearTimeout(timeoutId);
+              eventSource.close();
             }
           }
         };
@@ -227,7 +194,6 @@ export default function ImageToMarkdownPage() {
         eventSource.onerror = (error) => {
           console.error('❌ SSE连接错误:', error);
           clearTimeout(timeoutId);
-          clearInterval(statusCheckInterval);
           eventSource.close();
         };
 

@@ -77,14 +77,14 @@ export class PDFToMarkdownClient extends CoreServiceClient {
   async parsePDF(
     file: File,
     options: {
-      tableMode: 'markdown' | 'image'
+      tableFormat: 'markdown' | 'image'
       enableTranslation?: boolean
       targetLanguage?: string
-      outputOptions?: ('original' | 'translated' | 'bilingual')[]
+      translationOutput?: ('original' | 'translated' | 'bilingual')[]
     }
   ): Promise<{ task_id: string; message: string }> {
     const additionalData: Record<string, string> = {
-      table_mode: options.tableMode,
+      table_mode: options.tableFormat,
     }
 
     if (options.enableTranslation) {
@@ -92,8 +92,8 @@ export class PDFToMarkdownClient extends CoreServiceClient {
       if (options.targetLanguage) {
         additionalData.target_language = options.targetLanguage
       }
-      if (options.outputOptions) {
-        additionalData.output_options = options.outputOptions.join(',')
+      if (options.translationOutput) {
+        additionalData.output_options = options.translationOutput.join(',')
       }
     }
 
@@ -150,8 +150,8 @@ export class MarkdownTranslationClient extends CoreServiceClient {
     targetLanguage: string
   ): Promise<{ task_id: string; message: string }> {
     return this.uploadFile('/translate', file, {
-      source_language: sourceLanguage,
-      target_language: targetLanguage,
+      sourceLanguage: sourceLanguage,
+      targetLanguage: targetLanguage,
     })
   }
 
@@ -180,8 +180,8 @@ export class PDFTranslationClient extends CoreServiceClient {
     targetLanguage: string
   ): Promise<{ task_id: string; message: string }> {
     return this.uploadFile('/translate-pdf', file, {
-      source_language: sourceLanguage,
-      target_language: targetLanguage,
+      sourceLanguage: sourceLanguage,
+      targetLanguage: targetLanguage,
     })
   }
 

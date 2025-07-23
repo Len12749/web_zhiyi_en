@@ -80,7 +80,7 @@ class SSEConnectionManager {
           connection.controller.enqueue(new TextEncoder().encode(data));
           connection.lastHeartbeat = new Date();
           sentCount++;
-          console.log(`✅ 消息已发送到连接 ${connectionId}: ${fullMessage.type}`);
+          console.log(`✅ SSE消息已发送到连接 ${connectionId}: ${fullMessage.type} (任务${taskId})`);
         } catch (error) {
           console.error(`❌ 向连接 ${connectionId} 推送消息失败:`, error);
           connectionsToRemove.push(connectionId);
@@ -91,7 +91,7 @@ class SSEConnectionManager {
     // 清理失效连接
     connectionsToRemove.forEach(id => this.removeConnection(id));
 
-    console.log(`任务 ${taskId} 消息推送完成，发送到 ${sentCount} 个连接`);
+    console.log(`📤 任务 ${taskId} 消息推送完成，发送到 ${sentCount} 个连接: ${fullMessage.type}`);
   }
 
   /**

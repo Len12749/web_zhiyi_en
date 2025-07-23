@@ -117,9 +117,27 @@ class SimpleFont(FontBase):
         """根据目标语言选择合适的字体"""
         # 判断是否需要中文字体
         chinese_languages = ["中文", "中国", "汉语", "普通话", "繁体中文", "简体中文"]
+        japanese_languages = ["日语", "日文", "日本語"]
+        korean_languages = ["韩语", "韩文", "한국어"]
         
         if any(lang in target_language for lang in chinese_languages):
             return self.chinese_font or self.english_font or "fonts/TimesNewRoman.ttf"
+        elif any(lang in target_language for lang in japanese_languages):
+            # 日语优先使用专门的日语字体
+            if os.path.exists("fonts/NotoSansCJKjp-Regular.otf"):
+                return "fonts/NotoSansCJKjp-Regular.otf"
+            elif os.path.exists("fonts/NotoSansJP-Regular.ttf"):
+                return "fonts/NotoSansJP-Regular.ttf"
+            else:
+                return "fonts/NotoSansSC-VF.ttf" if os.path.exists("fonts/NotoSansSC-VF.ttf") else self.chinese_font or "fonts/TimesNewRoman.ttf"
+        elif any(lang in target_language for lang in korean_languages):
+            # 韩语优先使用专门的韩语字体
+            if os.path.exists("fonts/NotoSansCJKkr-Regular.otf"):
+                return "fonts/NotoSansCJKkr-Regular.otf"
+            elif os.path.exists("fonts/NotoSansKR-Regular.ttf"):
+                return "fonts/NotoSansKR-Regular.ttf"
+            else:
+                return "fonts/NotoSansSC-VF.ttf" if os.path.exists("fonts/NotoSansSC-VF.ttf") else self.chinese_font or "fonts/TimesNewRoman.ttf"
         else:
             return self.english_font or "fonts/TimesNewRoman.ttf"
  

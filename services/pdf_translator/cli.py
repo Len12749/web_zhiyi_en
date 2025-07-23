@@ -338,12 +338,31 @@ class PDFTranslator:
                 "fonts/msyh.ttc",                    # 微软雅黑
                 "fonts/simhei.ttf",                  # 黑体
                 "fonts/simsun.ttc",                  # 宋体
-                "fonts/NotoSansSC-VF.ttf",           # Noto Sans SC
+                "fonts/NotoSansSC-VF.ttf",           # Noto Sans SC（支持CJK）
                 "fonts/SourceHanSerifCN-Bold.ttf",   # 思源宋体
                 "C:/Windows/Fonts/msyh.ttc",         # 系统微软雅黑
                 "C:/Windows/Fonts/simhei.ttf",       # 系统黑体
                 "C:/Windows/Fonts/simsun.ttc",       # 系统宋体
             ])
+        
+        # 如果是NotoSans字体（支持日语），确保能找到
+        if 'noto' in font_family.lower():
+            possible_paths.insert(0, "fonts/NotoSansSC-VF.ttf")
+        # 如果是NotoSans字体（支持日语、韩语），确保能找到
+        if 'noto' in font_family.lower():
+            possible_paths.insert(0, "fonts/NotoSansSC-VF.ttf")
+            possible_paths.insert(0, "fonts/NotoSansCJKjp-Regular.otf")
+            possible_paths.insert(0, "fonts/NotoSansCJKkr-Regular.otf")
+        
+        # 针对日语字体
+        if 'jp' in font_family.lower() or 'japanese' in font_family.lower():
+            possible_paths.insert(0, "fonts/NotoSansCJKjp-Regular.otf")
+            possible_paths.insert(0, "fonts/NotoSansJP-Regular.ttf")
+            
+        # 针对韩语字体
+        if 'kr' in font_family.lower() or 'korean' in font_family.lower():
+            possible_paths.insert(0, "fonts/NotoSansCJKkr-Regular.otf")
+            possible_paths.insert(0, "fonts/NotoSansKR-Regular.ttf")
         
         # 尝试加载字体
         for font_path in possible_paths:

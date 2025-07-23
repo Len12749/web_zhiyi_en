@@ -47,26 +47,81 @@ export async function GET(
         const latestTaskResult = await getTaskById(taskId);
         const currentTask = latestTaskResult.task || taskResult.task;
 
-        console.log(`SSE连接建立 [${taskId}]: 当前状态=${currentTask.taskStatus}, 进度=${currentTask.progressPercent}%`);
+        console.log(`🔗 SSE连接建立 [${taskId}]: 当前状态=${currentTask.taskStatus}, 进度=${currentTask.progressPercent}%, 消息=${currentTask.statusMessage || 'N/A'}`);
 
         // 发送最新状态
         const initialMessage = {
           type: "status_update",
           data: {
-            taskId,
+            taskId: taskId,
             status: currentTask.taskStatus,
-            progress: currentTask.progressPercent,
-            message: currentTask.statusMessage,
+            progress: currentTask.progressPercent || 0,
+            message: currentTask.statusMessage || '',
           }
         };
 
         const data = `data: ${JSON.stringify(initialMessage)}\n\n`;
         controller.enqueue(new TextEncoder().encode(data));
 
-        console.log(`SSE初始状态已发送 [${taskId}]: ${currentTask.taskStatus}`);
+        console.log(`📤 SSE初始状态已发送 [${taskId}]: ${JSON.stringify(initialMessage)}`);
+
+        // 跟踪最后的状态，用于检测变化
+        let lastStatus = currentTask.taskStatus;
+        let lastProgress = currentTask.progressPercent || 0;
+        let lastMessage = currentTask.statusMessage || '';
+        
+        // 定期检查数据库状态变化
+        const checkInterval = setInterval(async () => {
+          try {
+            const result = await getTaskById(taskId);
+            if (!result.success || !result.task) return;
+            
+            const task = result.task;
+            
+            // 检测状态变化
+            if (
+              task.taskStatus !== lastStatus ||
+              (task.progressPercent || 0) !== lastProgress ||
+              (task.statusMessage || '') !== lastMessage
+            ) {
+              // 状态有变化，推送更新
+              lastStatus = task.taskStatus;
+              lastProgress = task.progressPercent || 0;
+              lastMessage = task.statusMessage || '';
+              
+              const updateMessage = {
+                type: "status_update",
+                data: {
+                  taskId: taskId,
+                  status: task.taskStatus,
+                  progress: task.progressPercent || 0,
+                  message: task.statusMessage || '',
+                }
+              };
+              
+              const updateData = `data: ${JSON.stringify(updateMessage)}\n\n`;
+              controller.enqueue(new TextEncoder().encode(updateData));
+              
+              console.log(`📤 SSE状态更新已发送 [${taskId}]: ${JSON.stringify(updateMessage)}`);
+              
+              // 如果任务完成或失败，清理并关闭连接
+              if (task.taskStatus === 'completed' || task.taskStatus === 'failed') {
+                clearInterval(checkInterval);
+                setTimeout(() => {
+                  sseConnectionManager.removeConnection(connectionId);
+                  controller.close();
+                }, 100);
+              }
+            }
+          } catch (error) {
+            console.error(`检查任务状态失败 [${taskId}]:`, error);
+          }
+        }, 1000); // 每秒检查一次
 
         // 设置连接关闭处理
         request.signal.addEventListener('abort', () => {
+          console.log(`🔐 SSE连接中断 [${taskId}] (连接ID: ${connectionId})`);
+          clearInterval(checkInterval);
           sseConnectionManager.removeConnection(connectionId);
         });
       },

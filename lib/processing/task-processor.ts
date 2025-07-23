@@ -13,10 +13,10 @@ export type TaskType =
 // 任务处理参数类型
 export interface TaskParams {
   'pdf-to-markdown': {
-    tableMode: 'markdown' | 'image'
+    tableFormat: 'markdown' | 'image'
     enableTranslation?: boolean
     targetLanguage?: SupportedLanguage
-    outputOptions?: ('original' | 'translated' | 'bilingual')[]
+    translationOutput?: ('original' | 'translated' | 'bilingual')[]
   }
   'image-to-markdown': {}
   'markdown-translation': {
@@ -115,6 +115,12 @@ export class TaskProcessor {
     }
 
     console.log(`[${this.taskId}] 推送SSE状态: ${status} ${progress}% ${message || ''}`)
+    
+    // 检查是否有活跃连接
+    const hasConnections = sseConnectionManager.hasActiveConnectionsForTask(this.taskId)
+    const stats = sseConnectionManager.getStats()
+    console.log(`[${this.taskId}] 活跃SSE连接: ${hasConnections ? '有' : '无'}`)
+    console.log(`[${this.taskId}] 连接统计: 总连接=${stats.totalConnections}, 任务连接=`, stats.connectionsByTask)
     
     // 通过SSE推送给前端
     sseConnectionManager.pushToTask(this.taskId, event)
@@ -305,30 +311,41 @@ export class TaskProcessor {
         switch (this.taskType) {
           case 'pdf-to-markdown':
             statusResult = await coreServices.pdfToMarkdown.getTaskStatus(this.externalTaskId)
+            console.log(`[${this.taskId}] PDF状态查询结果:`, statusResult)
             break
           case 'markdown-translation':
           case 'pdf-translation':
-            // 对于翻译任务，我们可能需要直接尝试下载
-            await this.checkTranslationTask()
-            return
+            // 对于翻译任务，直接尝试下载
+            try {
+              await this.downloadResult()
+              return
+            } catch (error) {
+              console.log(`[${this.taskId}] 翻译任务下载失败，继续等待: ${error instanceof Error ? error.message : error}`)
+              const progress = Math.min(80, 10 + attempts * 2)
+              await this.pushStatusUpdate('processing', progress, '正在翻译中，请稍候...')
+            }
+            break
           default:
             throw new Error(`不支持的异步任务类型: ${this.taskType}`)
         }
 
-        if (statusResult.status === 'completed') {
-          await this.pushStatusUpdate('processing', 90, '正在下载处理结果...')
-          await this.downloadResult()
-          return
-        } else if (statusResult.status === 'failed') {
-          throw new Error(statusResult.message || '外部服务处理失败')
-        } else {
-          // 更新进度
-          const progress = Math.min(80, 10 + attempts * 2)
-          await this.pushStatusUpdate(
-            'processing',
-            progress,
-            statusResult.message || '正在处理中...'
-          )
+        if (this.taskType === 'pdf-to-markdown') {
+          if (statusResult.status === 'completed') {
+            console.log(`[${this.taskId}] PDF任务已完成，开始下载`)
+            await this.pushStatusUpdate('processing', 90, '正在下载处理结果...')
+            await this.downloadResult()
+            return
+          } else if (statusResult.status === 'failed') {
+            throw new Error(statusResult.message || '外部服务处理失败')
+          } else {
+            // 更新进度
+            const progress = Math.min(80, 10 + attempts * 2)
+            await this.pushStatusUpdate(
+              'processing',
+              progress,
+              statusResult.message || '正在处理中...'
+            )
+          }
         }
 
       } catch (error) {
@@ -343,35 +360,7 @@ export class TaskProcessor {
     throw new Error('任务处理超时')
   }
 
-  // 检查翻译任务状态（通过尝试下载）
-  private async checkTranslationTask(): Promise<void> {
-    if (!this.externalTaskId) {
-      throw new Error('外部任务ID未设置')
-    }
 
-    const maxAttempts = 180 // 最多等待30分钟
-    let attempts = 0
-
-    while (attempts < maxAttempts) {
-      try {
-        await this.downloadResult()
-        return // 下载成功，任务完成
-      } catch (error) {
-        // 下载失败，继续等待
-        const progress = Math.min(80, 10 + attempts)
-        await this.pushStatusUpdate(
-          'processing',
-          progress,
-          '正在翻译中，请稍候...'
-        )
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 10000))
-      attempts++
-    }
-
-    throw new Error('翻译任务超时')
-  }
 
   // 下载并保存结果
   private async downloadResult(): Promise<void> {
@@ -404,8 +393,13 @@ export class TaskProcessor {
     const relativePath = `processed/${this.userId}/${this.taskType}/${this.taskId}/result/${filename}`;
 
     // 更新任务状态为完成
-    await completeTask(this.taskId, relativePath, blob.size, filename)
+    const completeResult = await completeTask(this.taskId, relativePath, blob.size, filename)
+    
+    if (!completeResult.success) {
+      throw new Error(`完成任务失败: ${completeResult.message}`)
+    }
 
+    console.log(`[${this.taskId}] 任务完成，推送completed状态`)
     await this.pushStatusUpdate('completed', 100, '任务完成！')
   }
 

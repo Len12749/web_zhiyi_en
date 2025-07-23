@@ -18,7 +18,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { UserButton, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
-import { useNotifications } from '@/lib/hooks/use-notifications';
+
 
 const navigationItems = [
   { href: '/', label: '首页', icon: null },
@@ -33,7 +33,7 @@ const navigationItems = [
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { unreadCount } = useNotifications();
+
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200/40 dark:border-gray-700/40 bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
@@ -111,11 +111,6 @@ export function Navigation() {
                   aria-label="通知中心"
                 >
                   <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
                 </Link>
                 
                 {/* Personal Center */}
@@ -191,11 +186,6 @@ export function Navigation() {
                     >
                       <Bell className="h-4 w-4" />
                       <span>通知中心</span>
-                      {unreadCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )}
                     </Link>
                     <Link
                       href="/dashboard"

@@ -289,22 +289,7 @@ export default function DashboardPage() {
                 {pointsSummary?.hasInfinitePoints ? '∞' : pointsSummary?.currentPoints || 0}
               </div>
 
-              {pointsSummary && !pointsSummary.hasInfinitePoints && (
-                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex justify-between">
-                    <span>累计获得:</span>
-                    <span className="text-green-600 dark:text-green-400">
-                      +{pointsSummary.totalEarned}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>累计消费:</span>
-                    <span className="text-red-600 dark:text-red-400">
-                      -{pointsSummary.totalSpent}
-                    </span>
-                  </div>
-                </div>
-              )}
+
             </motion.div>
 
             {/* 每日签到卡片 */}

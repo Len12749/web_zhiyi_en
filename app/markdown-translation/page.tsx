@@ -229,6 +229,7 @@ export default function MarkdownTranslationPage() {
           const data = JSON.parse(event.data);
           
           if (data.type === 'status_update') {
+            // 先更新状态
             setProcessingStatus(prev => ({
               ...prev,
               status: data.data.status === 'completed' ? 'completed' : 'processing',
@@ -237,13 +238,14 @@ export default function MarkdownTranslationPage() {
               downloadUrl: data.data.status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
             }));
 
+            // 如果任务完成或失败，立即同步刷新通知
             if (data.data.status === 'completed' || data.data.status === 'failed') {
-              clearTimeout(timeoutId);
-              eventSource.close();
-              
-              // 任务完成后立即刷新通知
+              // 立即触发通知刷新，与状态更新同步
               const refreshEvent = new CustomEvent('refreshNotifications');
               window.dispatchEvent(refreshEvent);
+              
+              clearTimeout(timeoutId);
+              eventSource.close();
             }
           }
         };
