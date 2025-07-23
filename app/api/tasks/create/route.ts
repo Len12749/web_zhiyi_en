@@ -4,6 +4,9 @@ import { createProcessingTask } from "@/actions/tasks/task-actions";
 import { sseConnectionManager } from "@/lib/sse/connection-manager";
 import { TaskProcessor, TaskType, TaskParams } from "@/lib/processing/task-processor";
 
+// 设置API路由最大执行时间为1小时（3600秒）
+export const maxDuration = 3600;
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = auth();

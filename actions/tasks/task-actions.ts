@@ -66,7 +66,7 @@ export async function createProcessingTask(
       };
     }
 
-    // 检查用户积分
+    // 检查用户积分并立即扣除（防止并发任务漏洞）
     const userResult = await getCurrentUser();
     if (!userResult.success || !userResult.user) {
       return {
@@ -80,6 +80,20 @@ export async function createProcessingTask(
       return {
         success: false,
         message: `积分不足，需要 ${estimatedPoints} 积分，当前余额 ${user.points} 积分`
+      };
+    }
+
+    // 立即扣除积分（防止并发任务超支）
+    const pointsResult = await updateUserPoints(
+      userId,
+      -estimatedPoints,
+      `任务开始处理 - ${inputFilename}（预扣积分）`
+    );
+
+    if (!pointsResult.success) {
+      return {
+        success: false,
+        message: "积分扣除失败，任务无法创建"
       };
     }
 
@@ -272,20 +286,7 @@ export async function completeTask(
 
     const currentTask = task[0];
 
-    // 扣除积分
-    const pointsResult = await updateUserPoints(
-      currentTask.userId,
-      -currentTask.estimatedPoints,
-      `任务处理完成 - ${currentTask.inputFilename}`
-    );
-
-    if (!pointsResult.success) {
-      return {
-        success: false,
-        message: "扣除积分失败"
-      };
-    }
-
+    // 积分已在任务创建时扣除，这里只需要更新任务状态
     // 更新任务为完成状态
     await db
       .update(processingTasks)
@@ -357,6 +358,18 @@ export async function failTask(
     }
 
     const currentTask = task[0];
+
+    // 任务失败时返还积分
+    const pointsRefundResult = await updateUserPoints(
+      currentTask.userId,
+      currentTask.estimatedPoints,
+      `任务处理失败，返还积分 - ${currentTask.inputFilename}`
+    );
+
+    if (!pointsRefundResult.success) {
+      console.error("返还积分失败:", pointsRefundResult.message);
+      // 继续执行，不阻塞任务状态更新
+    }
 
     // 更新任务为失败状态
     await db

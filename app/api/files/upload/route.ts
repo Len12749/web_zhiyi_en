@@ -5,6 +5,9 @@ import { existsSync } from 'fs';
 import { auth } from '@clerk/nextjs';
 import { getPDFPageCount } from '@/lib/external/pdf-utils';
 
+// 设置API路由最大执行时间为1小时（3600秒）
+export const maxDuration = 3600;
+
 export async function POST(request: NextRequest) {
   try {
     // 验证用户身份

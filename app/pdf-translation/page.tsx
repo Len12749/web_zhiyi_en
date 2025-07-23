@@ -48,10 +48,22 @@ export default function PDFTranslationPage() {
   const [detectedPageCount, setDetectedPageCount] = useState<number>(0);
   const [isDetectingPages, setIsDetectingPages] = useState<boolean>(false);
 
-  // 支持的语言列表
-  const languages = [
+  // 源语言列表 (输入语言简化为英文和中文)
+  const sourceLanguages = [
     { code: 'en', name: '英语' },
     { code: 'zh', name: '中文' },
+  ];
+
+  // 目标语言列表 (与后端PDF翻译服务的LANGUAGE_MAPPING保持一致)
+  const targetLanguages = [
+    { code: 'zh', name: '中文' },
+    { code: 'en', name: '英语' },
+    { code: 'ja', name: '日语' },
+    { code: 'ko', name: '韩语' },
+    { code: 'fr', name: '法语' },
+    { code: 'de', name: '德语' },
+    { code: 'es', name: '西班牙语' },
+    { code: 'ru', name: '俄语' },
   ];
 
   // 精确检测PDF页数
@@ -546,7 +558,7 @@ export default function PDFTranslationPage() {
                       onChange={(e) => setSourceLanguage(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
                     >
-                      {languages.map(lang => (
+                      {sourceLanguages.map(lang => (
                         <option key={lang.code} value={lang.code}>
                           {lang.name}
                         </option>
@@ -564,7 +576,7 @@ export default function PDFTranslationPage() {
                       onChange={(e) => setTargetLanguage(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
                     >
-                      {languages.map(lang => (
+                      {targetLanguages.map(lang => (
                         <option key={lang.code} value={lang.code}>
                           {lang.name}
                         </option>

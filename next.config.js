@@ -17,6 +17,22 @@ const nextConfig = {
       },
     ],
   },
+  // 针对特定API路由的配置
+  async rewrites() {
+    return [
+      {
+        source: '/api/files/upload',
+        destination: '/api/files/upload',
+        has: [
+          {
+            type: 'header',
+            key: 'content-type',
+            value: '.*multipart/form-data.*',
+          },
+        ],
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -29,6 +45,15 @@ const nextConfig = {
           {
             key: 'Connection',
             value: 'keep-alive',
+          },
+        ],
+      },
+      {
+        source: '/api/files/upload',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache',
           },
         ],
       },

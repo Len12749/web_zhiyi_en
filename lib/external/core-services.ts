@@ -10,30 +10,56 @@ export const CORE_SERVICES = {
 // API客户端基类
 class CoreServiceClient {
   protected baseURL: string
-  protected timeout: number = 3600000 // 1小时超时
+  protected timeout: number = 3600000 // 1小时超时，支持长时间处理
 
   constructor(baseURL: string) {
     this.baseURL = baseURL
+    
+    // 配置全局 undici 超时设置
+    try {
+      const { setGlobalDispatcher, Agent } = require('undici')
+      setGlobalDispatcher(new Agent({
+        bodyTimeout: 3600000, // 1小时
+        headersTimeout: 300000, // 5分钟
+        keepAliveTimeout: 3600000, // 1小时
+        keepAliveMaxTimeout: 3600000 // 1小时
+      }))
+      console.log('✅ undici 超时配置已成功设置为1小时')
+    } catch (error) {
+      console.warn('无法设置 undici 超时配置:', error.message)
+    }
   }
 
   protected async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
-      ...options,
-      signal: AbortSignal.timeout(this.timeout),
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    })
+    // 创建自定义的AbortController以避免Node.js timeout问题
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout)
 
-    if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Connection': 'keep-alive',
+          ...options.headers,
+        },
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
+      }
+
+      return response.json()
+    } catch (error) {
+      clearTimeout(timeoutId)
+      throw error
     }
-
-    return response.json()
   }
 
   protected async uploadFile(
@@ -50,17 +76,32 @@ class CoreServiceClient {
       })
     }
 
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
-      method: 'POST',
-      body: formData,
-      signal: AbortSignal.timeout(this.timeout),
-    })
+    // 创建自定义的AbortController以避免Node.js body timeout问题
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout)
 
-    if (!response.ok) {
-      throw new Error(`文件上传失败: ${response.status} ${response.statusText}`)
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+        // 添加这些headers可能有助于避免body timeout
+        headers: {
+          'Connection': 'keep-alive',
+        },
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        throw new Error(`文件上传失败: ${response.status} ${response.statusText}`)
+      }
+
+      return response.json()
+    } catch (error) {
+      clearTimeout(timeoutId)
+      throw error
     }
-
-    return response.json()
   }
 
   async healthCheck(): Promise<{ status: string; service: string }> {

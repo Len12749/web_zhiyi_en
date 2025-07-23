@@ -48,7 +48,7 @@ export default function MarkdownTranslationPage() {
   const [detectedWordCount, setDetectedWordCount] = useState<number>(0);
   const [isDetectingWords, setIsDetectingWords] = useState<boolean>(false);
 
-  // 支持的语言列表
+  // 支持的语言列表 (与后端Markdown翻译API的LANGUAGE_MAPPING保持一致)
   const languages = [
     { code: 'zh', name: '中文' },
     { code: 'en', name: '英语' },

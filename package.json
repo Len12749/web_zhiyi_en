@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "cross-env UNDICI_BODY_TIMEOUT=3600000 UNDICI_HEADERS_TIMEOUT=300000 next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit push:pg",
@@ -21,13 +21,15 @@
     "pg": "^8.16.3",
     "postgres": "^3.4.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "undici": "^7.12.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.16",
+    "cross-env": "^7.0.3",
     "drizzle-kit": "^0.20.0",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.0",
