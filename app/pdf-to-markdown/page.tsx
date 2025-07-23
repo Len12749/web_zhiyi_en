@@ -142,7 +142,8 @@ export default function PDFToMarkdownPage() {
         // 精确检测PDF页数
         detectPDFPageCount(file);
       } else {
-        setErrorMessage('请选择PDF文件');
+        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
+        return;
       }
     }
   }, []);
@@ -162,7 +163,8 @@ export default function PDFToMarkdownPage() {
         // 精确检测PDF页数
         detectPDFPageCount(file);
       } else {
-        setErrorMessage('请选择PDF文件');
+        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
+        return;
       }
     }
   };
@@ -447,20 +449,6 @@ export default function PDFToMarkdownPage() {
                 </motion.div>
               )}
             </motion.div>
-
-            {/* 错误消息显示 */}
-            {errorMessage && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800"
-              >
-                <div className="flex items-center">
-                  <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-                  <span className="text-sm text-red-600 dark:text-red-400">{errorMessage}</span>
-                </div>
-              </motion.div>
-            )}
 
             {/* 处理状态 */}
             {processingStatus.status !== 'idle' && (

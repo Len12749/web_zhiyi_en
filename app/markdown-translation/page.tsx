@@ -104,7 +104,7 @@ export default function MarkdownTranslationPage() {
     const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
     
     if (!hasValidExtension) {
-      setErrorMessage(`请选择Markdown文件。支持的格式：${validExtensions.join(', ')}`);
+      // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
       return;
     }
     

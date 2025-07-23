@@ -68,7 +68,8 @@ export default function ImageToMarkdownPage() {
         setSelectedFile(file);
         setErrorMessage(''); // 清除之前的错误消息
       } else {
-        setErrorMessage('请选择支持的图片格式（JPG、PNG、GIF、BMP、TIFF、WEBP）');
+        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
+        return;
       }
     }
   }, []);
@@ -86,7 +87,8 @@ export default function ImageToMarkdownPage() {
         setSelectedFile(file);
         setErrorMessage(''); // 清除之前的错误消息
       } else {
-        setErrorMessage('请选择支持的图片格式（JPG、PNG、GIF、BMP、TIFF、WEBP）');
+        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
+        return;
       }
     }
   };
