@@ -78,11 +78,11 @@ export default function PDFToMarkdownPage() {
       console.log('PDF页数检测结果:', result);
       
       // 检查响应中的页数信息
-      if (result.pageCount && typeof result.pageCount === 'number') {
-        if (result.pageCount > MAX_PAGES) {
-          throw new Error(`PDF页数超过限制（最大${MAX_PAGES}页，当前${result.pageCount}页）`);
+      if (result.additionalInfo?.pageCount && typeof result.additionalInfo.pageCount === 'number') {
+        if (result.additionalInfo.pageCount > MAX_PAGES) {
+          throw new Error(`PDF页数超过限制（最大${MAX_PAGES}页，当前${result.additionalInfo.pageCount}页）`);
         }
-        setDetectedPageCount(result.pageCount);
+        setDetectedPageCount(result.additionalInfo.pageCount);
       } else if (result.success === false) {
         throw new Error(result.message || '页数检测失败');
       } else {

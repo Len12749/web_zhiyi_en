@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import { redeemCode } from "@/actions/points/point-actions";
+import { getErrorMessage } from "@/lib/utils";
+
+// 强制动态渲染，避免静态生成错误
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,32 +12,64 @@ export async function POST(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { 
+          success: false, 
+          message: "用户未认证",
+          code: "UNAUTHORIZED",
+          timestamp: new Date().toISOString()
+        },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "请求体格式错误",
+          code: "INVALID_JSON",
+          timestamp: new Date().toISOString()
+        },
+        { status: 400 }
+      );
+    }
+
     const { code } = body;
 
-    if (!code || typeof code !== 'string') {
+    if (!code || typeof code !== 'string' || !code.trim()) {
       return NextResponse.json(
-        { success: false, message: "请输入有效的兑换码" },
+        { 
+          success: false, 
+          message: "请输入有效的兑换码",
+          code: "INVALID_REDEEM_CODE",
+          timestamp: new Date().toISOString()
+        },
         { status: 400 }
       );
     }
 
     const result = await redeemCode(code.trim().toUpperCase());
 
-    if (result.success) {
-      return NextResponse.json(result, { status: 200 });
-    } else {
-      return NextResponse.json(result, { status: 400 });
-    }
+    return NextResponse.json({
+      ...result,
+      timestamp: new Date().toISOString()
+    }, { 
+      status: result.success ? 200 : 400 
+    });
+
   } catch (error) {
     console.error("兑换码API错误:", error);
+    
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { 
+        success: false, 
+        message: getErrorMessage(error),
+        code: "INTERNAL_ERROR",
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }

@@ -6,6 +6,8 @@ import { generateRandomString } from "@/lib/utils";
 
 // 设置API路由最大执行时间为1小时（3600秒）
 export const maxDuration = 3600;
+// 强制动态渲染，避免静态生成错误
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,

@@ -4,6 +4,9 @@ import { getTaskById } from "@/actions/tasks/task-actions";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
+// 强制动态渲染，避免静态生成错误
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = auth();

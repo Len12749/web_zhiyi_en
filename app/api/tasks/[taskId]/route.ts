@@ -5,6 +5,9 @@ import { db } from "@/db";
 import { processingTasks } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
+// 强制动态渲染，避免静态生成错误
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { taskId: string } }

@@ -52,7 +52,7 @@ export const config = {
   
   // API 配置
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000',
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001',
     timeout: 900000, // 15分钟超时，匹配Vercel函数最大超时
   },
   

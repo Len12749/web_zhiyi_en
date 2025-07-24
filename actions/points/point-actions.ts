@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { users, pointTransactions, userCheckins, redeemCodes, codeRedemptions } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { updateUserPoints, getCurrentUser } from "@/actions/auth/user-actions";
+import { createNotification } from "@/actions/notifications/notification-actions";
 
 export interface PointTransaction {
   id: number;
@@ -78,6 +79,14 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
         message: "签到失败，积分更新错误"
       };
     }
+
+    // 创建签到成功通知
+    await createNotification(
+      userId,
+      'success',
+      '签到成功',
+      `每日签到完成，获得 ${pointsEarned} 积分奖励！`
+    );
 
     return {
       success: true,

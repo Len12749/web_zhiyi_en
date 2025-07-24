@@ -7,6 +7,9 @@ import {
   getUnreadNotificationsCount 
 } from "@/actions/notifications/notification-actions";
 
+// 强制动态渲染，避免静态生成错误
+export const dynamic = 'force-dynamic';
+
 // 获取通知列表
 export async function GET(request: NextRequest) {
   try {

@@ -283,7 +283,7 @@ export default function HomePage() {
                 <span className="font-semibold">1元 = 100积分</span>
               </p>
               <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                <Link href="/profile">
+                <Link href="/dashboard">
                   查看我的积分
                 </Link>
               </Button>

@@ -5,6 +5,9 @@ import {
   deleteNotification 
 } from "@/actions/notifications/notification-actions";
 
+// 强制动态渲染，避免静态生成错误
+export const dynamic = 'force-dynamic';
+
 // 标记单个通知为已读
 export async function PATCH(
   request: NextRequest,

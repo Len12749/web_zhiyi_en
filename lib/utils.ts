@@ -113,34 +113,212 @@ export function getErrorMessage(error: unknown): string {
   return '未知错误';
 }
 
-// 延迟函数
-export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+// 异步操作相关工具
+export interface AsyncOperationOptions {
+  maxRetries?: number;
+  baseDelay?: number;
+  maxDelay?: number;
+  timeout?: number;
+  retryCondition?: (error: unknown) => boolean;
 }
 
-// 防抖函数
+/**
+ * 带重试机制的异步操作
+ */
+export async function withRetry<T>(
+  operation: () => Promise<T>,
+  options: AsyncOperationOptions = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    baseDelay = 1000,
+    maxDelay = 10000,
+    timeout = 30000,
+    retryCondition = () => true
+  } = options;
+
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // 添加超时控制
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('操作超时')), timeout);
+      });
+
+      const result = await Promise.race([operation(), timeoutPromise]);
+      return result;
+    } catch (error) {
+      lastError = error;
+
+      // 检查是否应该重试
+      if (attempt === maxRetries || !retryCondition(error)) {
+        throw error;
+      }
+
+      // 计算延迟时间（指数退避）
+      const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay);
+      console.warn(`操作失败，第 ${attempt} 次重试，等待 ${delay}ms...`, getErrorMessage(error));
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * 并发控制器
+ */
+export class ConcurrencyController {
+  private semaphore: number;
+  private queue: Array<() => void> = [];
+
+  constructor(maxConcurrency: number) {
+    this.semaphore = maxConcurrency;
+  }
+
+  async execute<T>(operation: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const executeOperation = async () => {
+        try {
+          const result = await operation();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        } finally {
+          this.semaphore++;
+          if (this.queue.length > 0) {
+            const next = this.queue.shift();
+            if (next) {
+              next();
+            }
+          }
+        }
+      };
+
+      if (this.semaphore > 0) {
+        this.semaphore--;
+        executeOperation();
+      } else {
+        this.queue.push(() => {
+          this.semaphore--;
+          executeOperation();
+        });
+      }
+    });
+  }
+}
+
+/**
+ * API响应标准化
+ */
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message: string;
+  code?: string;
+  timestamp?: string;
+}
+
+/**
+ * 标准化API请求
+ */
+export async function makeApiRequest<T>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options: AsyncOperationOptions = {}
+): Promise<ApiResponse<T>> {
+  return withRetry(async () => {
+    const response = await fetch(input, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...init?.headers,
+      },
+      ...init,
+    });
+
+    // 检查HTTP状态
+    if (!response.ok) {
+      let errorMessage = `请求失败: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        // 忽略JSON解析错误
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    
+    // 如果响应不是标准格式，尝试适配
+    if (typeof data.success === 'undefined') {
+      return {
+        success: true,
+        data: data,
+        message: '请求成功',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    return {
+      ...data,
+      timestamp: data.timestamp || new Date().toISOString(),
+    };
+  }, {
+    ...options,
+    retryCondition: (error) => {
+      // 对于特定错误类型进行重试
+      if (error instanceof Error) {
+        const message = error.message.toLowerCase();
+        return message.includes('网络') || 
+               message.includes('timeout') || 
+               message.includes('超时') ||
+               message.includes('fetch');
+      }
+      return false;
+    },
+  });
+}
+
+/**
+ * 防抖函数
+ */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
+  let timeout: NodeJS.Timeout | null = null;
+  
   return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
     timeout = setTimeout(() => func(...args), wait);
   };
 }
 
-// 节流函数
+/**
+ * 节流函数
+ */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  limit: number
+  wait: number
 ): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
+  let inThrottle = false;
+  
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => {
+        inThrottle = false;
+      }, wait);
     }
   };
 }
