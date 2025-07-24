@@ -121,71 +121,36 @@ except Exception as e:
       .catch((error) => {
         resolve({
           success: false,
-          error: `Failed to create temp script: ${error.message}`
+          error: `Failed to create Python script: ${error.message}`
         });
       });
   });
 }
 
 /**
- * 备用PDF页数检测方法：基于文件大小估算
- * 作为Python脚本失败时的降级方案
- * 
- * @param filePath PDF文件路径
- * @param fileSize 文件大小（字节）
- * @returns Promise<PDFPageCountResult>
- */
-export async function estimatePDFPageCount(filePath: string, fileSize: number): Promise<PDFPageCountResult> {
-  try {
-    // 简单估算：1MB约等于1页（经验值）
-    const estimatedPages = Math.max(1, Math.ceil(fileSize / (1024 * 1024)));
-    
-    return {
-      success: true,
-      pageCount: estimatedPages
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: `Estimation failed: ${error instanceof Error ? error.message : String(error)}`
-    };
-  }
-}
-
-/**
  * 检测PDF页数的主函数
- * 优先使用精确检测，失败时降级到估算
+ * 只使用精确检测，失败直接返回错误
  * 
  * @param filePath PDF文件路径
  * @param fileSize 文件大小（字节）
  * @returns Promise<PDFPageCountResult>
  */
 export async function getPDFPageCount(filePath: string, fileSize: number): Promise<PDFPageCountResult> {
-  // 首先尝试精确检测
-  const preciseResult = await detectPDFPageCount(filePath);
+  console.log(`开始精确检测PDF页数: ${filePath}`);
   
-  if (preciseResult.success) {
-    console.log(`PDF精确页数检测成功: ${preciseResult.pageCount}页`);
-    return preciseResult;
+  // 只进行精确检测
+  const result = await detectPDFPageCount(filePath);
+  
+  if (result.success) {
+    console.log(`PDF精确页数检测成功: ${result.pageCount}页`);
+    return result;
   }
   
-  console.warn('PDF精确页数检测失败，使用估算方法:', preciseResult.error);
-  
-  // 降级到估算方法
-  const estimationResult = await estimatePDFPageCount(filePath, fileSize);
-  
-  if (estimationResult.success) {
-    console.log(`PDF页数估算结果: ${estimationResult.pageCount}页`);
-    return {
-      ...estimationResult,
-      error: `注意：使用估算方法 (原因: ${preciseResult.error})`
-    };
-  }
-  
-  // 两种方法都失败了
+  // 检测失败，直接返回错误
+  console.error('PDF精确页数检测失败:', result.error);
   return {
     success: false,
-    error: `页数检测失败 - 精确检测: ${preciseResult.error}, 估算: ${estimationResult.error}`
+    error: `PDF页数检测失败: ${result.error}`
   };
 } 
  

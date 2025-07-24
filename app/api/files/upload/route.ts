@@ -177,8 +177,7 @@ export async function POST(request: NextRequest) {
         additionalInfo = {
           pageCount: pageCountResult.pageCount,
           needsPageDetection: false,
-          pageDetectionMethod: pageCountResult.error ? 'estimation' : 'precise',
-          pageDetectionNote: pageCountResult.error || undefined,
+          pageDetectionMethod: 'precise',
         };
       } else {
         console.error('PDF页数检测失败:', pageCountResult.error);
