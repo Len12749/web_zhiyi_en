@@ -20,9 +20,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Local env files (注意：不忽略 .env.local)
-.env*.local
-!.env.local
+# 保留环境配置文件以便快速部署
+# .env.local (允许提交)
+# .env (允许提交)
 
 # Vercel
 .vercel
@@ -36,6 +36,64 @@ next-env.d.ts
 .idea/
 *.swp
 *.swo
+.cursor/
 
 # OS
-Thumbs.db 
+Thumbs.db
+.DS_Store
+
+# Python服务相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share-python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 临时文件和日志
+*.log
+services/*/File/
+services/*/temp/
+services/*/data/temp/
+services/*/data/input/
+services/*/data/output/
+services/*/data/logs/
+services/*/temp_storage/
+services/pdf_to_markdown/data/
+services/md_translate/data/
+services/md_translate/File/
+
+# 测试文件（保留一些示例）
+test*.pdf
+output*.pdf
+*_temp/
+*_test/
+
+# 但是保留重要的配置和脚本文件
+!*.config.*
+!*.json
+!*.yml
+!*.yaml
+!start.py
+!app.py
+!main.py
+!requirements.txt
+!README.md
+!Dockerfile
+!Makefile 
