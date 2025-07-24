@@ -1,6 +1,5 @@
-import { spawn } from 'child_process';
+import { PDFDocument } from 'pdf-lib';
 import { promises as fs } from 'fs';
-import path from 'path';
 
 /**
  * PDF页数检测结果接口
@@ -12,119 +11,49 @@ export interface PDFPageCountResult {
 }
 
 /**
- * 调用外部Python脚本检测PDF页数
+ * 使用pdf-lib检测PDF页数
  * 
  * @param filePath PDF文件路径
  * @returns Promise<PDFPageCountResult>
  */
 export async function detectPDFPageCount(filePath: string): Promise<PDFPageCountResult> {
-  return new Promise((resolve) => {
-    // 使用Python脚本进行PDF页数检测
-    const pythonScript = `
-import sys
-import json
-try:
-    import fitz  # PyMuPDF
+  try {
+    // 读取PDF文件
+    const pdfBuffer = await fs.readFile(filePath);
     
-    if len(sys.argv) != 2:
-        print(json.dumps({"success": False, "error": "Missing file path argument"}))
-        sys.exit(1)
+    // 加载PDF文档
+    const pdfDoc = await PDFDocument.load(pdfBuffer);
     
-    pdf_path = sys.argv[1]
+    // 获取页数
+    const pageCount = pdfDoc.getPageCount();
     
-    try:
-        doc = fitz.open(pdf_path)
-        page_count = len(doc)
-        doc.close()
-        
-        print(json.dumps({"success": True, "pageCount": page_count}))
-    except Exception as e:
-        print(json.dumps({"success": False, "error": f"PDF processing error: {str(e)}"}))
-        
-except ImportError:
-    print(json.dumps({"success": False, "error": "PyMuPDF (fitz) not installed"}))
-except Exception as e:
-    print(json.dumps({"success": False, "error": f"Script error: {str(e)}"}))
-`;
-
-    // 创建临时Python脚本文件
-    const tempScriptPath = path.join(process.cwd(), 'temp_pdf_detector.py');
+    return {
+      success: true,
+      pageCount: pageCount
+    };
+  } catch (error: any) {
+    console.error('PDF页数检测失败:', error);
     
-    fs.writeFile(tempScriptPath, pythonScript)
-      .then(() => {
-        // 执行Python脚本
-        const pythonProcess = spawn('python', [tempScriptPath, filePath], {
-          stdio: ['pipe', 'pipe', 'pipe']
-        });
-
-        let output = '';
-        let errorOutput = '';
-
-        pythonProcess.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-          errorOutput += data.toString();
-        });
-
-        pythonProcess.on('close', async (code) => {
-          // 清理临时脚本文件
-          try {
-            await fs.unlink(tempScriptPath);
-          } catch (e) {
-            console.warn('无法删除临时脚本文件:', e);
-          }
-
-          if (code !== 0) {
-            resolve({
-              success: false,
-              error: `Python script failed with code ${code}: ${errorOutput}`
-            });
-            return;
-          }
-
-          try {
-            const result = JSON.parse(output.trim());
-            resolve(result);
-          } catch (e) {
-            resolve({
-              success: false,
-              error: `Failed to parse Python output: ${output}`
-            });
-          }
-        });
-
-        pythonProcess.on('error', async (error) => {
-          // 清理临时脚本文件
-          try {
-            await fs.unlink(tempScriptPath);
-          } catch (e) {
-            console.warn('无法删除临时脚本文件:', e);
-          }
-
-          resolve({
-            success: false,
-            error: `Failed to spawn Python process: ${error.message}`
-          });
-        });
-
-        // 设置超时（30秒）
-        setTimeout(() => {
-          pythonProcess.kill();
-          resolve({
-            success: false,
-            error: 'PDF page detection timeout (30s)'
-          });
-        }, 30000);
-      })
-      .catch((error) => {
-        resolve({
-          success: false,
-          error: `Failed to create Python script: ${error.message}`
-        });
-      });
-  });
+    // 处理不同类型的错误
+    let errorMessage = 'PDF文件解析失败';
+    
+    if (error.message) {
+      if (error.message.includes('Invalid PDF')) {
+        errorMessage = 'PDF文件格式无效或损坏';
+      } else if (error.message.includes('password') || error.message.includes('encrypted')) {
+        errorMessage = 'PDF文件受密码保护，暂不支持';
+      } else if (error.message.includes('ENOENT')) {
+        errorMessage = '找不到PDF文件';
+      } else {
+        errorMessage = `PDF解析错误: ${error.message}`;
+      }
+    }
+    
+    return {
+      success: false,
+      error: errorMessage
+    };
+  }
 }
 
 /**
@@ -138,11 +67,46 @@ except Exception as e:
 export async function getPDFPageCount(filePath: string, fileSize: number): Promise<PDFPageCountResult> {
   console.log(`开始精确检测PDF页数: ${filePath}`);
   
-  // 只进行精确检测
+  // 检查文件大小是否合理
+  if (fileSize === 0) {
+    return {
+      success: false,
+      error: 'PDF文件为空'
+    };
+  }
+  
+  // 检查文件大小是否过大（超过300MB）
+  const maxSize = 300 * 1024 * 1024; // 300MB
+  if (fileSize > maxSize) {
+    return {
+      success: false,
+      error: `PDF文件过大（${Math.round(fileSize / (1024 * 1024))}MB），最大支持300MB`
+    };
+  }
+  
+  // 进行PDF页数检测
   const result = await detectPDFPageCount(filePath);
   
   if (result.success) {
     console.log(`PDF精确页数检测成功: ${result.pageCount}页`);
+    
+    // 验证页数是否合理
+    if (result.pageCount && result.pageCount <= 0) {
+      return {
+        success: false,
+        error: 'PDF文件页数无效'
+      };
+    }
+    
+    // 验证页数限制
+    const maxPages = 800;
+    if (result.pageCount && result.pageCount > maxPages) {
+      return {
+        success: false,
+        error: `PDF页数超出限制（当前${result.pageCount}页，最大支持${maxPages}页）`
+      };
+    }
+    
     return result;
   }
   
