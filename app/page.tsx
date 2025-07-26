@@ -245,7 +245,8 @@ export default function HomePage() {
                     { text: '注册即送', points: '20积分' },
                     { text: '每日签到领取', points: '5积分' },
                     { text: '特殊节日免费赠送积分', points: null },
-                    { text: '兑换码充值', points: null },
+                    { text: '兑换码', points: null },
+                    { text: '充值', points: null },
                   ].map((item, index) => (
                     <li key={index} className="flex items-center text-gray-700 dark:text-gray-300">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
@@ -266,7 +267,7 @@ export default function HomePage() {
                 <ul className="space-y-3">
                   {[
                     { service: 'PDF解析', cost: '5积分/页' },
-                    { service: 'PDF解析+翻译', cost: '8积分/页（含翻译）' },
+                    { service: 'PDF解析+翻译', cost: '8积分/页' },
                     { service: '图片转Markdown', cost: '5积分/张' },
                     { service: 'Markdown翻译', cost: '5积分/KB' },
                     { service: 'PDF翻译', cost: '3积分/页' },
