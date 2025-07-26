@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useUser, SignInButton } from '@clerk/nextjs';
 import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -82,6 +83,8 @@ const benefits = [
 ];
 
 export default function HomePage() {
+  const { isSignedIn, isLoaded } = useUser();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Hero Section */}
@@ -282,11 +285,21 @@ export default function HomePage() {
               <p className="text-gray-600 dark:text-gray-400 text-lg">
                 <span className="font-semibold">1元 = 100积分</span>
               </p>
-              <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                <Link href="/dashboard">
-                  查看我的积分
-                </Link>
-              </Button>
+              {isLoaded && (
+                isSignedIn ? (
+                  <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                    <Link href="/dashboard">
+                      查看我的积分
+                    </Link>
+                  </Button>
+                ) : (
+                  <SignInButton mode="modal">
+                    <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                      登录查看积分
+                    </Button>
+                  </SignInButton>
+                )
+              )}
             </div>
           </motion.div>
         </div>
