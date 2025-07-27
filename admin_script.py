@@ -33,7 +33,7 @@ def generate_redeem_code(length=8):
     """生成随机兑换码"""
     characters = string.ascii_uppercase + string.digits
     # 排除容易混淆的字符
-    characters = characters.replace('0', '').replace('O', '').replace('I', '').replace('1')
+    characters = characters.replace('0', '').replace('O', '').replace('I', '').replace('1', '')
     return ''.join(random.choices(characters, k=length))
 
 def get_user_input(prompt, default=None, input_type=str, validator=None):
@@ -133,28 +133,18 @@ class PointsManager:
         if points_value is None:
             return
         
-        max_uses = get_user_input("最大使用次数 (留空表示无限制)", default="1", input_type=int, validator=lambda x: x > 0)
-        if max_uses is None:
-            return
-        if max_uses == 1:
-            max_uses = 1
-        
-        expires_days = get_user_input("有效期天数 (留空表示永不过期)", input_type=int, validator=lambda x: x > 0)
-        if expires_days == "":
-            expires_days = None
-        
-        custom_code = get_user_input("自定义兑换码 (留空自动生成)")
+        custom_code = get_user_input("自定义兑换码 (留空自动生成)", default="")
         if custom_code == "":
             custom_code = None
         
         print(f"\n📋 即将创建兑换码:")
         print(f"   积分价值: {points_value}")
-        print(f"   最大使用次数: {max_uses if max_uses else '无限制'}")
-        print(f"   有效期: {expires_days + '天' if expires_days else '永不过期'}")
+        print(f"   使用次数: 1次")
+        print(f"   有效期: 永不过期")
         print(f"   兑换码: {custom_code if custom_code else '自动生成'}")
         
         if confirm_action("确认创建"):
-            self.create_redeem_code(points_value, max_uses, expires_days, custom_code)
+            self.create_redeem_code(points_value, 1, None, custom_code)
 
     def create_redeem_code(self, points_value: int, max_uses: Optional[int] = 1, 
                           expires_days: Optional[int] = None, custom_code: Optional[str] = None) -> bool:
@@ -180,8 +170,9 @@ class PointsManager:
             print(f"\n✅ 兑换码创建成功!")
             print(f"   🎫 代码: {code}")
             print(f"   💰 价值: {points_value} 积分")
-            print(f"   🔢 最大使用次数: {max_uses or '无限制'}")
-            print(f"   ⏰ 过期时间: {expires_at.strftime('%Y-%m-%d %H:%M:%S') if expires_at else '永不过期'}")
+            print(f"   🔢 使用次数: 1次")
+            print(f"   ⏰ 有效期: 永不过期")
+            print(f"   📝 说明: 此兑换码只能使用一次，不会过期")
             return True
 
         except psycopg2.Error as e:
