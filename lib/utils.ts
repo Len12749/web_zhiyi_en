@@ -69,23 +69,45 @@ export function generateRandomString(length: number): string {
   return result;
 }
 
-// 计算文件处理积分
-export function calculatePoints(taskType: string, pageCount?: number, characterCount?: number): number {
+// 计算文件处理积分 - 严格按照实际数据计算，不允许估算
+export function calculatePoints(
+  taskType: string, 
+  fileSizeOrPageCount: number, 
+  pageCount?: number, 
+  enableTranslation?: boolean
+): number {
   switch (taskType) {
     case 'pdf-to-markdown':
-      return (pageCount || 1) * 5; // 5积分/页
+      if (!pageCount || pageCount <= 0) {
+        return 0; // 必须有实际页数
+      }
+      return enableTranslation ? pageCount * 8 : pageCount * 5;
+      
     case 'image-to-markdown':
-      return (pageCount || 1) * 5; // 5积分/图片
+      return 5; // 固定5积分每张图片
+      
     case 'markdown-translation':
-      return Math.ceil((characterCount || 1000) / 1000) * 5; // 5积分/千字符
+      // fileSizeOrPageCount 是文件大小（字节）
+      const sizeInKB = Math.ceil(fileSizeOrPageCount / 1024); // 向上取整到KB
+      return sizeInKB * 5;
+      
     case 'pdf-translation':
-      return (pageCount || 1) * 3; // 3积分/页
+      if (!pageCount || pageCount <= 0) {
+        return 0; // 必须有实际页数
+      }
+      return pageCount * 3;
+      
     case 'format-conversion':
-      return (pageCount || 1) * 2; // 2积分/页
+      // fileSizeOrPageCount 是文件大小（字节）
+      const formatSizeInKB = Math.ceil(fileSizeOrPageCount / 1024); // 向上取整到KB
+      return formatSizeInKB * 1; // 每KB 1积分
+      
     default:
-      return 1;
+      return 0;
   }
 }
+
+
 
 // 进度百分比格式化
 export function formatProgress(progress: number): string {
@@ -340,5 +362,18 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     } catch (fallbackErr) {
       return false;
     }
+  }
+}
+
+// PDF页数检测
+export async function detectPDFPageCount(file: File): Promise<number> {
+  try {
+    const { PDFDocument } = await import('pdf-lib');
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    return pdfDoc.getPageCount();
+  } catch (error) {
+    console.error('检测PDF页数失败:', error);
+    throw new Error('无法检测PDF页数，请确保文件格式正确');
   }
 } 

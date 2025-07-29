@@ -1,6 +1,7 @@
 import { coreServices, SupportedLanguage } from '@/lib/external/core-services'
 import { sseConnectionManager } from '@/lib/sse/connection-manager'
 import { updateTaskStatus, completeTask } from '@/actions/tasks/task-actions'
+import { calculatePoints } from '@/lib/utils'
 
 // 任务类型映射
 export type TaskType = 
@@ -32,35 +33,6 @@ export interface TaskParams {
   }
 }
 
-// 积分计算策略
-const POINTS_CALCULATION = {
-  'pdf-to-markdown': (fileSize: number, hasTranslation = false) => {
-    // 按页数计算，每MB约10页，每页5积分
-    const estimatedPages = Math.ceil(fileSize / (1024 * 1024 / 10))
-    const basePoints = estimatedPages * 5
-    return hasTranslation ? basePoints + (estimatedPages * 3) : basePoints
-  },
-  'image-to-markdown': (fileSize: number) => {
-    // 每张图片5积分，按文件大小估算图片数量
-    const estimatedImages = Math.max(1, Math.ceil(fileSize / (1024 * 1024)))
-    return estimatedImages * 5
-  },
-  'markdown-translation': (fileSize: number) => {
-    // 每千字符5积分，按文件大小估算
-    const estimatedChars = fileSize * 2 // 假设平均每字节2个字符
-    return Math.ceil(estimatedChars / 1000) * 5
-  },
-  'pdf-translation': (fileSize: number) => {
-    // 每页3积分
-    const estimatedPages = Math.ceil(fileSize / (1024 * 1024 / 10))
-    return estimatedPages * 3
-  },
-  'format-conversion': (fileSize: number) => {
-    // 固定2积分每文件
-    return 2
-  }
-}
-
 // 任务处理器类
 export class TaskProcessor {
   private taskId: number
@@ -74,28 +46,27 @@ export class TaskProcessor {
     this.taskType = taskType
   }
 
-  // 计算任务所需积分
+  // 计算任务所需积分 - 使用统一的精确计算逻辑
   static calculatePoints<T extends TaskType>(
     taskType: T,
-    fileSize: number,
-    params: TaskParams[T]
+    fileSizeOrPageCount: number,
+    params: TaskParams[T],
+    pageCount?: number
   ): number {
     switch (taskType) {
       case 'pdf-to-markdown':
-        return POINTS_CALCULATION['pdf-to-markdown'](
-          fileSize,
-          (params as TaskParams['pdf-to-markdown']).enableTranslation
-        )
+        const pdfParams = params as TaskParams['pdf-to-markdown']
+        return calculatePoints(taskType, fileSizeOrPageCount, pageCount, pdfParams.enableTranslation)
       case 'image-to-markdown':
-        return POINTS_CALCULATION['image-to-markdown'](fileSize)
+        return calculatePoints(taskType, fileSizeOrPageCount)
       case 'markdown-translation':
-        return POINTS_CALCULATION['markdown-translation'](fileSize)
+        return calculatePoints(taskType, fileSizeOrPageCount)
       case 'pdf-translation':
-        return POINTS_CALCULATION['pdf-translation'](fileSize)
+        return calculatePoints(taskType, fileSizeOrPageCount, pageCount)
       case 'format-conversion':
-        return POINTS_CALCULATION['format-conversion'](fileSize)
+        return calculatePoints(taskType, fileSizeOrPageCount)
       default:
-        return 10 // 默认值
+        return 0
     }
   }
 

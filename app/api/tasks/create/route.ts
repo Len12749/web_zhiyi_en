@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
     const estimatedPoints = TaskProcessor.calculatePoints(
       taskType,
       inputFileSize,
-      processingParams as any
+      processingParams as any,
+      pageCount
     );
 
     // 创建任务记录

@@ -17,7 +17,7 @@ import {
   Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints } from '@/lib/utils';
+import { calculatePoints, detectPDFPageCount as detectPDFPages } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
 
 // PDF文件限制
@@ -58,37 +58,16 @@ export default function PDFToMarkdownPage() {
       setIsDetectingPages(true);
       setDetectedPageCount(0);
       
-      // 先上传文件获取页数检测结果
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('taskType', 'pdf-to-markdown');
+      // 使用pdf-lib直接检测页数
+      const pageCount = await detectPDFPages(file);
       
-      const response = await fetch('/api/files/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('PDF上传失败:', errorText);
-        throw new Error('文件上传失败');
+      if (pageCount > MAX_PAGES) {
+        throw new Error(`PDF页数超过限制（最大${MAX_PAGES}页，当前${pageCount}页）`);
       }
       
-      const result = await response.json();
-      console.log('PDF页数检测结果:', result);
+      setDetectedPageCount(pageCount);
+      console.log(`PDF页数检测成功: ${pageCount}页`);
       
-      // 检查响应中的页数信息
-      if (result.success === false) {
-        throw new Error(result.message || '页数检测失败');
-      } else if (result.additionalInfo?.pageCount && typeof result.additionalInfo.pageCount === 'number') {
-        if (result.additionalInfo.pageCount > MAX_PAGES) {
-          throw new Error(`PDF页数超过限制（最大${MAX_PAGES}页，当前${result.additionalInfo.pageCount}页）`);
-        }
-        setDetectedPageCount(result.additionalInfo.pageCount);
-      } else {
-        // 如果没有返回页数信息，视为检测失败
-        throw new Error('PDF页数检测失败，无法获取页数信息');
-      }
     } catch (error) {
       console.error('PDF页数检测失败:', error);
       setErrorMessage(error instanceof Error ? error.message : '页数检测失败，请重新选择文件');

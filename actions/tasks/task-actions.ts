@@ -55,8 +55,26 @@ export async function createProcessingTask(
       };
     }
 
-    // 计算所需积分
-    const estimatedPoints = calculatePoints(taskType, inputFileSize, pageCount);
+    // 计算所需积分 - 根据任务类型使用不同的参数
+    let estimatedPoints = 0;
+    switch (taskType) {
+      case 'pdf-to-markdown':
+      case 'pdf-translation':
+        // 这些任务需要页数
+        estimatedPoints = calculatePoints(taskType, inputFileSize, pageCount);
+        break;
+      case 'format-conversion':
+      case 'markdown-translation':
+        // 这些任务按文件大小计算
+        estimatedPoints = calculatePoints(taskType, inputFileSize);
+        break;
+      case 'image-to-markdown':
+        // 图片转Markdown固定积分
+        estimatedPoints = calculatePoints(taskType, inputFileSize);
+        break;
+      default:
+        estimatedPoints = 0;
+    }
     
     // 验证积分计算是否成功（严格检测）
     if (estimatedPoints === 0) {

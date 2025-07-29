@@ -474,10 +474,10 @@ export default function FormatConversionPage() {
                     
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
                       <div className="text-green-800 dark:text-green-200 font-medium">
-                        本次消耗：2积分
+                        本次消耗：{calculatePoints('format-conversion', selectedFile.size)}积分
                       </div>
                       <div className="text-green-600 dark:text-green-400 text-sm mt-1">
-                        每个文件固定消耗2积分
+                        按文件大小计费：1积分/KB
                       </div>
                     </div>
                   </div>
@@ -554,7 +554,7 @@ export default function FormatConversionPage() {
                   积分消耗说明
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• 格式转换：2积分/文件</li>
+                  <li>• 格式转换：1积分/KB</li>
                   <li>• 支持多种输出格式</li>
                   <li>• 处理失败将返还积分</li>
                 </ul>

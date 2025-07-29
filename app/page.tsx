@@ -268,7 +268,7 @@ export default function HomePage() {
                   { service: '图片转Markdown', cost: '5积分/张' },
                   { service: 'Markdown翻译', cost: '5积分/KB' },
                   { service: 'PDF翻译', cost: '3积分/页' },
-                  { service: '格式转换', cost: '2积分/KB' },
+                  { service: '格式转换', cost: '1积分/KB' },
                 ].map((item, index) => (
                   <li key={index} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
                     <span>{item.service}</span>
