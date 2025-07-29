@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import { 
   getUserNotifications, 
-  markAllNotificationsAsRead,
-  deleteNotifications,
-  getUnreadNotificationsCount 
+  deleteNotifications
 } from "@/actions/notifications/notification-actions";
 
 // 强制动态渲染，避免静态生成错误
@@ -22,32 +20,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const url = new URL(request.url);
-    const countOnly = url.searchParams.get('countOnly') === 'true';
-
-    if (countOnly) {
-      // 只获取未读数量
-      const result = await getUnreadNotificationsCount();
-      return NextResponse.json(result, { 
-        status: result.success ? 200 : 500 
-      });
-    } else {
-      // 获取通知列表和未读数量
-      const limit = parseInt(url.searchParams.get('limit') || '10');
-      const notificationsResult = await getUserNotifications(limit);
-      
-      if (!notificationsResult.success) {
-        return NextResponse.json(notificationsResult, { status: 500 });
-      }
-      
-      const unreadResult = await getUnreadNotificationsCount();
-      
-      return NextResponse.json({
-        success: true,
-        notifications: notificationsResult.notifications,
-        unreadCount: unreadResult.success ? unreadResult.count : 0,
-      }, { status: 200 });
+    // 获取通知列表（30天内，无条数限制）
+    const notificationsResult = await getUserNotifications();
+    
+    if (!notificationsResult.success) {
+      return NextResponse.json(notificationsResult, { status: 500 });
     }
+    
+    return NextResponse.json({
+      success: true,
+      notifications: notificationsResult.notifications,
+    }, { status: 200 });
   } catch (error) {
     console.error("通知API错误:", error);
     return NextResponse.json(
@@ -72,12 +55,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, notificationIds } = body;
 
-    if (action === 'markAllRead') {
-      const result = await markAllNotificationsAsRead();
-      return NextResponse.json(result, { 
-        status: result.success ? 200 : 500 
-      });
-    } else if (action === 'deleteMultiple' && Array.isArray(notificationIds)) {
+    if (action === 'deleteMultiple' && Array.isArray(notificationIds)) {
       const result = await deleteNotifications(notificationIds);
       return NextResponse.json(result, { 
         status: result.success ? 200 : 500 

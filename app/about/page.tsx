@@ -108,6 +108,15 @@ export default function AboutPage() {
               汇聚各领域精英，致力于为您提供最优质的AI文档处理服务
             </p>
             
+            <div className="mb-8">
+              <div className="inline-flex items-center px-6 py-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+                <Building className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
+                <span className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                  北京理工智译科技有限公司
+                </span>
+              </div>
+            </div>
+            
             <div className="flex items-center justify-center">
               <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <Link href="/">

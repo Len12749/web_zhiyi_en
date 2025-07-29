@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs";
 import { db } from "@/db";
 import { notifications, users } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gt, sql } from "drizzle-orm";
 
 // 通知类型
 export type NotificationType = 'success' | 'warning' | 'info' | 'error';
@@ -23,7 +23,6 @@ export async function createNotification(
       type,
       title,
       message,
-      isRead: false,
     }).returning({ id: notifications.id });
 
     return {
@@ -39,8 +38,8 @@ export async function createNotification(
   }
 }
 
-// 获取用户通知
-export async function getUserNotifications(limit = 50) {
+// 获取用户通知（30天内，无条数限制）
+export async function getUserNotifications() {
   try {
     const { userId } = auth();
     
@@ -51,20 +50,27 @@ export async function getUserNotifications(limit = 50) {
       };
     }
 
+    // 计算30天前的时间
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const userNotifications = await db
       .select({
         id: notifications.id,
         type: notifications.type,
         title: notifications.title,
         message: notifications.message,
-        isRead: notifications.isRead,
         taskId: notifications.taskId,
         createdAt: notifications.createdAt,
       })
       .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit);
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          gt(notifications.createdAt, thirtyDaysAgo)
+        )
+      )
+      .orderBy(desc(notifications.createdAt));
 
     return {
       success: true,
@@ -75,71 +81,6 @@ export async function getUserNotifications(limit = 50) {
     return {
       success: false,
       message: "获取通知失败",
-    };
-  }
-}
-
-// 标记通知为已读
-export async function markNotificationAsRead(notificationId: number) {
-  try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return {
-        success: false,
-        message: "用户未认证",
-      };
-    }
-
-    await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(
-        and(
-          eq(notifications.id, notificationId),
-          eq(notifications.userId, userId)
-        )
-      );
-
-    return {
-      success: true,
-      message: "已标记为已读",
-    };
-  } catch (error) {
-    console.error("标记通知已读失败:", error);
-    return {
-      success: false,
-      message: "标记已读失败",
-    };
-  }
-}
-
-// 标记所有通知为已读
-export async function markAllNotificationsAsRead() {
-  try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return {
-        success: false,
-        message: "用户未认证",
-      };
-    }
-
-    await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.userId, userId));
-
-    return {
-      success: true,
-      message: "所有通知已标记为已读",
-    };
-  } catch (error) {
-    console.error("标记所有通知已读失败:", error);
-    return {
-      success: false,
-      message: "标记所有已读失败",
     };
   }
 }
@@ -214,39 +155,27 @@ export async function deleteNotifications(notificationIds: number[]) {
   }
 }
 
-// 获取未读通知数量
-export async function getUnreadNotificationsCount() {
+// 清理过期通知（30天前的通知）
+export async function cleanupExpiredNotifications() {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return {
-        success: false,
-        message: "用户未认证",
-        count: 0,
-      };
-    }
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const result = await db
-      .select()
-      .from(notifications)
+      .delete(notifications)
       .where(
-        and(
-          eq(notifications.userId, userId),
-          eq(notifications.isRead, false)
-        )
+        sql`${notifications.createdAt} < ${thirtyDaysAgo}`
       );
 
     return {
       success: true,
-      count: result.length,
+      message: "过期通知清理完成",
     };
   } catch (error) {
-    console.error("获取未读通知数量失败:", error);
+    console.error("清理过期通知失败:", error);
     return {
       success: false,
-      message: "获取未读数量失败",
-      count: 0,
+      message: "清理过期通知失败",
     };
   }
 } 

@@ -8,6 +8,20 @@
       "when": 1753210266785,
       "tag": "0000_sharp_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1753778472486,
+      "tag": "0001_vengeful_cobalt_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1753778632222,
+      "tag": "0002_tricky_typhoid_mary",
+      "breakpoints": true
     }
   ]
 }
