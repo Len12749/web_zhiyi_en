@@ -595,7 +595,7 @@ export default function MarkdownTranslationPage() {
                   积分消耗说明
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• Markdown翻译：5积分/千字符</li>
+                  <li>• Markdown翻译：5积分/KB</li>
                   <li>• 保留原文档格式结构</li>
                   <li>• 处理失败将返还积分</li>
                 </ul>

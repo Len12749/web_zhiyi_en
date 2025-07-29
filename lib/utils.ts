@@ -81,9 +81,9 @@ export function calculatePoints(taskType: string, fileSize: number, pageCount?: 
     case 'image-to-markdown':
       return 5; // 每张图片5积分
     case 'markdown-translation':
-      // 按文件大小计费：1KB = 5积分
+      // 按文件大小计费：1KB = 5积分，不足1KB按1KB计算
       const sizeInKB = Math.ceil(fileSize / 1024);
-      return Math.max(1, sizeInKB * 5);
+      return sizeInKB * 5;
     case 'pdf-translation':
       if (!pageCount) return 0; // 必须有实际页数
       return pageCount * 3; // 按页数计费，每页3积分
