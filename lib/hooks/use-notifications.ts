@@ -94,8 +94,8 @@ export function useNotifications() {
   useEffect(() => {
     fetchNotifications();
     
-    // 每30秒检查一次通知
-    const interval = setInterval(fetchNotifications, 30000);
+    // 每5秒检查一次通知 - 合理的实时频率
+    const interval = setInterval(fetchNotifications, 5000);
     
     // 监听自定义刷新事件
     const handleRefresh = () => {

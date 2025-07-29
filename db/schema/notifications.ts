@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, text, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { processingTasks } from './processing-tasks';
 
@@ -11,6 +11,9 @@ export const notifications = pgTable('notifications', {
   type: varchar('type', { length: 20 }).notNull(), // success, warning, info, error
   title: varchar('title', { length: 255 }).notNull(),
   message: text('message').notNull(),
+  
+  // 已读状态
+  isRead: boolean('is_read').default(false).notNull(),
   
   // 时间 - 通知将保留30天后自动清理
   createdAt: timestamp('created_at').defaultNow(),

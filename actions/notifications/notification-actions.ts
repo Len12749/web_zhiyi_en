@@ -23,11 +23,36 @@ export async function createNotification(
       type,
       title,
       message,
-    }).returning({ id: notifications.id });
+      isRead: false,
+    }).returning({ 
+      id: notifications.id,
+      createdAt: notifications.createdAt 
+    });
+
+    const newNotification = result[0];
+
+    // 立即通过SSE推送通知给用户
+    try {
+      const { notificationSSEManager } = await import("@/lib/sse/notification-manager");
+      
+      notificationSSEManager.pushNotificationToUser(userId, {
+        id: newNotification.id,
+        type,
+        title,
+        message,
+        taskId: taskId?.toString(),
+        createdAt: newNotification.createdAt?.toISOString() || new Date().toISOString()
+      });
+      
+      console.log(`🚀 通知已实时推送给用户 ${userId}: ${title}`);
+    } catch (sseError) {
+      console.error("SSE推送通知失败:", sseError);
+      // SSE推送失败不影响通知创建
+    }
 
     return {
       success: true,
-      notificationId: result[0].id,
+      notificationId: newNotification.id,
     };
   } catch (error) {
     console.error("创建通知失败:", error);
@@ -38,8 +63,8 @@ export async function createNotification(
   }
 }
 
-// 获取用户通知（30天内，无条数限制）
-export async function getUserNotifications() {
+// 获取用户通知（30天内，支持仅获取未读数量）
+export async function getUserNotifications(countOnly?: boolean) {
   try {
     const { userId } = auth();
     
@@ -54,6 +79,26 @@ export async function getUserNotifications() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // 如果只需要未读数量
+    if (countOnly) {
+      const unreadCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.userId, userId),
+            eq(notifications.isRead, false),
+            gt(notifications.createdAt, thirtyDaysAgo)
+          )
+        );
+
+      return {
+        success: true,
+        count: Number(unreadCount[0]?.count || 0),
+      };
+    }
+
+    // 获取通知列表，限制100条
     const userNotifications = await db
       .select({
         id: notifications.id,
@@ -61,6 +106,7 @@ export async function getUserNotifications() {
         title: notifications.title,
         message: notifications.message,
         taskId: notifications.taskId,
+        isRead: notifications.isRead,
         createdAt: notifications.createdAt,
       })
       .from(notifications)
@@ -70,17 +116,92 @@ export async function getUserNotifications() {
           gt(notifications.createdAt, thirtyDaysAgo)
         )
       )
-      .orderBy(desc(notifications.createdAt));
+      .orderBy(desc(notifications.createdAt))
+      .limit(100);
+
+    // 计算未读数量
+    const unreadCount = userNotifications.filter(n => !n.isRead).length;
 
     return {
       success: true,
       notifications: userNotifications,
+      unreadCount,
     };
   } catch (error) {
     console.error("获取通知失败:", error);
     return {
       success: false,
       message: "获取通知失败",
+    };
+  }
+}
+
+// 标记通知为已读
+export async function markNotificationAsRead(notificationId: number) {
+  try {
+    const { userId } = auth();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "用户未认证",
+      };
+    }
+
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(notifications.id, notificationId),
+          eq(notifications.userId, userId)
+        )
+      );
+
+    return {
+      success: true,
+      message: "通知已标记为已读",
+    };
+  } catch (error) {
+    console.error("标记通知已读失败:", error);
+    return {
+      success: false,
+      message: "标记通知已读失败",
+    };
+  }
+}
+
+// 标记所有通知为已读
+export async function markAllNotificationsAsRead() {
+  try {
+    const { userId } = auth();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "用户未认证",
+      };
+    }
+
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.isRead, false)
+        )
+      );
+
+    return {
+      success: true,
+      message: "所有通知已标记为已读",
+    };
+  } catch (error) {
+    console.error("标记所有通知已读失败:", error);
+    return {
+      success: false,
+      message: "标记所有通知已读失败",
     };
   }
 }

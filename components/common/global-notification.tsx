@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   CheckCircle, 
   AlertCircle, 
   Info, 
-  AlertTriangle,
-  Bell
+  AlertTriangle
 } from 'lucide-react';
-import { useNotifications } from '@/lib/hooks/use-notifications';
+import { useUser } from '@clerk/nextjs';
 
 export interface NotificationItem {
   id: string;
@@ -24,65 +23,144 @@ export interface NotificationItem {
 
 export default function GlobalNotification() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const { notifications: dbNotifications, markAsRead } = useNotifications();
+  const { isSignedIn } = useUser();
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const processedNotificationIds = useRef<Set<string>>(new Set());
 
-  // 监听数据库通知更新
+  // SSE连接管理
   useEffect(() => {
-    if (dbNotifications && dbNotifications.length > 0) {
-      // 获取最新的未读通知
-      const latestUnread = dbNotifications
-        .filter(n => !n.isRead)
-        .slice(0, 1); // 只显示最新的一条
+    if (!isSignedIn) {
+      // 用户未登录，清理连接和通知
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      setNotifications([]);
+      processedNotificationIds.current.clear();
+      return;
+    }
 
-      if (latestUnread.length > 0) {
-        const notification = latestUnread[0];
-        const notificationItem: NotificationItem = {
-          id: notification.id.toString(),
-          type: getNotificationType(notification.type),
-          title: notification.title,
-          message: notification.message,
-          timestamp: new Date(notification.createdAt),
-          autoClose: true,
-          duration: 5000, // 5秒后自动消失
+    // 建立SSE连接
+    const connectSSE = () => {
+      try {
+        console.log('🔗 建立通知SSE连接...');
+        const eventSource = new EventSource('/api/sse/notifications');
+        eventSourceRef.current = eventSource;
+
+        eventSource.onopen = () => {
+          console.log('✅ 通知SSE连接已建立');
         };
 
-        // 避免重复添加相同通知
-        setNotifications(prev => {
-          const exists = prev.some(n => n.id === notificationItem.id);
-          if (!exists) {
-            return [notificationItem, ...prev.slice(0, 2)]; // 最多显示3个通知
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('📨 收到SSE消息:', data);
+
+            if (data.type === 'connection_established') {
+              console.log('🔗 通知SSE连接确认:', data.data.connectionId);
+              return;
+            }
+
+            if (data.type === 'new_notification') {
+              const notification = data.data;
+              
+              // 检查是否已经处理过
+              if (processedNotificationIds.current.has(notification.id.toString())) {
+                console.log('⚠️ 通知已处理过，跳过:', notification.id);
+                return;
+              }
+
+              console.log('🔔 处理新通知:', notification);
+
+              const notificationItem: NotificationItem = {
+                id: notification.id.toString(),
+                type: getNotificationType(notification.type),
+                title: notification.title,
+                message: notification.message,
+                timestamp: new Date(notification.createdAt),
+                autoClose: true,
+                duration: 5000,
+              };
+
+              // 添加到显示列表
+              setNotifications(prev => {
+                const newNotifications = [notificationItem, ...prev].slice(0, 3);
+                return newNotifications;
+              });
+
+              // 标记为已处理
+              processedNotificationIds.current.add(notification.id.toString());
+
+              // 自动标记为已读
+              markAsRead(notification.id);
+            }
+          } catch (error) {
+            console.error('解析SSE消息失败:', error);
           }
-          return prev;
-        });
+        };
 
-        // 标记为已读
-        markAsRead(notification.id);
+        eventSource.onerror = (error) => {
+          console.error('❌ 通知SSE连接错误:', error);
+          eventSource.close();
+          
+          // 3秒后重连
+          setTimeout(() => {
+            if (isSignedIn) {
+              console.log('🔄 重新连接通知SSE...');
+              connectSSE();
+            }
+          }, 3000);
+        };
+
+      } catch (error) {
+        console.error('建立通知SSE连接失败:', error);
       }
+    };
+
+    // 建立连接
+    connectSSE();
+
+    // 清理函数
+    return () => {
+      if (eventSourceRef.current) {
+        console.log('🔐 关闭通知SSE连接');
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [isSignedIn]);
+
+  // 标记通知为已读
+  const markAsRead = async (notificationId: number) => {
+    try {
+      await fetch(`/api/notifications/${notificationId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isRead: true }),
+      });
+    } catch (error) {
+      console.error('标记通知已读失败:', error);
     }
-  }, [dbNotifications, markAsRead]);
-
-  // 定期刷新通知（更频繁）
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // 刷新通知数据
-      const event = new CustomEvent('refreshNotifications');
-      window.dispatchEvent(event);
-    }, 10000); // 每10秒刷新一次
-
-    return () => clearInterval(interval);
-  }, []);
+  };
 
   // 自动关闭通知
   useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+    
     notifications.forEach(notification => {
       if (notification.autoClose) {
         const timer = setTimeout(() => {
           removeNotification(notification.id);
         }, notification.duration || 5000);
-
-        return () => clearTimeout(timer);
+        timers.push(timer);
       }
     });
+
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
   }, [notifications]);
 
   const removeNotification = (id: string) => {
@@ -114,8 +192,6 @@ export default function GlobalNotification() {
         return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case 'info':
         return <Info className="h-5 w-5 text-blue-500" />;
-      default:
-        return <Bell className="h-5 w-5 text-gray-500" />;
     }
   };
 
@@ -129,19 +205,18 @@ export default function GlobalNotification() {
         return 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800';
       case 'info':
         return 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800';
-      default:
-        return 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-800';
     }
   };
 
   const formatTime = (timestamp: Date) => {
     const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
+    const diffInSeconds = Math.floor((now.getTime() - timestamp.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return '刚刚';
+    
+    const minutes = Math.floor(diffInSeconds / 60);
     const hours = Math.floor(minutes / 60);
-
-    if (seconds < 60) return '刚刚';
+    
     if (minutes < 60) return `${minutes}分钟前`;
     if (hours < 24) return `${hours}小时前`;
     return timestamp.toLocaleDateString();
@@ -195,19 +270,6 @@ export default function GlobalNotification() {
                 </p>
               </div>
             </div>
-
-            {/* 自动关闭进度条 */}
-            {notification.autoClose && (
-              <motion.div
-                className="absolute bottom-0 left-0 h-1 bg-current opacity-30 rounded-b-lg"
-                initial={{ width: "100%" }}
-                animate={{ width: "0%" }}
-                transition={{ 
-                  duration: (notification.duration || 5000) / 1000,
-                  ease: "linear"
-                }}
-              />
-            )}
           </motion.div>
         ))}
       </AnimatePresence>
