@@ -6,6 +6,7 @@ import { useUser, SignInButton } from '@clerk/nextjs';
 import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock, Users, GraduationCap, Award, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { useScrollAnimation } from '@/lib/hooks/use-scroll-animation';
 
 const features = [
   {
@@ -107,15 +108,22 @@ const teamInfo = [
 
 export default function HomePage() {
   const { isSignedIn, isLoaded } = useUser();
+  
+  // 为每个section创建滚动动画hook
+  const heroAnimation = useScrollAnimation();
+  const featuresAnimation = useScrollAnimation();
+  const pointsAnimation = useScrollAnimation();
+  const benefitsAnimation = useScrollAnimation();
+  const teamAnimation = useScrollAnimation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-4">
+      <section ref={heroAnimation.ref} className="relative overflow-hidden py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-7xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={heroAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6 }}
             className="space-y-8"
           >
@@ -148,12 +156,12 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4">
+      <section ref={featuresAnimation.ref} className="py-20 px-4 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            animate={featuresAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">核心功能</h2>
@@ -167,8 +175,8 @@ export default function HomePage() {
                 <motion.div
                   key={feature.id}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index }}
+                  animate={featuresAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: featuresAnimation.isVisible ? 0.1 * index : 0 }}
                   className="group"
                 >
                   <Link href={feature.href} className="block h-full">
@@ -191,16 +199,6 @@ export default function HomePage() {
                         </span>
                         <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                       </div>
-                      
-                      {/* 预留图片位置 */}
-                      <div className="mt-4 space-y-2">
-                        <div className="h-32 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-slate-600">
-                          <span className="text-gray-400 dark:text-gray-500 text-sm">功能演示图 1</span>
-                        </div>
-                        <div className="h-32 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-slate-600">
-                          <span className="text-gray-400 dark:text-gray-500 text-sm">功能演示图 2</span>
-                        </div>
-                      </div>
                     </div>
                   </Link>
                 </motion.div>
@@ -211,95 +209,111 @@ export default function HomePage() {
       </section>
 
       {/* Points System Section */}
-      <section className="py-20 px-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto">
+      <section ref={pointsAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-slate-700"
+            animate={pointsAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
           >
-            <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">积分系统</h2>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">积分系统</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">简单透明的积分机制，让您的每一分都物有所值</p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={pointsAnimation.isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+              transition={{ duration: 0.6, delay: pointsAnimation.isVisible ? 0.2 : 0 }}
+              className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700"
+            >
+              <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center mb-6">
+                <Zap className="h-5 w-5 mr-2" />
+                获得积分
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  { text: '注册即送', points: '20积分' },
+                  { text: '每日签到领取', points: '5积分' },
+                  { text: '特殊节日免费赠送积分', points: null },
+                  { text: '兑换码', points: null },
+                  { text: '充值', points: null },
+                ].map((item, index) => (
+                  <li key={index} className="flex items-center text-gray-700 dark:text-gray-300">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
+                    <span className="flex-grow">{item.text}</span>
+                    {item.points && (
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">{item.points}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center">
-                  <Zap className="h-5 w-5 mr-2" />
-                  获得积分
-                </h3>
-                <ul className="space-y-3">
-                  {[
-                    { text: '注册即送', points: '20积分' },
-                    { text: '每日签到领取', points: '5积分' },
-                    { text: '特殊节日免费赠送积分', points: null },
-                    { text: '兑换码', points: null },
-                    { text: '充值', points: null },
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-center text-gray-700 dark:text-gray-300">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
-                      <span className="flex-grow">{item.text}</span>
-                      {item.points && (
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">{item.points}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-green-600 dark:text-green-400 flex items-center">
-                  <Shield className="h-5 w-5 mr-2" />
-                  消费标准
-                </h3>
-                <ul className="space-y-3">
-                  {[
-                    { service: 'PDF解析', cost: '5积分/页' },
-                    { service: 'PDF解析+翻译', cost: '8积分/页' },
-                    { service: '图片转Markdown', cost: '5积分/张' },
-                    { service: 'Markdown翻译', cost: '5积分/KB' },
-                    { service: 'PDF翻译', cost: '3积分/页' },
-                    { service: '格式转换', cost: '2积分/KB' },
-                  ].map((item, index) => (
-                    <li key={index} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
-                      <span>{item.service}</span>
-                      <span className="font-medium text-green-600 dark:text-green-400">{item.cost}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-200 dark:border-slate-700 pt-8 text-center space-y-4">
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
-                <span className="font-semibold">1元 = 100积分</span>
-              </p>
-              {isLoaded && (
-                isSignedIn ? (
-                  <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                    <Link href="/dashboard">
-                      查看我的积分
-                    </Link>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={pointsAnimation.isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              transition={{ duration: 0.6, delay: pointsAnimation.isVisible ? 0.4 : 0 }}
+              className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700"
+            >
+              <h3 className="text-xl font-semibold text-green-600 dark:text-green-400 flex items-center mb-6">
+                <Shield className="h-5 w-5 mr-2" />
+                消费标准
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  { service: 'PDF解析', cost: '5积分/页' },
+                  { service: 'PDF解析+翻译', cost: '8积分/页' },
+                  { service: '图片转Markdown', cost: '5积分/张' },
+                  { service: 'Markdown翻译', cost: '5积分/KB' },
+                  { service: 'PDF翻译', cost: '3积分/页' },
+                  { service: '格式转换', cost: '2积分/KB' },
+                ].map((item, index) => (
+                  <li key={index} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
+                    <span>{item.service}</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">{item.cost}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={pointsAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: pointsAnimation.isVisible ? 0.6 : 0 }}
+            className="text-center space-y-4"
+          >
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              <span className="font-semibold">1元 = 100积分</span>
+            </p>
+            {isLoaded && (
+              isSignedIn ? (
+                <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Link href="/dashboard">
+                    查看我的积分
+                  </Link>
+                </Button>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                    登录查看积分
                   </Button>
-                ) : (
-                  <SignInButton mode="modal">
-                    <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                      登录查看积分
-                    </Button>
-                  </SignInButton>
-                )
-              )}
-            </div>
+                </SignInButton>
+              )
+            )}
           </motion.div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4">
+      <section ref={benefitsAnimation.ref} className="py-20 px-4 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
+            animate={benefitsAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">为什么选择智译平台？</h2>
@@ -313,9 +327,9 @@ export default function HomePage() {
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index + 0.6 }}
-                  className="text-center group"
+                  animate={benefitsAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: benefitsAnimation.isVisible ? 0.1 * index : 0 }}
+                  className="text-center group bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <Icon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -330,12 +344,12 @@ export default function HomePage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20 px-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
+      <section ref={teamAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
+            animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">专业团队</h2>
@@ -349,9 +363,9 @@ export default function HomePage() {
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index + 0.8 }}
-                  className="text-center group"
+                  animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: teamAnimation.isVisible ? 0.1 * index : 0 }}
+                  className="text-center group bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <Icon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
@@ -365,8 +379,8 @@ export default function HomePage() {
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
+            animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: teamAnimation.isVisible ? 0.6 : 0 }}
             className="text-center"
           >
             <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">

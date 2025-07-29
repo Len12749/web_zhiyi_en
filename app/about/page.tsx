@@ -17,6 +17,7 @@ import {
   Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useScrollAnimation } from '@/lib/hooks/use-scroll-animation';
 
 const teamMembers = [
   {
@@ -78,14 +79,22 @@ const expertiseAreas = [
 ];
 
 export default function AboutPage() {
+  // 为每个section创建滚动动画hook
+  const headerAnimation = useScrollAnimation();
+  const teamAnimation = useScrollAnimation();
+  const universityAnimation = useScrollAnimation();
+  const aiAnimation = useScrollAnimation();
+  const academicAnimation = useScrollAnimation();
+  const missionAnimation = useScrollAnimation();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen">
       {/* Header */}
-      <section className="py-20 px-4">
+      <section ref={headerAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={headerAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
@@ -112,12 +121,12 @@ export default function AboutPage() {
       </section>
 
       {/* Team Overview */}
-      <section className="py-20 px-4">
+      <section ref={teamAnimation.ref} className="py-20 px-4 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">团队概览</h2>
@@ -131,8 +140,8 @@ export default function AboutPage() {
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index + 0.4 }}
+                  animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: teamAnimation.isVisible ? 0.1 * index : 0 }}
                   className="group"
                 >
                   <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:hover:shadow-2xl dark:hover:shadow-slate-700/20 h-full">
@@ -156,12 +165,12 @@ export default function AboutPage() {
       </section>
 
       {/* University Background */}
-      <section className="py-20 px-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
+      <section ref={universityAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
+            animate={universityAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">教育背景</h2>
@@ -175,11 +184,11 @@ export default function AboutPage() {
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index + 0.8 }}
+                  animate={universityAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: universityAnimation.isVisible ? 0.1 * index : 0 }}
                   className="group"
                 >
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:hover:shadow-2xl dark:hover:shadow-slate-700/20 h-full">
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:hover:shadow-2xl dark:hover:shadow-slate-700/20 h-full">
                     <div className={`w-16 h-16 rounded-lg bg-gradient-to-r ${member.color} flex items-center justify-center mb-6 shadow-md`}>
                       <Icon className="h-8 w-8 text-white" />
                     </div>
@@ -200,34 +209,73 @@ export default function AboutPage() {
       </section>
 
       {/* AI Expertise */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
+      <section ref={aiAnimation.ref} className="py-20 px-4 bg-white dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.0 }}
-            className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-slate-700"
+            animate={aiAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
           >
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-6">
-                <Award className="h-8 w-8 text-white" />
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">AI技术专家</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">深度学习与自然语言处理领域的技术专家</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={aiAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: aiAnimation.isVisible ? 0.2 : 0 }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 shadow-xl border border-purple-200 dark:border-slate-600 hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-start space-x-6">
+                <div className="flex-shrink-0">
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Award className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="mb-4">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">英瑞</h3>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm font-medium">
+                        工程力学专业
+                      </span>
+                      <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 rounded-full text-sm font-medium">
+                        大模型微调专家
+                      </span>
+                      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">
+                        深度学习工程师
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+                    2021年起于Coursera学习深度神经网络，后在国际化拔尖创新人才培养计划中与Björn Schuller教授继续学习人工智能，同时学习大模型全栈工程师，并选择大模型微调方向深入，结合工程化思想，在实践中积累数据清洗、预处理和微调相关的经验和直觉。
+                  </p>
+                  <div className="mt-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center mr-6">
+                      <GraduationCap className="h-4 w-4 mr-2" />
+                      <span>国际化拔尖创新人才培养计划</span>
+                    </div>
+                    <div className="flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      <span>Coursera深度学习</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">AI技术专家</h3>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
-                团队成员拥有丰富的AI开发经验，熟悉大模型开发技术，具备深度学习、机器学习、自然语言处理等前沿技术能力。我们致力于将最新的AI技术应用到文档处理领域，为用户提供智能化、高效化的服务体验。
-              </p>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* Academic Achievements */}
-      <section className="py-20 px-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
+      <section ref={academicAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
+            animate={academicAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">学术成果</h2>
@@ -241,11 +289,11 @@ export default function AboutPage() {
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index + 1.4 }}
+                  animate={academicAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: academicAnimation.isVisible ? 0.1 * index : 0 }}
                   className="group"
                 >
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:hover:shadow-2xl dark:hover:shadow-slate-700/20 h-full">
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-slate-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:hover:shadow-2xl dark:hover:shadow-slate-700/20 h-full">
                     <div className="flex items-center justify-between mb-6">
                       <div className={`w-16 h-16 rounded-lg bg-gradient-to-r ${journal.color} flex items-center justify-center shadow-md`}>
                         <Icon className="h-8 w-8 text-white" />
@@ -275,22 +323,30 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Statement */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
+      <section ref={missionAnimation.ref} className="py-20 px-4 bg-white dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.6 }}
+            animate={missionAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-6">
-                <Star className="h-8 w-8 text-white" />
+            <div className="max-w-4xl mx-auto space-y-8">
+              <div className="space-y-4">
+                <h2 className="text-4xl font-bold text-gray-900 dark:text-white">我们的使命</h2>
+                <p className="text-xl text-gray-600 dark:text-gray-300">致力于提供最先进的AI文档处理服务</p>
               </div>
-              <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">我们的使命</h3>
-              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                凭借深厚的学术背景和丰富的技术经验，我们致力于为用户提供最先进、最可靠的AI文档处理服务。通过持续的技术创新和服务优化，让文档处理变得更加智能、高效、便捷。
-              </p>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={missionAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.6, delay: missionAnimation.isVisible ? 0.2 : 0 }}
+                className="pt-8"
+              >
+                <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed max-w-3xl mx-auto">
+                  凭借深厚的学术背景和丰富的技术经验，我们致力于为用户提供最先进、最可靠的AI文档处理服务。通过持续的技术创新和服务优化，让文档处理变得更加智能、高效、便捷。
+                </p>
+              </motion.div>
             </div>
           </motion.div>
         </div>

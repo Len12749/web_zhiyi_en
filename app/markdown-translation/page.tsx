@@ -45,8 +45,6 @@ export default function MarkdownTranslationPage() {
   // 翻译参数
   const [sourceLanguage, setSourceLanguage] = useState('en');
   const [targetLanguage, setTargetLanguage] = useState('zh');
-  const [detectedWordCount, setDetectedWordCount] = useState<number>(0);
-  const [isDetectingWords, setIsDetectingWords] = useState<boolean>(false);
 
   // 支持的语言列表 (与后端Markdown翻译API的LANGUAGE_MAPPING保持一致)
   const languages = [
@@ -59,25 +57,6 @@ export default function MarkdownTranslationPage() {
     { code: 'es', name: '西班牙语' },
     { code: 'ru', name: '俄语' },
   ];
-
-  // 检测文件字符数
-  const detectWordCount = async (file: File) => {
-    try {
-      setIsDetectingWords(true);
-      setDetectedWordCount(0);
-      
-      const text = await file.text();
-      const wordCount = text.length;
-      setDetectedWordCount(wordCount);
-    } catch (error) {
-      console.error('字符数检测失败:', error);
-      setErrorMessage('字符数检测失败，请重新选择文件');
-      setSelectedFile(null);
-      setDetectedWordCount(0);
-    } finally {
-      setIsDetectingWords(false);
-    }
-  };
 
   // 拖拽处理
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -122,8 +101,6 @@ export default function MarkdownTranslationPage() {
     
     setSelectedFile(file);
     setErrorMessage(''); // 清除之前的错误消息
-    // 检测字符数
-    detectWordCount(file);
     console.log('文件验证通过，已设置文件');
   };
 
@@ -185,7 +162,6 @@ export default function MarkdownTranslationPage() {
       const processingParams = {
         sourceLanguage,
         targetLanguage,
-        wordCount: detectedWordCount,
       };
 
       // 3. 创建处理任务
@@ -198,7 +174,6 @@ export default function MarkdownTranslationPage() {
           inputFileSize: selectedFile.size,
           inputStoragePath: uploadResult.storagePath,
           processingParams,
-          wordCount: detectedWordCount,
         }),
       });
 
@@ -278,8 +253,6 @@ export default function MarkdownTranslationPage() {
   const resetForm = () => {
     setSelectedFile(null);
     setErrorMessage('');
-    setDetectedWordCount(0);
-    setIsDetectingWords(false);
     setProcessingStatus({
       taskId: null,
       status: 'idle',
@@ -499,11 +472,8 @@ export default function MarkdownTranslationPage() {
                     </div>
                     
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
-                      <div className="text-green-800 dark:text-green-200 font-medium">
-                        {isDetectingWords ? '字符数检测中...' : `检测字符数：${detectedWordCount}字符`}
-                      </div>
-                      <div className="text-green-600 dark:text-green-400 text-sm mt-1">
-                        {isDetectingWords ? '检测完成后显示积分消耗' : `本次消耗：${Math.ceil(detectedWordCount / 1000) * 5}积分`}
+                      <div className="text-green-600 dark:text-green-400 text-sm">
+                        本次消耗：{calculatePoints('markdown-translation', selectedFile.size)}积分
                       </div>
                     </div>
                   </div>
