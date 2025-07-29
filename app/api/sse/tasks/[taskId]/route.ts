@@ -114,7 +114,7 @@ export async function GET(
                 clearInterval(checkInterval);
                 setTimeout(() => {
                   sseConnectionManager.removeConnection(connectionId);
-                  controller.close();
+                  // 移除重复的 controller.close()，因为 removeConnection 已经关闭了
                 }, 100);
               }
             }

@@ -51,9 +51,15 @@ class SSEConnectionManager {
     const connection = this.connections.get(connectionId);
     if (connection) {
       try {
-        connection.controller.close();
+        // 检查控制器状态，避免重复关闭
+        if (connection.controller.desiredSize !== null) {
+          connection.controller.close();
+        }
       } catch (error) {
-        console.error(`关闭SSE连接失败: ${connectionId}`, error);
+        // 忽略已关闭连接的错误，但记录其他错误
+        if (error.code !== 'ERR_INVALID_STATE') {
+          console.error(`关闭SSE连接失败: ${connectionId}`, error);
+        }
       }
       this.connections.delete(connectionId);
       console.log(`SSE连接已移除: ${connectionId}`);
@@ -141,11 +147,20 @@ class SSEConnectionManager {
 
     this.connections.forEach((connection, connectionId) => {
       try {
-        const data = `data: ${JSON.stringify(heartbeatMessage)}\n\n`;
-        connection.controller.enqueue(new TextEncoder().encode(data));
-        connection.lastHeartbeat = new Date();
+        // 检查控制器状态，避免向已关闭的连接发送消息
+        if (connection.controller.desiredSize !== null) {
+          const data = `data: ${JSON.stringify(heartbeatMessage)}\n\n`;
+          connection.controller.enqueue(new TextEncoder().encode(data));
+          connection.lastHeartbeat = new Date();
+        } else {
+          // 控制器已关闭，标记为需要移除
+          connectionsToRemove.push(connectionId);
+        }
       } catch (error) {
-        console.error(`向连接 ${connectionId} 发送心跳失败:`, error);
+        // 忽略已关闭连接的错误
+        if (error.code !== 'ERR_INVALID_STATE') {
+          console.error(`向连接 ${connectionId} 发送心跳失败:`, error);
+        }
         connectionsToRemove.push(connectionId);
       }
     });
@@ -225,9 +240,10 @@ if (typeof setInterval !== 'undefined') {
     sseConnectionManager.cleanupExpiredConnections();
   }, 60 * 1000);
 
-  // 定期发送心跳（每30秒执行一次）
+  // 定期发送心跳（每15秒执行一次，提高频率）
   setInterval(() => {
+    // 移除详细日志，避免前端显示过多信息
     sseConnectionManager.sendHeartbeat();
-  }, 30 * 1000);
+  }, 15 * 1000);
 } 
  
