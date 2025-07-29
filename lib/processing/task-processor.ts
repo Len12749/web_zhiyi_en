@@ -1,6 +1,6 @@
 import { coreServices, SupportedLanguage } from '@/lib/external/core-services'
 import { sseConnectionManager } from '@/lib/sse/connection-manager'
-import { updateTaskStatus, completeTask } from '@/actions/tasks/task-actions'
+import { updateTaskStatus, completeTask, failTask } from '@/actions/tasks/task-actions'
 import { calculatePoints } from '@/lib/utils'
 
 // 任务类型映射
@@ -176,11 +176,13 @@ export class TaskProcessor {
 
     } catch (error) {
       console.error(`任务处理失败 [${this.taskId}]:`, error)
-      await this.pushStatusUpdate(
-        'failed',
-        0,
-        error instanceof Error ? error.message : '处理失败'
-      )
+      
+      // 调用failTask返还积分并更新任务状态
+      const errorMessage = error instanceof Error ? error.message : '处理失败'
+      await failTask(this.taskId, 'PROCESSING_ERROR', errorMessage)
+      
+      // 推送失败状态给前端
+      await this.pushStatusUpdate('failed', 0, errorMessage)
     }
   }
 
@@ -234,11 +236,13 @@ export class TaskProcessor {
       
     } catch (error) {
       console.error(`❌ [${this.taskId}] 从路径处理任务失败:`, error)
-      await this.pushStatusUpdate(
-        'failed',
-        0,
-        error instanceof Error ? error.message : '处理失败'
-      )
+      
+      // 调用failTask返还积分并更新任务状态
+      const errorMessage = error instanceof Error ? error.message : '处理失败'
+      await failTask(this.taskId, 'FILE_PROCESSING_ERROR', errorMessage)
+      
+      // 推送失败状态给前端
+      await this.pushStatusUpdate('failed', 0, errorMessage)
     }
   }
 
@@ -328,6 +332,9 @@ export class TaskProcessor {
       attempts++
     }
 
+    // 任务处理超时，调用failTask返还积分
+    console.error(`[${this.taskId}] 任务处理超时`)
+    await failTask(this.taskId, 'TIMEOUT_ERROR', '任务处理超时')
     throw new Error('任务处理超时')
   }
 
