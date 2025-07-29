@@ -13,69 +13,112 @@ import {
   Bell, 
   User, 
   Menu,
-  X
+  X,
+  Info,
+  Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { UserButton, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
 
-
 const navigationItems = [
-  { href: '/', label: '首页', icon: null },
+  { href: '/', label: '首页', icon: Home },
   { href: '/pdf-to-markdown', label: 'PDF解析', icon: FileText },
   { href: '/image-to-markdown', label: '图片转Markdown', icon: Image },
   { href: '/markdown-translation', label: 'Markdown翻译', icon: Languages },
   { href: '/pdf-translation', label: 'PDF翻译', icon: Globe },
   { href: '/format-conversion', label: '格式转换', icon: RefreshCw },
   { href: '/file-history', label: '文件历史', icon: History },
+  { href: '/about', label: '关于我们', icon: Info },
 ];
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200/40 dark:border-gray-700/40 bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
             <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">智译</div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          {/* Desktop Navigation - Icon Only - 绝对居中 */}
+          <div className="hidden lg:flex items-center justify-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {Icon && <Icon className="h-4 w-4" />}
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <motion.div
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
-                      layoutId="activeTab"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </Link>
+                <div key={item.href} className="relative group">
+                  <Link
+                    href={item.href}
+                    className={`relative flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {isActive && (
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
+                        layoutId="activeTab"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                  {/* Tooltip */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.label}
+                    {/* Tooltip arrow */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Medium Screen Navigation - Compact - 绝对居中 */}
+          <div className="hidden md:flex lg:hidden items-center justify-center space-x-1 absolute left-1/2 transform -translate-x-1/2">
+            {navigationItems.slice(0, 6).map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              
+              return (
+                <div key={item.href} className="relative group">
+                  <Link
+                    href={item.href}
+                    className={`relative flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {isActive && (
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
+                        layoutId="activeTab"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                  {/* Tooltip */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.label}
+                    {/* Tooltip arrow */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
+                  </div>
+                </div>
               );
             })}
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 flex-shrink-0 ml-auto">
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -105,22 +148,38 @@ export function Navigation() {
               {/* Show additional features for signed in users */}
               <SignedIn>
                 {/* Notifications */}
-                <Link
-                  href="/notifications"
-                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                  aria-label="通知中心"
-                >
-                  <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                </Link>
+                <div className="relative group">
+                  <Link
+                    href="/notifications"
+                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    aria-label="通知中心"
+                  >
+                    <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  </Link>
+                  {/* Tooltip */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    通知中心
+                    {/* Tooltip arrow */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
+                  </div>
+                </div>
                 
                 {/* Personal Center */}
-                <Link
-                  href="/dashboard"
-                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                  aria-label="个人中心"
-                >
-                  <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                </Link>
+                <div className="relative group">
+                  <Link
+                    href="/dashboard"
+                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    aria-label="个人中心"
+                  >
+                    <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  </Link>
+                  {/* Tooltip */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    个人中心
+                    {/* Tooltip arrow */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
+                  </div>
+                </div>
                 
                 {/* User Button - Always on the right */}
                 <UserButton 

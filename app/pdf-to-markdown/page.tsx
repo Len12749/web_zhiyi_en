@@ -354,7 +354,7 @@ export default function PDFToMarkdownPage() {
             <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            PDF解析转Markdown
+            PDF解析
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             将PDF文档智能转换为可编辑的Markdown格式，支持表格处理和多语言翻译

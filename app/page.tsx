@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useUser, SignInButton } from '@clerk/nextjs';
-import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock } from 'lucide-react';
+import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock, Users, GraduationCap, Award, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -79,6 +79,29 @@ const benefits = [
     icon: Clock,
     title: '7天保存',
     description: '处理结果保存7天，随时下载，方便管理',
+  },
+];
+
+const teamInfo = [
+  {
+    icon: Users,
+    title: '团队专业全面',
+    description: '涵盖经济学、数学、计算机、物理学等多个专业领域',
+  },
+  {
+    icon: GraduationCap,
+    title: '知名高校背景',
+    description: '团队成员来自北京理工大学、大连理工大学等国内知名大学',
+  },
+  {
+    icon: Award,
+    title: 'AI技术专家',
+    description: '拥有熟悉开发大模型的专家成员，AI开发技术经验丰富',
+  },
+  {
+    icon: BookOpen,
+    title: '学术成果丰硕',
+    description: '团队成员有成果发表在CSSCI《科学学研究》（第一作者）、SCI《Frontiers of Physics》等期刊上',
   },
 ];
 
@@ -187,50 +210,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 px-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">为什么选择智译平台？</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">专业、安全、高效的文档处理服务</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon;
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index + 0.4 }}
-                  className="text-center group"
-                >
-                  <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Icon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">{benefit.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{benefit.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* Points System Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-slate-700"
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-slate-700"
           >
             <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">积分系统</h2>
             
@@ -302,6 +289,91 @@ export default function HomePage() {
                 )
               )}
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">为什么选择智译平台？</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">专业、安全、高效的文档处理服务</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {benefits.map((benefit, index) => {
+              const Icon = benefit.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 * index + 0.6 }}
+                  className="text-center group"
+                >
+                  <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Icon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">{benefit.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{benefit.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="py-20 px-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">专业团队</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">汇聚各领域精英，为您提供最优质的服务</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            {teamInfo.map((info, index) => {
+              const Icon = info.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 * index + 0.8 }}
+                  className="text-center group"
+                >
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Icon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{info.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">{info.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.2 }}
+            className="text-center"
+          >
+            <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+              <Link href="/about">
+                关于我们
+              </Link>
+            </Button>
           </motion.div>
         </div>
       </section>
