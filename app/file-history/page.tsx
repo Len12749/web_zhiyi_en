@@ -433,11 +433,6 @@ export default function FileHistoryPage() {
                               {file.taskStatus === 'failed' && '失败'}
                               {file.taskStatus === 'pending' && '等待中'}
                             </span>
-                            {file.taskStatus === 'processing' && (
-                              <span className="text-xs text-gray-500">
-                                {file.progressPercent}%
-                              </span>
-                            )}
                           </div>
                           {file.taskStatus === 'failed' && file.errorMessage && (
                             <p className="text-xs text-red-500 mt-1">

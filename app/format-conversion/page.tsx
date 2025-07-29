@@ -382,28 +382,19 @@ export default function FormatConversionPage() {
                     处理状态
                   </h3>
                   
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      {processingStatus.status === 'uploading' || processingStatus.status === 'processing' ? (
-                        <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
-                      ) : processingStatus.status === 'completed' ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <AlertCircle className="h-5 w-5 text-red-600" />
-                      )}
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {processingStatus.message}
-                      </span>
-                    </div>
-
-                    {(processingStatus.status === 'processing' || processingStatus.status === 'uploading') && (
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${processingStatus.progress}%` }}
-                        ></div>
-                      </div>
+                                  <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    {processingStatus.status === 'uploading' || processingStatus.status === 'processing' ? (
+                      <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+                    ) : processingStatus.status === 'completed' ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-600" />
                     )}
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {processingStatus.message}
+                    </span>
+                  </div>
 
                     {processingStatus.status === 'completed' && processingStatus.downloadUrl && (
                       <div className="flex space-x-3">

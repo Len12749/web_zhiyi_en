@@ -453,15 +453,6 @@ export default function PDFToMarkdownPage() {
                     </span>
                   </div>
 
-                  {(processingStatus.status === 'processing' || processingStatus.status === 'uploading') && (
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${processingStatus.progress}%` }}
-                      ></div>
-                    </div>
-                  )}
-
                   {processingStatus.status === 'completed' && processingStatus.downloadUrl && (
                     <div className="flex space-x-3">
                       <Button
