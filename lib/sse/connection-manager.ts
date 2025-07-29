@@ -77,15 +77,13 @@ class SSEConnectionManager {
     };
 
     let sentCount = 0;
-    let failedCount = 0;
     const connectionsToRemove: string[] = [];
 
     this.connections.forEach((connection, connectionId) => {
       if (connection.taskId === taskId) {
         try {
-          // 🔥 增强检查：验证控制器状态
+          // 检查控制器状态
           if (connection.controller.desiredSize === null) {
-            console.log(`⚠️ 连接 ${connectionId} 控制器已关闭，标记移除`);
             connectionsToRemove.push(connectionId);
             return;
           }
@@ -94,10 +92,7 @@ class SSEConnectionManager {
           connection.controller.enqueue(new TextEncoder().encode(data));
           connection.lastHeartbeat = new Date();
           sentCount++;
-          console.log(`✅ SSE消息已发送到连接 ${connectionId}: ${fullMessage.type} (任务${taskId})`);
         } catch (error) {
-          failedCount++;
-          console.error(`❌ 向连接 ${connectionId} 推送消息失败:`, error);
           connectionsToRemove.push(connectionId);
         }
       }
@@ -106,19 +101,10 @@ class SSEConnectionManager {
     // 清理失效连接
     connectionsToRemove.forEach(id => this.removeConnection(id));
 
-    // 🔥 增强日志：提供更详细的推送结果
-    const totalConnections = this.connections.size;
-    const taskConnections = Array.from(this.connections.values()).filter(c => c.taskId === taskId).length;
-    
-    console.log(`📤 任务 ${taskId} 消息推送完成: ${fullMessage.type}`);
-    console.log(`   - 成功发送: ${sentCount} 个连接`);
-    console.log(`   - 发送失败: ${failedCount} 个连接`);
-    console.log(`   - 清理连接: ${connectionsToRemove.length} 个`);
-    console.log(`   - 当前任务连接数: ${taskConnections}`);
-    console.log(`   - 总连接数: ${totalConnections}`);
-    
-    // 🔥 关键：即使没有活跃连接也不抛出异常
-    // 这确保TaskProcessor能继续正常运行，依赖数据库轮询机制
+    // 简化日志：只在有连接时记录
+    if (sentCount > 0) {
+      console.log(`📤 任务 ${taskId} 推送到 ${sentCount} 个连接: ${fullMessage.type}`);
+    }
   }
 
   /**
@@ -210,45 +196,6 @@ class SSEConnectionManager {
     if (connectionsToRemove.length > 0) {
       console.log(`清理了 ${connectionsToRemove.length} 个过期连接`);
     }
-  }
-
-  /**
-   * 获取连接统计信息
-   */
-  getStats(): {
-    totalConnections: number;
-    connectionsByUser: Record<string, number>;
-    connectionsByTask: Record<number, number>;
-  } {
-    const connectionsByUser: Record<string, number> = {};
-    const connectionsByTask: Record<number, number> = {};
-
-    this.connections.forEach((connection) => {
-      // 按用户统计
-      connectionsByUser[connection.userId] = (connectionsByUser[connection.userId] || 0) + 1;
-      
-      // 按任务统计
-      connectionsByTask[connection.taskId] = (connectionsByTask[connection.taskId] || 0) + 1;
-    });
-
-    return {
-      totalConnections: this.connections.size,
-      connectionsByUser,
-      connectionsByTask,
-    };
-  }
-
-  /**
-   * 检查特定任务是否有活跃连接
-   */
-  hasActiveConnectionsForTask(taskId: number): boolean {
-    let hasConnection = false;
-    this.connections.forEach((connection) => {
-      if (connection.taskId === taskId) {
-        hasConnection = true;
-      }
-    });
-    return hasConnection;
   }
 }
 
