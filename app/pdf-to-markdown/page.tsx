@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
+import { useSSEWithReconnect } from '@/lib/hooks/use-sse-with-reconnect';
 import { 
   FileText, 
   Upload, 
@@ -34,6 +35,7 @@ interface ProcessingStatus {
 
 export default function PDFToMarkdownPage() {
   const { user } = useUser();
+  const { connect: connectSSE, disconnect: disconnectSSE } = useSSEWithReconnect();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -230,23 +232,8 @@ export default function PDFToMarkdownPage() {
         });
 
         // 4. 建立SSE连接监听状态更新
-        const eventSource = new EventSource(result.sseUrl);
-        
-        // 设置1小时超时保护
-        const timeoutId = setTimeout(() => {
-          eventSource.close();
-          setProcessingStatus(prev => ({
-            ...prev,
-            status: 'failed',
-            message: '处理超时（1小时），请重试或联系支持',
-          }));
-        }, 3600000); // 1小时 = 3600000毫秒
-        
-        eventSource.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            console.log('🔔 收到SSE消息:', data);
-            
+        connectSSE(result.sseUrl, {
+          onMessage: (data) => {
             if (data.type === 'status_update' && data.data) {
               const { status, progress, message } = data.data;
               console.log(`📊 状态更新: ${status} ${progress}% ${message || ''}`);
@@ -259,31 +246,22 @@ export default function PDFToMarkdownPage() {
                 message: message || prev.message,
                 downloadUrl: status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
               }));
-
-              if (status === 'completed' || status === 'failed') {
-                console.log('🎯 任务结束，关闭SSE连接');
-                clearTimeout(timeoutId);
-                eventSource.close();
-                
-                // 任务完成后立即刷新通知
-                const refreshEvent = new CustomEvent('refreshNotifications');
-                window.dispatchEvent(refreshEvent);
-              }
             }
-          } catch (parseError) {
-            console.error('❌ SSE消息解析失败:', parseError, event.data);
+          },
+          onTimeout: () => {
+            setProcessingStatus(prev => ({
+              ...prev,
+              status: 'failed',
+              message: '处理超时（1小时），请重试或联系支持',
+            }));
+          },
+          onMaxReconnectReached: () => {
+            setProcessingStatus(prev => ({
+              ...prev,
+              message: '连接中断，任务继续在后台处理，请稍后查看文件历史',
+            }));
           }
-        };
-
-        eventSource.onerror = (error) => {
-          console.error('❌ SSE连接错误:', error);
-          clearTimeout(timeoutId);
-          eventSource.close();
-        };
-
-        eventSource.onopen = () => {
-          console.log('✅ SSE连接已建立，监听任务:', result.taskId);
-        };
+        });
 
       } else {
         setProcessingStatus({

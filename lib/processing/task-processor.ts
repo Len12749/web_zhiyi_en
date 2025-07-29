@@ -76,6 +76,18 @@ export class TaskProcessor {
     progress: number,
     message?: string
   ) {
+    console.log(`[${this.taskId}] 推送SSE状态: ${status} ${progress}% ${message || ''}`)
+    
+    // 🔥 关键修复：先更新数据库状态，确保SSE轮询能检测到变化
+    try {
+      await updateTaskStatus(this.taskId, status, progress, message)
+      console.log(`[${this.taskId}] ✅ 数据库状态已更新: ${status} ${progress}%`)
+    } catch (error) {
+      console.error(`[${this.taskId}] ❌ 更新数据库状态失败:`, error)
+      // 即使数据库更新失败，也要继续尝试SSE推送
+    }
+
+    // 构建SSE事件
     const event = {
       type: 'status_update',
       data: {
@@ -84,20 +96,22 @@ export class TaskProcessor {
         message,
       }
     }
-
-    console.log(`[${this.taskId}] 推送SSE状态: ${status} ${progress}% ${message || ''}`)
     
-    // 检查是否有活跃连接
+    // 检查活跃连接状态（仅用于日志）
     const hasConnections = sseConnectionManager.hasActiveConnectionsForTask(this.taskId)
     const stats = sseConnectionManager.getStats()
     console.log(`[${this.taskId}] 活跃SSE连接: ${hasConnections ? '有' : '无'}`)
     console.log(`[${this.taskId}] 连接统计: 总连接=${stats.totalConnections}, 任务连接=`, stats.connectionsByTask)
     
-    // 通过SSE推送给前端
-    sseConnectionManager.pushToTask(this.taskId, event)
-
-    // 更新数据库状态
-    await updateTaskStatus(this.taskId, status, progress, message)
+    // 🔥 关键修复：无论是否有活跃连接，都尝试推送
+    // 这样可以确保如果连接在处理过程中重新建立，能立即收到最新状态
+    try {
+      sseConnectionManager.pushToTask(this.taskId, event)
+      console.log(`[${this.taskId}] ✅ SSE消息推送尝试完成`)
+    } catch (error) {
+      console.error(`[${this.taskId}] ❌ SSE消息推送失败:`, error)
+      // SSE推送失败不影响任务继续处理，因为有数据库轮询机制兜底
+    }
   }
 
   // 处理任务的主要方法

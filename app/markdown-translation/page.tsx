@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
+import { useSSEWithReconnect } from '@/lib/hooks/use-sse-with-reconnect';
 import { 
   Languages, 
   Upload, 
@@ -32,6 +33,7 @@ interface ProcessingStatus {
 
 export default function MarkdownTranslationPage() {
   const { user } = useUser();
+  const { connect: connectSSE, disconnect: disconnectSSE } = useSSEWithReconnect();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -188,48 +190,33 @@ export default function MarkdownTranslationPage() {
         });
 
         // 4. 建立SSE连接监听状态更新
-        const eventSource = new EventSource(result.sseUrl);
-        
-        // 设置1小时超时保护
-        const timeoutId = setTimeout(() => {
-          eventSource.close();
-          setProcessingStatus(prev => ({
-            ...prev,
-            status: 'failed',
-            message: '处理超时（1小时），请重试或联系支持',
-          }));
-        }, 3600000); // 1小时 = 3600000毫秒
-        
-        eventSource.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'status_update') {
-            // 先更新状态
+        connectSSE(result.sseUrl, {
+          onMessage: (data) => {
+            if (data.type === 'status_update') {
+              setProcessingStatus(prev => ({
+                ...prev,
+                status: data.data.status === 'completed' ? 'completed' : 
+                       data.data.status === 'failed' ? 'failed' : 'processing',
+                progress: data.data.progress || prev.progress,
+                message: data.data.message || prev.message,
+                downloadUrl: data.data.status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
+              }));
+            }
+          },
+          onTimeout: () => {
             setProcessingStatus(prev => ({
               ...prev,
-              status: data.data.status === 'completed' ? 'completed' : 'processing',
-              progress: data.data.progress || prev.progress,
-              message: data.data.message || prev.message,
-              downloadUrl: data.data.status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
+              status: 'failed',
+              message: '处理超时（1小时），请重试或联系支持',
             }));
-
-            // 如果任务完成或失败，立即同步刷新通知
-            if (data.data.status === 'completed' || data.data.status === 'failed') {
-              // 立即触发通知刷新，与状态更新同步
-              const refreshEvent = new CustomEvent('refreshNotifications');
-              window.dispatchEvent(refreshEvent);
-              
-              clearTimeout(timeoutId);
-              eventSource.close();
-            }
+          },
+          onMaxReconnectReached: () => {
+            setProcessingStatus(prev => ({
+              ...prev,
+              message: '连接中断，任务继续在后台处理，请稍后查看文件历史',
+            }));
           }
-        };
-
-        eventSource.onerror = (error) => {
-          console.error('SSE连接错误:', error);
-          clearTimeout(timeoutId);
-          eventSource.close();
-        };
+        });
 
       } else {
         setProcessingStatus({
