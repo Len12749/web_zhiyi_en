@@ -14,7 +14,8 @@ import {
   XCircle,
   Loader,
   Search,
-  Package
+  Package,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthGuard } from '@/components/common/auth-guard';
@@ -68,6 +69,7 @@ export default function FileHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
+  const [isBatchMode, setIsBatchMode] = useState(false);
 
   // 获取文件历史
   const fetchFileHistory = async () => {
@@ -213,6 +215,13 @@ export default function FileHistoryPage() {
     }
   };
 
+  const toggleBatchMode = () => {
+    setIsBatchMode(!isBatchMode);
+    if (isBatchMode) {
+      setSelectedFiles([]);
+    }
+  };
+
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('zh-CN', {
       year: 'numeric',
@@ -302,8 +311,18 @@ export default function FileHistoryPage() {
                 <option value="pending">等待中</option>
               </select>
 
+              {/* 批量管理按钮 */}
+              <Button 
+                onClick={toggleBatchMode}
+                variant={isBatchMode ? "default" : "outline"}
+                size="sm"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                {isBatchMode ? '退出批量管理' : '批量管理'}
+              </Button>
+
               {/* 批量操作 */}
-              {selectedFiles.length > 0 && (
+              {isBatchMode && selectedFiles.length > 0 && (
                 <div className="flex gap-2">
                   <Button onClick={handleBatchDownload} variant="outline" size="sm">
                     <Package className="h-4 w-4 mr-2" />
@@ -331,13 +350,15 @@ export default function FileHistoryPage() {
             {/* 表头 */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700">
               <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-4"
-                />
-                <div className="grid grid-cols-12 gap-4 w-full text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {isBatchMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-4"
+                  />
+                )}
+                <div className={`grid grid-cols-12 gap-4 w-full text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${!isBatchMode ? 'ml-0' : ''}`}>
                   <div className="col-span-3">文件信息</div>
                   <div className="col-span-2">类型</div>
                   <div className="col-span-2">状态</div>
@@ -363,13 +384,15 @@ export default function FileHistoryPage() {
                     className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                   >
                     <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedFiles.includes(file.id)}
-                        onChange={() => handleSelectFile(file.id)}
-                        className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-4"
-                      />
-                      <div className="grid grid-cols-12 gap-4 w-full items-center">
+                      {isBatchMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedFiles.includes(file.id)}
+                          onChange={() => handleSelectFile(file.id)}
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-4"
+                        />
+                      )}
+                      <div className={`grid grid-cols-12 gap-4 w-full items-center ${!isBatchMode ? 'ml-0' : ''}`}>
                         {/* 文件信息 */}
                         <div className="col-span-3 flex items-center space-x-3">
                           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">

@@ -8,8 +8,8 @@ import {
   AlertCircle, 
   Info, 
   Trash2, 
-  Check,
-  Clock
+  Clock,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthGuard } from '@/components/common/auth-guard';
@@ -23,7 +23,6 @@ interface Notification {
   title: string;
   message: string;
   createdAt: string;
-  isRead: boolean;
   taskId?: string;
 }
 
@@ -44,8 +43,8 @@ const notificationColors = {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedNotifications, setSelectedNotifications] = useState<number[]>([]);
-  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [loading, setLoading] = useState(true);
+  const [isBatchMode, setIsBatchMode] = useState(false);
 
   // 获取通知
   const fetchNotifications = async () => {
@@ -67,52 +66,6 @@ export default function NotificationsPage() {
   useEffect(() => {
     fetchNotifications();
   }, []);
-
-  const filteredNotifications = notifications.filter(notification => {
-    if (filter === 'unread') return !notification.isRead;
-    if (filter === 'read') return notification.isRead;
-    return true;
-  });
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const handleMarkAsRead = async (notificationId: number) => {
-    try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'PATCH',
-      });
-      
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(notification => 
-            notification.id === notificationId 
-              ? { ...notification, isRead: true }
-              : notification
-          )
-        );
-      }
-    } catch (error) {
-      console.error('标记已读失败:', error);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      const response = await fetch('/api/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'markAllRead' }),
-      });
-      
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(notification => ({ ...notification, isRead: true }))
-        );
-      }
-    } catch (error) {
-      console.error('标记所有已读失败:', error);
-    }
-  };
 
   const handleDelete = async (notificationId: number) => {
     try {
@@ -142,14 +95,20 @@ export default function NotificationsPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedNotifications.length === filteredNotifications.length) {
+    if (selectedNotifications.length === notifications.length) {
       setSelectedNotifications([]);
     } else {
-      setSelectedNotifications(filteredNotifications.map(n => n.id));
+      setSelectedNotifications(notifications.map(n => n.id));
     }
   };
 
   const handleBatchDelete = async () => {
+    if (selectedNotifications.length === 0) return;
+    
+    if (!confirm(`确定要删除选中的 ${selectedNotifications.length} 条通知吗？此操作不可撤销。`)) {
+      return;
+    }
+
     try {
       const response = await fetch('/api/notifications', {
         method: 'POST',
@@ -171,25 +130,10 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleBatchMarkAsRead = async () => {
-    try {
-      // 批量标记已读，通过单独调用每个通知的API
-      await Promise.all(
-        selectedNotifications.map(id => 
-          fetch(`/api/notifications/${id}`, { method: 'PATCH' })
-        )
-      );
-      
-      setNotifications(prev => 
-        prev.map(notification => 
-          selectedNotifications.includes(notification.id)
-            ? { ...notification, isRead: true }
-            : notification
-        )
-      );
+  const toggleBatchMode = () => {
+    setIsBatchMode(!isBatchMode);
+    if (isBatchMode) {
       setSelectedNotifications([]);
-    } catch (error) {
-      console.error('批量标记已读失败:', error);
     }
   };
 
@@ -226,13 +170,8 @@ export default function NotificationsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8 text-center"
           >
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bell className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-6 w-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               通知中心
@@ -251,47 +190,19 @@ export default function NotificationsPage() {
           >
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                {/* 过滤器 */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setFilter('all')}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      filter === 'all' 
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                    }`}
-                  >
-                    全部 ({notifications.length})
-                  </button>
-                  <button
-                    onClick={() => setFilter('unread')}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      filter === 'unread' 
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                    }`}
-                  >
-                    未读 ({unreadCount})
-                  </button>
-                  <button
-                    onClick={() => setFilter('read')}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      filter === 'read' 
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                    }`}
-                  >
-                    已读 ({notifications.length - unreadCount})
-                  </button>
-                </div>
+                {/* 批量管理按钮 */}
+                <Button 
+                  onClick={toggleBatchMode}
+                  variant={isBatchMode ? "default" : "outline"}
+                  size="sm"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  {isBatchMode ? '退出批量管理' : '批量管理'}
+                </Button>
 
                 {/* 批量操作 */}
-                {selectedNotifications.length > 0 && (
+                {isBatchMode && selectedNotifications.length > 0 && (
                   <div className="flex gap-2">
-                    <Button onClick={handleBatchMarkAsRead} variant="outline" size="sm">
-                      <Check className="h-4 w-4 mr-2" />
-                      标记已读 ({selectedNotifications.length})
-                    </Button>
                     <Button onClick={handleBatchDelete} variant="outline" size="sm">
                       <Trash2 className="h-4 w-4 mr-2" />
                       删除 ({selectedNotifications.length})
@@ -300,22 +211,18 @@ export default function NotificationsPage() {
                 )}
               </div>
 
-              {/* 全部操作 */}
-              <div className="flex gap-2">
-                {unreadCount > 0 && (
-                  <Button onClick={handleMarkAllAsRead} variant="outline" size="sm">
-                    <Check className="h-4 w-4 mr-2" />
-                    全部已读
-                  </Button>
-                )}
-                <input
-                  type="checkbox"
-                  checked={selectedNotifications.length === filteredNotifications.length && filteredNotifications.length > 0}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-400">全选</span>
-              </div>
+              {/* 全选操作 */}
+              {isBatchMode && (
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedNotifications.length === notifications.length && notifications.length > 0}
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">全选</span>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -326,18 +233,18 @@ export default function NotificationsPage() {
             transition={{ delay: 0.2 }}
             className="space-y-4"
           >
-            {filteredNotifications.length === 0 ? (
+            {notifications.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center shadow-sm border border-gray-200 dark:border-gray-700">
                 <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  {filter === 'unread' ? '暂无未读通知' : filter === 'read' ? '暂无已读通知' : '暂无通知'}
+                  暂无通知
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400">
-                  {filter === 'unread' ? '所有通知都已阅读' : '当系统有重要更新或任务状态变化时，我们会及时通知您'}
+                  当系统有重要更新或任务状态变化时，我们会及时通知您
                 </p>
               </div>
             ) : (
-              filteredNotifications.map((notification, index) => {
+              notifications.map((notification, index) => {
                 const Icon = notificationIcons[notification.type];
                 
                 return (
@@ -346,20 +253,18 @@ export default function NotificationsPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className={`bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border transition-all duration-200 ${
-                      notification.isRead 
-                        ? 'border-gray-200 dark:border-gray-700' 
-                        : 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10'
-                    } hover:shadow-md`}
+                    className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
                   >
                     <div className="flex items-start space-x-4">
-                      {/* 选择框 */}
-                      <input
-                        type="checkbox"
-                        checked={selectedNotifications.includes(notification.id)}
-                        onChange={() => handleSelectNotification(notification.id)}
-                        className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-1"
-                      />
+                      {/* 选择框 - 只在批量管理模式下显示 */}
+                      {isBatchMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedNotifications.includes(notification.id)}
+                          onChange={() => handleSelectNotification(notification.id)}
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-1"
+                        />
+                      )}
 
                       {/* 图标 */}
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${notificationColors[notification.type]}`}>
@@ -370,11 +275,8 @@ export default function NotificationsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className={`text-sm font-medium ${notification.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white'}`}>
+                            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                               {notification.title}
-                              {!notification.isRead && (
-                                <span className="ml-2 inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
-                              )}
                             </h3>
                             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                               {notification.message}
@@ -390,25 +292,18 @@ export default function NotificationsPage() {
                             </div>
                           </div>
 
-                          {/* 操作按钮 */}
-                          <div className="flex items-center space-x-2 ml-4">
-                            {!notification.isRead && (
+                          {/* 操作按钮 - 只在非批量管理模式下显示 */}
+                          {!isBatchMode && (
+                            <div className="flex items-center space-x-2 ml-4">
                               <button
-                                onClick={() => handleMarkAsRead(notification.id)}
-                                className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                                title="标记已读"
+                                onClick={() => handleDelete(notification.id)}
+                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                                title="删除"
                               >
-                                <Check className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" />
                               </button>
-                            )}
-                            <button
-                              onClick={() => handleDelete(notification.id)}
-                              className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                              title="删除"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -432,6 +327,7 @@ export default function NotificationsPage() {
               <li>• 任务完成、失败或需要您关注时会发送通知</li>
               <li>• 重要的系统公告和维护信息也会通过通知发送</li>
               <li>• 通知将保留30天，您可以随时删除不需要的通知</li>
+              <li>• 使用批量管理功能可以高效管理多条通知</li>
             </ul>
           </motion.div>
         </div>
