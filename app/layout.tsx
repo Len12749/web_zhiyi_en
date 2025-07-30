@@ -7,6 +7,11 @@ import { Navigation } from '../components/layout/navigation';
 import GlobalNotification from '../components/common/global-notification';
 import React from 'react';
 
+// 导入服务器端初始化（只在服务器端执行）
+if (typeof window === 'undefined') {
+  require('../lib/init-server');
+}
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {

@@ -75,9 +75,23 @@ class TaskSSEManager {
     this.pushToTask(taskId, heartbeatMessage);
   }
 
+  // 清理所有连接
+  cleanup() {
+    const connectionCount = this.connections.size;
+    this.connections.clear();
+    console.log(`🧹 所有任务SSE连接已清理，共清理 ${connectionCount} 个连接`);
+  }
 
-
-
+  // 获取连接统计信息
+  getStats() {
+    return {
+      totalConnections: this.connections.size,
+      connectionsByTask: Array.from(this.connections.values()).reduce((acc, conn) => {
+        acc[conn.taskId] = (acc[conn.taskId] || 0) + 1;
+        return acc;
+      }, {} as Record<number, number>)
+    };
+  }
 }
 
 // 导出单例实例
@@ -91,5 +105,12 @@ export function generateRandomString(length: number): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+// 服务器启动时自动清理所有SSE连接
+if (typeof window === 'undefined') {
+  // 只在服务器端执行
+  console.log('🚀 服务器启动，清理所有SSE连接...');
+  sseConnectionManager.cleanup();
 }
  
