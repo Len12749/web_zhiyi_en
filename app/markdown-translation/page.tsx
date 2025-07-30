@@ -12,10 +12,11 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  Globe
+  Globe,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints, validateFileFormat, getAcceptedExtensions, type TaskType } from '@/lib/utils';
+import { calculatePoints, validateFileFormat, getAcceptedExtensions, formatFileSize, type TaskType } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
 
 interface ProcessingStatus {
@@ -40,12 +41,11 @@ export default function MarkdownTranslationPage() {
   });
 
   // 翻译参数
-  const [sourceLanguage, setSourceLanguage] = useState('auto');
+  const [sourceLanguage, setSourceLanguage] = useState('en');
   const [targetLanguage, setTargetLanguage] = useState('zh');
 
   // 支持的语言列表
   const languages = [
-    { code: 'auto', name: '自动检测' },
     { code: 'en', name: '英语' },
     { code: 'zh', name: '中文' },
     { code: 'ja', name: '日语' },
@@ -84,7 +84,7 @@ export default function MarkdownTranslationPage() {
     }
     
     setSelectedFile(file);
-    setErrorMessage(''); // 清除之前的错误消息
+    setErrorMessage('');
     console.log('文件验证通过，已设置文件');
   };
 
@@ -117,7 +117,7 @@ export default function MarkdownTranslationPage() {
     });
 
     try {
-      // 1. 先上传文件到存储系统
+      // 上传文件到存储系统
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('taskType', 'markdown-translation');
@@ -142,13 +142,13 @@ export default function MarkdownTranslationPage() {
         throw new Error(uploadResult.message || '文件上传失败');
       }
 
-      // 2. 构建处理参数
+      // 构建处理参数
       const processingParams = {
         sourceLanguage,
         targetLanguage,
       };
 
-      // 3. 创建处理任务
+      // 创建处理任务
       const response = await fetch('/api/tasks/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,7 +156,7 @@ export default function MarkdownTranslationPage() {
           taskType: 'markdown-translation',
           inputFilename: selectedFile.name,
           inputFileSize: selectedFile.size,
-          inputStoragePath: uploadResult.storagePath,
+          inputStoragePath: uploadResult.data.storagePath,
           processingParams,
         }),
       });
@@ -171,7 +171,7 @@ export default function MarkdownTranslationPage() {
           message: '任务已创建，开始翻译...',
         });
 
-        // 4. 建立SSE连接监听状态更新
+        // 建立SSE连接监听状态更新
         connectSSE(result.sseUrl, {
           onMessage: (data) => {
             if (data.type === 'status_update') {
@@ -270,7 +270,7 @@ export default function MarkdownTranslationPage() {
                           {selectedFile.name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {/* formatFileSize(selectedFile.size) */}
+                          {formatFileSize(selectedFile.size)}
                         </p>
                       </div>
                       <Button
@@ -412,7 +412,7 @@ export default function MarkdownTranslationPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">大小：</span>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {/* formatFileSize(selectedFile.size) */}
+                            {formatFileSize(selectedFile.size)}
                           </span>
                         </div>
                       </div>

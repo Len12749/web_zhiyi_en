@@ -169,12 +169,12 @@ export default function PDFToMarkdownPage() {
       const uploadResult = await uploadResponse.json();
       
       // 验证PDF页数检测
-      if (uploadResult.needsPageDetection && !uploadResult.additionalInfo?.pageCount) {
+      if (uploadResult.data?.needsPageDetection && !uploadResult.data?.additionalInfo?.pageCount) {
         throw new Error('PDF页数检测失败，无法计算准确积分。请重试或联系客服。');
       }
 
       // 获取实际页数
-      const pageCount = uploadResult.additionalInfo?.pageCount;
+      const pageCount = uploadResult.data?.additionalInfo?.pageCount;
       if (!pageCount) {
         throw new Error('无法获取PDF页数信息，请重新上传文件。');
       }
@@ -197,7 +197,7 @@ export default function PDFToMarkdownPage() {
           taskType: 'pdf-to-markdown',
           inputFilename: selectedFile.name,
           inputFileSize: selectedFile.size,
-          inputStoragePath: uploadResult.storagePath,
+          inputStoragePath: uploadResult.data.storagePath,
           processingParams,
           pageCount: pageCount,
         }),

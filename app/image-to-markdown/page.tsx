@@ -123,7 +123,7 @@ export default function ImageToMarkdownPage() {
           taskType: 'image-to-markdown',
           inputFilename: selectedFile.name,
           inputFileSize: selectedFile.size,
-          inputStoragePath: uploadResult.storagePath,
+          inputStoragePath: uploadResult.data.storagePath,
           processingParams: {},
         }),
       });

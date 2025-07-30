@@ -157,7 +157,7 @@ export default function FormatConversionPage() {
           taskType: 'format-conversion',
           inputFilename: selectedFile.name,
           inputFileSize: selectedFile.size,
-          inputStoragePath: uploadResult.storagePath,
+          inputStoragePath: uploadResult.data.storagePath,
           processingParams,
         }),
       });
