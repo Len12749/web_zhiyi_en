@@ -70,29 +70,36 @@ export class TaskProcessor {
     }
   }
 
-  // 推送SSE状态更新
+  // 推送SSE状态更新 - 完全按照通知SSE的简单机制
   private async pushStatusUpdate(
     status: string,
     progress: number,
     message?: string
   ) {
-    // 更新数据库状态（核心逻辑）
+    // 更新数据库状态
     try {
       await updateTaskStatus(this.taskId, status, progress, message)
     } catch (error) {
       console.error(`[${this.taskId}] 更新数据库状态失败:`, error)
     }
 
-    // 推送SSE消息到活跃连接
-    const event = {
-      type: 'status_update',
-      data: { status, progress, message }
-    }
-    
+    // 推送SSE消息 - 和通知SSE一样简单
     try {
-      sseConnectionManager.pushToTask(this.taskId, event)
+      sseConnectionManager.pushToTask(this.taskId, {
+        type: 'status_update',
+        data: { status, progress, message }
+      })
     } catch (error) {
-      // SSE推送失败不影响任务处理，状态已保存到数据库
+      console.error(`[${this.taskId}] SSE推送失败:`, error)
+    }
+  }
+
+  // 发送心跳保持连接活跃
+  private sendHeartbeat() {
+    try {
+      sseConnectionManager.sendHeartbeat(this.taskId)
+    } catch (error) {
+      // 心跳失败不影响任务处理
     }
   }
 
@@ -323,6 +330,9 @@ export class TaskProcessor {
         console.error(`监控任务状态失败 [${this.taskId}]:`, error)
       }
 
+      // 发送心跳保持连接活跃
+      this.sendHeartbeat()
+      
       // 等待10秒再次检查
       await new Promise(resolve => setTimeout(resolve, 10000))
       attempts++

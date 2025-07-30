@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import { getTaskById } from "@/actions/tasks/task-actions";
-import { sseConnectionManager } from "@/lib/sse/connection-manager";
-import { generateRandomString } from "@/lib/utils";
+import { sseConnectionManager, generateRandomString } from "@/lib/sse/connection-manager";
 
 // 设置API路由最大执行时间为1小时（3600秒）
 export const maxDuration = 3600;
@@ -50,6 +49,20 @@ export async function GET(
         // 注册SSE连接
         sseConnectionManager.addConnection(connectionId, userId, taskId, controller);
 
+        // 发送连接确认 - 和通知SSE一样
+        const connectionMessage = {
+          type: "connection_established",
+          data: {
+            connectionId,
+            timestamp: new Date().toISOString()
+          }
+        };
+
+        const connectionData = `data: ${JSON.stringify(connectionMessage)}\n\n`;
+        controller.enqueue(new TextEncoder().encode(connectionData));
+
+        console.log(`📤 任务SSE连接确认已发送 [用户: ${userId}] [任务: ${taskId}] [连接ID: ${connectionId}]`);
+
         // 发送当前任务状态
         const initialMessage = {
           type: "status_update",
@@ -66,6 +79,7 @@ export async function GET(
 
         // 设置连接关闭处理
         request.signal.addEventListener('abort', () => {
+          console.log(`🔐 任务SSE连接中断 [用户: ${userId}] [任务: ${taskId}] [连接ID: ${connectionId}]`);
           sseConnectionManager.removeConnection(connectionId);
         });
       },
@@ -82,9 +96,9 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("SSE连接错误:", error);
+    console.error("任务SSE连接错误:", error);
     return NextResponse.json(
-      { success: false, message: "建立SSE连接失败" },
+      { success: false, message: "建立任务SSE连接失败" },
       { status: 500 }
     );
   }

@@ -247,19 +247,6 @@ export default function PDFToMarkdownPage() {
                 downloadUrl: status === 'completed' ? `/api/tasks/${result.taskId}/download` : undefined,
               }));
             }
-          },
-          onTimeout: () => {
-            setProcessingStatus(prev => ({
-              ...prev,
-              status: 'failed',
-              message: '处理超时（1小时），请重试或联系支持',
-            }));
-          },
-          onMaxReconnectReached: () => {
-            setProcessingStatus(prev => ({
-              ...prev,
-              message: '连接中断，任务继续在后台处理，请稍后查看文件历史',
-            }));
           }
         });
 
