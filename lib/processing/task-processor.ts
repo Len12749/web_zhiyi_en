@@ -83,7 +83,7 @@ export class TaskProcessor {
       console.error(`[${this.taskId}] 更新数据库状态失败:`, error)
     }
 
-    // 推送SSE消息（如果有连接的话）
+    // 推送SSE消息到活跃连接
     const event = {
       type: 'status_update',
       data: { status, progress, message }
@@ -92,7 +92,7 @@ export class TaskProcessor {
     try {
       sseConnectionManager.pushToTask(this.taskId, event)
     } catch (error) {
-      // SSE推送失败不影响任务处理，数据库轮询机制会兜底
+      // SSE推送失败不影响任务处理，状态已保存到数据库
     }
   }
 

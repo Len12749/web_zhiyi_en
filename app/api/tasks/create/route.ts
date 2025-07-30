@@ -69,10 +69,9 @@ export async function POST(request: NextRequest) {
       // 构建SSE URL
       const sseUrl = `/api/sse/tasks/${result.taskId}`;
       
-      // 延迟启动任务处理，给SSE连接建立时间
+      // 延迟启动任务处理，确保SSE连接有时间建立
       setTimeout(async () => {
         try {
-          console.log(`⏰ 延迟2秒后开始处理任务 [${result.taskId}]`);
           await processTaskAsync(result.taskId!, userId, taskType, inputStoragePath, processingParams);
         } catch (error) {
           console.error(`异步任务处理失败 [${result.taskId}]:`, error);
@@ -86,7 +85,7 @@ export async function POST(request: NextRequest) {
           }
         });
         }
-      }, 2000); // 延迟2秒
+      }, 500); // 延迟500毫秒，足够SSE连接建立
 
       return NextResponse.json({
         success: true,
