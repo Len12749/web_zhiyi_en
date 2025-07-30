@@ -42,7 +42,7 @@ AI_API_KEY = os.getenv("AI_API_KEY", "sk-litellm-master-key-2024")
 
 # 支持的图片格式
 SUPPORTED_IMAGE_FORMATS = {
-    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'
+    'image/jpeg', 'image/jpg', 'image/png'
 }
 
 @app.get("/")
@@ -212,11 +212,11 @@ async def recognize_image(
         # 读取文件内容
         image_bytes = await file.read()
         
-        # 检查文件大小（限制为10MB）
-        if len(image_bytes) > 10 * 1024 * 1024:
+        # 检查文件大小（限制为100MB）
+        if len(image_bytes) > 100 * 1024 * 1024:
             raise HTTPException(
                 status_code=400,
-                detail="文件大小超过限制（最大10MB）"
+                detail="文件大小超过限制（最大100MB）"
             )
         
         # 验证图片

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { auth } from '@clerk/nextjs/server';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { auth } from '@clerk/nextjs';
+import { mkdir, writeFile } from 'fs/promises';
+import { validateFileFormat, FILE_FORMAT_CONFIG, type TaskType } from '@/lib/utils';
 import { getPDFPageCount } from '@/lib/external/pdf-utils';
 
-// 设置API路由最大执行时间为1小时（3600秒）
-export const maxDuration = 3600;
 // 强制动态渲染，避免静态生成错误
 export const dynamic = 'force-dynamic';
 
@@ -39,63 +38,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证文件类型（扩展支持多种MIME类型）
-    const allowedTypes = {
-      'pdf-to-markdown': ['application/pdf'],
-      'pdf-translation': ['application/pdf'],
-      'image-to-markdown': ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'],
-      'markdown-translation': ['text/markdown', 'text/plain', 'application/octet-stream'],
-      'format-conversion': ['text/markdown', 'application/octet-stream'],
-    };
-
-    const allowedExtensions = {
-      'pdf-to-markdown': ['.pdf'],
-      'pdf-translation': ['.pdf'],
-      'image-to-markdown': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'],
-      'markdown-translation': ['.md', '.markdown', '.txt'],
-      'format-conversion': ['.md', '.markdown'],
-    };
-
-    const allowedTypesForTask = allowedTypes[taskType as keyof typeof allowedTypes];
-    const allowedExtensionsForTask = allowedExtensions[taskType as keyof typeof allowedExtensions];
-    
-    // 获取文件扩展名
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    
-    // 验证文件类型（通过MIME类型或文件扩展名）
-    const isValidType = allowedTypesForTask?.includes(file.type) || 
-                       allowedExtensionsForTask?.includes(fileExtension);
-    
-    if (!isValidType) {
-      console.log(`文件验证失败 - 文件名: ${file.name}, MIME类型: ${file.type}, 扩展名: ${fileExtension}`);
+    // 使用统一的文件格式验证
+    const validation = validateFileFormat(file, taskType as TaskType);
+    if (!validation.isValid) {
+      console.log(`文件验证失败 - 文件名: ${file.name}, MIME类型: ${file.type}`);
       return NextResponse.json(
-        { success: false, message: `不支持的文件类型。允许的格式：${allowedExtensionsForTask?.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // 验证文件大小
-    const maxSizes = {
-      'pdf-to-markdown': 300 * 1024 * 1024, // 300MB
-      'pdf-translation': 300 * 1024 * 1024, // 300MB
-      'image-to-markdown': 100 * 1024 * 1024, // 100MB
-      'markdown-translation': 100 * 1024 * 1024, // 100MB
-      'format-conversion': 100 * 1024 * 1024, // 100MB
-    };
-
-    const maxSize = maxSizes[taskType as keyof typeof maxSizes];
-    
-    // 检查文件是否为空
-    if (file.size === 0) {
-      return NextResponse.json(
-        { success: false, message: "不能上传空文件，请选择有内容的文件" },
-        { status: 400 }
-      );
-    }
-    
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { success: false, message: `文件大小超出限制，最大 ${maxSize / (1024 * 1024)}MB` },
+        { success: false, message: validation.error },
         { status: 400 }
       );
     }
@@ -163,7 +111,9 @@ export async function POST(request: NextRequest) {
         console.log(`PDF页数检测成功: ${pageCountResult.pageCount}页`);
         
         // 验证页数限制
-        const maxPages = 800;
+        const config = FILE_FORMAT_CONFIG[taskType as TaskType];
+        const maxPages = (config as any)?.maxPages || 800;
+        
         if (pageCountResult.pageCount > maxPages) {
           return NextResponse.json(
             { 
@@ -193,35 +143,29 @@ export async function POST(request: NextRequest) {
       }
     } else if (taskType === 'markdown-translation' || taskType === 'format-conversion') {
       // Markdown文件默认按文件大小计费，页数检测不是必需的
-      try {
-        const textContent = buffer.toString('utf-8');
-        additionalInfo = {
-          needsPageDetection: false,
-          characterCount: textContent.length,
-          wordCount: textContent.split(/\s+/).filter(word => word.length > 0).length,
-        };
-      } catch (error) {
-        console.error('读取文件内容失败:', error);
       additionalInfo = {
+        pageCount: 1, // 默认值
         needsPageDetection: false,
-          characterCount: file.size, // 使用文件大小作为备选
+        pageDetectionMethod: 'default',
       };
-      }
     }
 
     return NextResponse.json({
       success: true,
       message: "文件上传成功",
-      storagePath: relativePath,
-      fileName: file.name,
-      fileSize: file.size,
-      additionalInfo,
+      data: {
+        storagePath: relativePath,
+        originalName: file.name,
+        fileSize: file.size,
+        timestamp,
+        additionalInfo
+      }
     });
 
   } catch (error) {
-    console.error("文件上传失败:", error);
+    console.error('文件上传错误:', error);
     return NextResponse.json(
-      { success: false, message: "文件上传失败" },
+      { success: false, message: "文件上传失败，请重试" },
       { status: 500 }
     );
   }

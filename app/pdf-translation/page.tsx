@@ -16,12 +16,8 @@ import {
   Languages
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints, detectPDFPageCount as detectPDFPages } from '@/lib/utils';
+import { calculatePoints, validateFileFormat, getAcceptedExtensions, type TaskType } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
-
-// PDF文件限制
-const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300MB
-const MAX_PAGES = 800; // 最多800页
 
 interface ProcessingStatus {
   taskId: number | null;
@@ -47,7 +43,7 @@ export default function PDFTranslationPage() {
   // 翻译参数
   const [sourceLanguage, setSourceLanguage] = useState('en');
   const [targetLanguage, setTargetLanguage] = useState('zh');
-  const [detectedPageCount, setDetectedPageCount] = useState<number>(0);
+  const [pageCount, setPageCount] = useState<number | null>(null);
   const [isDetectingPages, setIsDetectingPages] = useState<boolean>(false);
 
   // 源语言列表 (输入语言简化为英文和中文)
@@ -68,27 +64,19 @@ export default function PDFTranslationPage() {
     { code: 'ru', name: '俄语' },
   ];
 
-  // 精确检测PDF页数
+  // 检测PDF页数
   const detectPDFPageCount = async (file: File) => {
+    setIsDetectingPages(true);
     try {
-      setIsDetectingPages(true);
-      setDetectedPageCount(0);
-      
-      // 使用pdf-lib直接检测页数
-      const pageCount = await detectPDFPages(file);
-      
-      if (pageCount > MAX_PAGES) {
-        throw new Error(`PDF页数超过限制（最大${MAX_PAGES}页，当前${pageCount}页）`);
-      }
-      
-      setDetectedPageCount(pageCount);
-      console.log(`PDF页数检测成功: ${pageCount}页`);
-      
+      const { PDFDocument } = await import('pdf-lib');
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const pages = pdfDoc.getPageCount();
+      setPageCount(pages);
+      console.log(`PDF页数检测完成: ${pages}页`);
     } catch (error) {
       console.error('PDF页数检测失败:', error);
-      setErrorMessage(error instanceof Error ? error.message : '页数检测失败，请重新选择文件');
-      setSelectedFile(null);
-      setDetectedPageCount(0);
+      setErrorMessage('PDF页数检测失败，请确保文件格式正确');
     } finally {
       setIsDetectingPages(false);
     }
@@ -105,6 +93,30 @@ export default function PDFTranslationPage() {
     }
   }, []);
 
+  const validateAndSetFile = (file: File) => {
+    console.log('选择的文件:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
+    
+    // 使用统一的文件格式验证
+    const validation = validateFileFormat(file, 'pdf-translation' as TaskType);
+    
+    if (!validation.isValid) {
+      setErrorMessage(validation.error || '文件格式验证失败');
+      return;
+    }
+    
+    setSelectedFile(file);
+    setErrorMessage(''); // 清除之前的错误消息
+    setPageCount(null); // 重置页数
+    // 精确检测PDF页数
+    detectPDFPageCount(file);
+    console.log('文件验证通过，已设置文件');
+  };
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -112,42 +124,14 @@ export default function PDFTranslationPage() {
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (file.type === 'application/pdf') {
-        // 检查文件大小
-        if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的PDF文件。`);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setErrorMessage(''); // 清除之前的错误消息
-        // 精确检测PDF页数
-        detectPDFPageCount(file);
-      } else {
-        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
-        return;
-      }
+      validateAndSetFile(file);
     }
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.type === 'application/pdf') {
-        // 检查文件大小
-        if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的PDF文件。`);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setErrorMessage(''); // 清除之前的错误消息
-        // 精确检测PDF页数
-        detectPDFPageCount(file);
-      } else {
-        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
-        return;
-      }
+      validateAndSetFile(file);
     }
   };
 
@@ -257,7 +241,7 @@ export default function PDFTranslationPage() {
   const resetForm = () => {
     setSelectedFile(null);
     setErrorMessage('');
-    setDetectedPageCount(0);
+    setPageCount(null);
     setIsDetectingPages(false);
     setProcessingStatus({
       taskId: null,
@@ -349,7 +333,7 @@ export default function PDFTranslationPage() {
                         <input
                           id="pdf-file-input"
                           type="file"
-                          accept=".pdf"
+                          accept={getAcceptedExtensions('pdf-translation' as TaskType)}
                           onChange={handleFileChange}
                           className="hidden"
                         />
@@ -470,10 +454,10 @@ export default function PDFTranslationPage() {
                     
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
                       <div className="text-green-800 dark:text-green-200 font-medium">
-                        {isDetectingPages ? '页数检测中...' : `检测页数：${detectedPageCount}页`}
+                        {isDetectingPages ? '页数检测中...' : `检测页数：${pageCount || 'N/A'}页`}
                       </div>
                       <div className="text-green-600 dark:text-green-400 text-sm mt-1">
-                        {isDetectingPages ? '检测完成后显示积分消耗' : `本次消耗：${calculatePoints('pdf-translation', selectedFile.size, detectedPageCount)}积分`}
+                        {isDetectingPages ? '检测完成后显示积分消耗' : `本次消耗：${calculatePoints('pdf-translation', selectedFile.size, pageCount || 0)}积分`}
                       </div>
                     </div>
                   </div>

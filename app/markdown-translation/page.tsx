@@ -5,23 +5,18 @@ import { useUser } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
 import { useSSEWithReconnect } from '@/lib/hooks/use-sse-with-reconnect';
 import { 
-  Languages, 
+  FileText, 
   Upload, 
-  Settings,
+  Languages,
   Download, 
   AlertCircle,
   CheckCircle,
   Loader2,
-  FileText,
   Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints, formatFileSize } from '@/lib/utils';
+import { calculatePoints, validateFileFormat, getAcceptedExtensions, type TaskType } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
-
-// Markdown文件限制
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ACCEPTED_TYPES = ['text/markdown', 'text/plain', 'application/octet-stream'];
 
 interface ProcessingStatus {
   taskId: number | null;
@@ -45,13 +40,14 @@ export default function MarkdownTranslationPage() {
   });
 
   // 翻译参数
-  const [sourceLanguage, setSourceLanguage] = useState('en');
+  const [sourceLanguage, setSourceLanguage] = useState('auto');
   const [targetLanguage, setTargetLanguage] = useState('zh');
 
-  // 支持的语言列表 (与后端Markdown翻译API的LANGUAGE_MAPPING保持一致)
+  // 支持的语言列表
   const languages = [
-    { code: 'zh', name: '中文' },
+    { code: 'auto', name: '自动检测' },
     { code: 'en', name: '英语' },
+    { code: 'zh', name: '中文' },
     { code: 'ja', name: '日语' },
     { code: 'ko', name: '韩语' },
     { code: 'fr', name: '法语' },
@@ -79,25 +75,11 @@ export default function MarkdownTranslationPage() {
       lastModified: file.lastModified
     });
     
-    // 检查文件扩展名
-    const validExtensions = ['.md', '.markdown', '.txt'];
-    const fileName = file.name.toLowerCase();
-    const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+    // 使用统一的文件格式验证
+    const validation = validateFileFormat(file, 'markdown-translation' as TaskType);
     
-    if (!hasValidExtension) {
-      // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
-      return;
-    }
-    
-    // 检查文件是否为空
-    if (file.size === 0) {
-      setErrorMessage('不能上传空文件，请选择有内容的文件。');
-      return;
-    }
-    
-    // 检查文件大小
-    if (file.size > MAX_FILE_SIZE) {
-      setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的文件。`);
+    if (!validation.isValid) {
+      setErrorMessage(validation.error || '文件格式验证失败');
       return;
     }
     
@@ -288,7 +270,7 @@ export default function MarkdownTranslationPage() {
                           {selectedFile.name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatFileSize(selectedFile.size)}
+                          {/* formatFileSize(selectedFile.size) */}
                         </p>
                       </div>
                       <Button
@@ -317,13 +299,13 @@ export default function MarkdownTranslationPage() {
                         <input
                           id="markdown-file-input"
                           type="file"
-                          accept=".md,.markdown,.txt"
+                          accept={getAcceptedExtensions('markdown-translation' as TaskType)}
                           onChange={handleFileChange}
                           className="hidden"
                         />
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        支持.md、.markdown格式，最大 10MB
+                        支持.md、.markdown格式，最大 100MB
                       </p>
                     </div>
                   )}
@@ -430,7 +412,7 @@ export default function MarkdownTranslationPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">大小：</span>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {formatFileSize(selectedFile.size)}
+                            {/* formatFileSize(selectedFile.size) */}
                           </span>
                         </div>
                       </div>

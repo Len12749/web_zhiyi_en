@@ -376,4 +376,125 @@ export async function detectPDFPageCount(file: File): Promise<number> {
     console.error('检测PDF页数失败:', error);
     throw new Error('无法检测PDF页数，请确保文件格式正确');
   }
+}
+
+// 文件格式验证配置
+export const FILE_FORMAT_CONFIG = {
+  'pdf-to-markdown': {
+    mimeTypes: ['application/pdf'],
+    extensions: ['.pdf'],
+    maxSize: 300 * 1024 * 1024, // 300MB
+    maxPages: 800,
+    description: 'PDF文件'
+  },
+  'pdf-translation': {
+    mimeTypes: ['application/pdf'],
+    extensions: ['.pdf'],
+    maxSize: 300 * 1024 * 1024, // 300MB
+    maxPages: 800,
+    description: 'PDF文件'
+  },
+  'image-to-markdown': {
+    mimeTypes: ['image/jpeg', 'image/jpg', 'image/png'],
+    extensions: ['.jpg', '.jpeg', '.png'],
+    maxSize: 100 * 1024 * 1024, // 100MB
+    description: '图片文件 (JPG, PNG)'
+  },
+  'markdown-translation': {
+    mimeTypes: ['text/markdown', 'text/plain', 'application/octet-stream'],
+    extensions: ['.md', '.markdown'], // 后端实际只支持.md和.markdown
+    maxSize: 100 * 1024 * 1024, // 100MB
+    description: 'Markdown文件 (.md, .markdown)'
+  },
+  'format-conversion': {
+    mimeTypes: ['text/markdown', 'text/plain', 'application/octet-stream'],
+    extensions: ['.md', '.markdown'], // 后端实际只支持.md和.markdown
+    maxSize: 100 * 1024 * 1024, // 100MB
+    description: 'Markdown文件 (.md, .markdown)'
+  }
+} as const;
+
+export type TaskType = keyof typeof FILE_FORMAT_CONFIG;
+
+/**
+ * 验证文件格式和大小
+ */
+export function validateFileFormat(
+  file: File, 
+  taskType: TaskType
+): { isValid: boolean; error?: string } {
+  const config = FILE_FORMAT_CONFIG[taskType];
+  
+  if (!config) {
+    return { isValid: false, error: '不支持的任务类型' };
+  }
+
+  // 检查文件是否为空
+  if (file.size === 0) {
+    return { isValid: false, error: '不能上传空文件，请选择有内容的文件' };
+  }
+
+  // 检查文件大小
+  if (file.size > config.maxSize) {
+    return { 
+      isValid: false, 
+      error: `文件大小超出限制。请选择小于 ${config.maxSize / (1024 * 1024)}MB 的${config.description}。` 
+    };
+  }
+
+  // 获取文件扩展名
+  const parts = file.name.toLowerCase().split('.');
+  const fileExtension = parts.length > 1 ? '.' + parts.pop() : '';
+  
+  // 验证文件类型（通过扩展名或MIME类型）
+  const isValidExtension = (config.extensions as readonly string[]).includes(fileExtension);
+  const isValidMimeType = (config.mimeTypes as readonly string[]).includes(file.type);
+  
+  // 对于图片转Markdown，严格检查扩展名
+  if (taskType === 'image-to-markdown') {
+    if (!isValidExtension) {
+      return { 
+        isValid: false, 
+        error: `不支持的文件类型。允许的格式：${(config.extensions as readonly string[]).join(', ')}` 
+      };
+    }
+  } else {
+    // 其他任务类型使用扩展名或MIME类型
+    const isValidType = isValidExtension || isValidMimeType;
+    if (!isValidType) {
+      return { 
+        isValid: false, 
+        error: `不支持的文件类型。允许的格式：${(config.extensions as readonly string[]).join(', ')}` 
+      };
+    }
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * 获取文件格式配置
+ */
+export function getFileFormatConfig(taskType: TaskType) {
+  return FILE_FORMAT_CONFIG[taskType];
+}
+
+/**
+ * 获取支持的文件扩展名列表（用于HTML accept属性）
+ */
+export function getAcceptedExtensions(taskType: TaskType): string {
+  const config = FILE_FORMAT_CONFIG[taskType];
+  if (!config) return '';
+  
+  return config.extensions.join(',');
+}
+
+/**
+ * 获取支持的文件类型列表（用于HTML accept属性）
+ */
+export function getAcceptedTypes(taskType: TaskType): string {
+  const config = FILE_FORMAT_CONFIG[taskType];
+  if (!config) return '';
+  
+  return config.mimeTypes.join(',');
 } 

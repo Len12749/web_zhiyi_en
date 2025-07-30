@@ -14,12 +14,8 @@ import {
   FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints } from '@/lib/utils';
+import { calculatePoints, validateFileFormat, getAcceptedExtensions, type TaskType } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
-
-// 图片文件限制
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff', 'image/webp'];
 
 interface ProcessingStatus {
   taskId: number | null;
@@ -53,6 +49,27 @@ export default function ImageToMarkdownPage() {
     }
   }, []);
 
+  const validateAndSetFile = (file: File) => {
+    console.log('选择的文件:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
+    
+    // 使用统一的文件格式验证
+    const validation = validateFileFormat(file, 'image-to-markdown' as TaskType);
+    
+    if (!validation.isValid) {
+      setErrorMessage(validation.error || '文件格式验证失败');
+      return;
+    }
+    
+    setSelectedFile(file);
+    setErrorMessage(''); // 清除之前的错误消息
+    console.log('文件验证通过，已设置文件');
+  };
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -60,38 +77,14 @@ export default function ImageToMarkdownPage() {
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (ACCEPTED_TYPES.includes(file.type)) {
-        // 检查文件大小
-        if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的图片文件。`);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setErrorMessage(''); // 清除之前的错误消息
-      } else {
-        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
-        return;
-      }
+      validateAndSetFile(file);
     }
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (ACCEPTED_TYPES.includes(file.type)) {
-        // 检查文件大小
-        if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`文件大小超出限制。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的图片文件。`);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setErrorMessage(''); // 清除之前的错误消息
-      } else {
-        // 文件类型不正确，不设置错误消息，因为上面的UI已经有提示
-        return;
-      }
+      validateAndSetFile(file);
     }
   };
 
@@ -278,13 +271,13 @@ export default function ImageToMarkdownPage() {
                         <input
                           id="image-file-input"
                           type="file"
-                          accept="image/*"
+                          accept={getAcceptedExtensions('image-to-markdown' as TaskType)}
                           onChange={handleFileChange}
                           className="hidden"
                         />
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        支持JPG、PNG、GIF、BMP、TIFF、WEBP格式，最大 50MB
+                        支持JPG、PNG格式，最大 100MB
                       </p>
                     </div>
                   )}
