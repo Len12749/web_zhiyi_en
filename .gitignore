@@ -29,7 +29,7 @@ yarn-error.log*
 
 # TypeScript
 *.tsbuildinfo
-next-env.d.ts
+# next-env.d.ts  # 注释掉，这个文件应该被提交
 
 # IDE
 .vscode/
@@ -111,4 +111,10 @@ otput*.pdf
 !Dockerfile
 !Makefile
 !config.yaml
-!config.env 
+!config.env
+
+# 确保重要的项目文件不被忽略
+!next-env.d.ts
+!lib/**/*.ts
+!lib/**/*.js
+!types/**/*.ts 
