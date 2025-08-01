@@ -248,6 +248,7 @@ class OutputConfiguration:
     bilingual_output: bool = True          # 双语输出
     table_as_image: bool = False           # 表格作为图像输出
     debug_mode: bool = False               # 是否启用调试模式
+    original_output_options: list[str] = field(default_factory=list)  # 原始输出选项列表
 
 @dataclass
 class OutputFile:

@@ -105,6 +105,9 @@ async def parse_pdf(
     
     # 解析输出选项
     output_opts = [opt.strip() for opt in output_options.split(',') if opt.strip()]
+    # 保留原始选项列表，用于精确控制输出
+    original_output_options = output_opts.copy()
+    # 为了向后兼容，保留原有的布尔标志
     translated_only = "translated" in output_opts and "original" not in output_opts
     bilingual_output = "bilingual" in output_opts
     include_original = "original" in output_opts
@@ -142,7 +145,8 @@ async def parse_pdf(
             "target_language": target_language,
             "translated_only": translated_only,
             "bilingual_output": bilingual_output,
-            "include_original": include_original
+            "include_original": include_original,
+            "original_output_options": original_output_options
         }
     }
     
@@ -156,7 +160,8 @@ async def parse_pdf(
         target_language,
         translated_only,
         bilingual_output,
-        include_original
+        include_original,
+        original_output_options
     )
     
     return {
@@ -204,7 +209,8 @@ async def process_pdf_task(
     target_language: str,
     translated_only: bool,
     bilingual_output: bool,
-    include_original: bool
+    include_original: bool,
+    original_output_options: list[str]
 ):
     """
     处理PDF的后台任务
@@ -242,7 +248,8 @@ async def process_pdf_task(
             translated_only=translated_only,
             bilingual_output=bilingual_output,
             table_as_image=(table_format == "image"),
-            debug_mode=False
+            debug_mode=False,
+            original_output_options=original_output_options
         )
         
         # 初始化处理状态

@@ -68,8 +68,8 @@ class OutputManager:
         warnings = []
         
         try:
-            # 原文Markdown (仅在不是只要译文时生成)
-            if not config.translated_only:
+            # 原文Markdown (仅在用户选择原文时生成)
+            if "original" in config.original_output_options:
                 original_path = os.path.join(output_dir, f"{config.base_filename}.md")
                 original_content = self._generate_markdown(assembled_document, False)
                 original_size = self._save_file(original_path, original_content)
@@ -83,8 +83,8 @@ class OutputManager:
             
             # 如果启用翻译
             if config.include_translation and assembled_document.translation_enabled:
-                # 译文Markdown (仅在只要译文或不要双语时生成单独译文)
-                if config.translated_only or not config.bilingual_output:
+                # 译文Markdown (仅在用户选择译文时生成)
+                if "translated" in config.original_output_options:
                     translated_path = os.path.join(output_dir, f"{config.base_filename}-translated.md")
                     translated_content = self._generate_markdown(assembled_document, True)
                     translated_size = self._save_file(translated_path, translated_content)
@@ -97,7 +97,7 @@ class OutputManager:
                     ))
                 
                 # 双语对照 (仅在用户选择双语时生成)
-                if config.bilingual_output:
+                if "bilingual" in config.original_output_options:
                     combined_path = os.path.join(output_dir, f"{config.base_filename}-bilingual.md")
                     combined_content = self._generate_combined_markdown(assembled_document)
                     combined_size = self._save_file(combined_path, combined_content)

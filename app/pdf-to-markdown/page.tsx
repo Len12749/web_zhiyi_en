@@ -185,7 +185,7 @@ export default function PDFToMarkdownPage() {
         enableTranslation,
         ...(enableTranslation && {
           targetLanguage,
-          outputOptions,
+          translationOutput: outputOptions,
         }),
       };
 
