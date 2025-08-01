@@ -112,7 +112,7 @@ export default function AboutPage() {
               <div className="inline-flex items-center px-6 py-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
                 <Building className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
                 <span className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                  北京理工智译科技有限公司
+                  北京智通明识科技有限公司
                 </span>
               </div>
             </div>
