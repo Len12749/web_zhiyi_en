@@ -1,6 +1,0 @@
-In recent years, the rapid development of technologies has facilitated human life. However, the digital gap for the elderly has aroused a heated discussion. But I do not think the elders should be neglected in using new technologies.
-
-Multiple measures should be carried out to help bridge the digital gap for older people and make sure they share in the benefits of a smart society. First, online medical services should be simplified, and voice - led guidance should be provided. This can help the elderly easily access medical resources without being confused by complex operations. Second, payment systems for retail, catering, shopping malls, parks and other basic public services such as water and electricity must not decline to accept cash payments. This ensures that the elderly who are not proficient in digital payment can still live conveniently. Last but not least, as young people, we should patiently help teach seniors to use smartphones and become more familiar with the internet and related services. We can spend some time every week showing them how to use common apps, such as those for chatting, shopping and taking buses.
-
-Only by the above - mentioned measures can we effectively bridge the digital gap for old people and help them keep up with the pace of the digital era, enjoying the convenience brought by technology.
-

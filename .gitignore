@@ -68,6 +68,7 @@ MANIFEST
 
 # 临时文件和日志
 *.log
+temp/
 services/*/File/
 services/*/temp/
 services/*/data/temp/
@@ -78,10 +79,12 @@ services/*/temp_storage/
 services/pdf_to_markdown/data/
 services/md_translate/data/
 services/md_translate/File/
+services/*/config.env
 
 # 测试文件（保留一些示例）
 test*.pdf
 output*.pdf
+otput*.pdf
 *_temp/
 *_test/
 
