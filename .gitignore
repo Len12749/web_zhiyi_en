@@ -46,6 +46,9 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+*.pyo
+*.pyd
 *.so
 .Python
 build/
@@ -80,6 +83,7 @@ services/pdf_to_markdown/data/
 services/md_translate/data/
 services/md_translate/File/
 services/*/config.env
+services/*/md_translate/File/
 
 # 测试文件（保留一些示例）
 test*.pdf
@@ -87,6 +91,12 @@ output*.pdf
 otput*.pdf
 *_temp/
 *_test/
+*.pkl
+*.h5
+*.pth
+*.onnx
+*.safetensors
+*.bin
 
 # 但是保留重要的配置和脚本文件
 !*.config.*
@@ -99,4 +109,6 @@ otput*.pdf
 !requirements.txt
 !README.md
 !Dockerfile
-!Makefile 
+!Makefile
+!config.yaml
+!config.env 
