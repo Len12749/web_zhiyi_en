@@ -16,7 +16,7 @@ import {
   Languages
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints, validateFileFormat, getAcceptedExtensions, type TaskType } from '@/lib/utils';
+import { calculatePoints, validateFileFormat, getAcceptedExtensions, FILE_FORMAT_CONFIG, type TaskType } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
 
 interface ProcessingStatus {
@@ -56,11 +56,23 @@ export default function PDFToMarkdownPage() {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       const pages = pdfDoc.getPageCount();
+      
+      // 检查页数限制
+      const config = FILE_FORMAT_CONFIG['pdf-to-markdown'];
+      if (config.maxPages && pages > config.maxPages) {
+        setErrorMessage(`PDF页数超出限制。文件有 ${pages} 页，最多支持 ${config.maxPages} 页。请选择页数较少的PDF文件。`);
+        setSelectedFile(null);
+        setPageCount(null);
+        return;
+      }
+      
       setPageCount(pages);
       console.log(`PDF页数检测完成: ${pages}页`);
     } catch (error) {
       console.error('PDF页数检测失败:', error);
       setErrorMessage('PDF页数检测失败，请确保文件格式正确');
+      setSelectedFile(null);
+      setPageCount(null);
     } finally {
       setIsDetectingPages(false);
     }
