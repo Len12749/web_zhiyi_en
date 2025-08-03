@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "cross-env UNDICI_BODY_TIMEOUT=3600000 UNDICI_HEADERS_TIMEOUT=300000 next start -p 3000",
+    "start": "node scripts/start.js",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit push:pg",

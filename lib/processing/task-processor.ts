@@ -157,7 +157,6 @@ export class TaskProcessor {
             formatParams.targetFormat
           )
           isAsyncTask = false
-          break
 
         default:
           throw new Error(`不支持的任务类型: ${this.taskType}`)
@@ -343,6 +342,8 @@ export class TaskProcessor {
     await failTask(this.taskId, 'TIMEOUT_ERROR', '任务处理超时')
     throw new Error('任务处理超时')
   }
+
+
 
 
 

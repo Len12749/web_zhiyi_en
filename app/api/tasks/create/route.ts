@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "缺少必要参数" },
         { status: 400 }
-      );
+      )
     }
 
     // 验证文件大小限制 (300MB)
@@ -75,15 +75,27 @@ export async function POST(request: NextRequest) {
           await processTaskAsync(result.taskId!, userId, taskType, inputStoragePath, processingParams);
         } catch (error) {
           console.error(`异步任务处理失败 [${result.taskId}]:`, error);
-          // 推送失败消息
-        sseConnectionManager.pushToTask(result.taskId!, {
-          type: "status_update",
-          data: {
-              status: "failed",
-              progress: 0,
-              message: error instanceof Error ? error.message : "处理失败",
+          
+          // 更新数据库状态为失败
+          try {
+            const { failTask } = await import('@/actions/tasks/task-actions');
+            await failTask(result.taskId!, 
+              "ASYNC_PROCESSING_ERROR",
+              error instanceof Error ? error.message : "处理失败"
+            );
+          } catch (dbError) {
+            console.error(`更新任务失败状态到数据库失败 [${result.taskId}]:`, dbError);
           }
-        });
+          
+          // 推送失败消息到SSE
+          sseConnectionManager.pushToTask(result.taskId!, {
+            type: "status_update",
+            data: {
+                status: "failed",
+                progress: 0,
+                message: error instanceof Error ? error.message : "处理失败",
+            }
+          });
         }
       }, 500); // 延迟500毫秒，足够SSE连接建立
 
@@ -118,5 +130,4 @@ async function processTaskAsync<T extends TaskType>(
 ) {
   const processor = new TaskProcessor(taskId, userId, taskType);
   await processor.processTaskFromPath(filePath, params);
-} 
- 
+}

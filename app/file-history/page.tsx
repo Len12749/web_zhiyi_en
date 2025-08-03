@@ -53,7 +53,7 @@ const statusColors: Record<TaskStatus, string> = {
   completed: 'text-green-600 bg-green-100 dark:bg-green-900/20',
   processing: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20',
   failed: 'text-red-600 bg-red-100 dark:bg-red-900/20',
-  pending: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20'
+  pending: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20'
 };
 
 const statusIcons: Record<TaskStatus, any> = {
@@ -308,7 +308,6 @@ export default function FileHistoryPage() {
                 <option value="completed">已完成</option>
                 <option value="processing">处理中</option>
                 <option value="failed">失败</option>
-                <option value="pending">等待中</option>
               </select>
 
               {/* 批量管理按钮 */}
@@ -427,11 +426,10 @@ export default function FileHistoryPage() {
                         <div className="col-span-2">
                           <div className="flex items-center space-x-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[file.taskStatus]}`}>
-                              <StatusIcon className={`h-3 w-3 mr-1 ${file.taskStatus === 'processing' ? 'animate-spin' : ''}`} />
+                              <StatusIcon className={`h-3 w-3 mr-1 ${(file.taskStatus === 'processing' || file.taskStatus === 'pending') ? 'animate-spin' : ''}`} />
                               {file.taskStatus === 'completed' && '已完成'}
-                              {file.taskStatus === 'processing' && '处理中'}
+                              {(file.taskStatus === 'processing' || file.taskStatus === 'pending') && '处理中'}
                               {file.taskStatus === 'failed' && '失败'}
-                              {file.taskStatus === 'pending' && '等待中'}
                             </span>
                           </div>
                           {file.taskStatus === 'failed' && file.errorMessage && (

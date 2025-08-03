@@ -365,18 +365,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-// PDF页数检测
-export async function detectPDFPageCount(file: File): Promise<number> {
-  try {
-    const { PDFDocument } = await import('pdf-lib');
-    const arrayBuffer = await file.arrayBuffer();
-    const pdfDoc = await PDFDocument.load(arrayBuffer);
-    return pdfDoc.getPageCount();
-  } catch (error) {
-    console.error('检测PDF页数失败:', error);
-    throw new Error('无法检测PDF页数，请确保文件格式正确');
-  }
-}
+// PDF页数检测已移至 lib/pdf-utils.ts
 
 // 文件格式验证配置
 export const FILE_FORMAT_CONFIG = {

@@ -107,10 +107,5 @@ export function generateRandomString(length: number): string {
   return result;
 }
 
-// 服务器启动时自动清理所有SSE连接
-if (typeof window === 'undefined') {
-  // 只在服务器端执行
-  console.log('🚀 服务器启动，清理所有SSE连接...');
-  sseConnectionManager.cleanup();
-}
+// 注意：自动清理逻辑已移至启动脚本，避免模块导入时重复执行
  

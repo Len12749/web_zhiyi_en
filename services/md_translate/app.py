@@ -8,12 +8,13 @@ MD翻译后台服务
 import os
 import tempfile
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 import uuid
 from datetime import datetime
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
 from fastapi.responses import PlainTextResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -26,6 +27,9 @@ from markdown_translator.content_optimizer import optimize_content
 # 创建临时目录
 TEMP_DIR = Path(tempfile.gettempdir()) / "md_translate_service"
 TEMP_DIR.mkdir(exist_ok=True)
+
+# 任务状态管理
+task_status: Dict[str, Dict[str, Any]] = {}
 
 # 创建FastAPI应用
 app = FastAPI(title="MD翻译服务", description="Markdown文件翻译API", version="1.0.0")
@@ -70,6 +74,7 @@ async def health_check():
 
 @app.post("/translate")
 async def translate_markdown(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="要翻译的Markdown文件"),
     sourceLanguage: str = Form("auto", description="源语言代码"),
     targetLanguage: str = Form("zh", description="目标语言代码")
@@ -136,65 +141,84 @@ async def translate_markdown(
         source_lang = LANGUAGE_MAPPING[sourceLanguage]
         target_lang = LANGUAGE_MAPPING[targetLanguage]
         
-        # 如果源语言和目标语言相同，直接返回原文
+        # 如果源语言和目标语言相同，直接返回成功状态
         if source_lang == target_lang and source_lang != 'auto':
-            return PlainTextResponse(
-                content=file_content,
-                media_type="text/markdown",
-                headers={
-                    "Content-Disposition": f'attachment; filename="{file.filename}"',
-                    "X-Translation-Status": "skipped-same-language"
-                }
-            )
-        
-        # 执行翻译流程
-        try:
-            # 1. 智能分块
-            chunks = await optimize_text(file_content)
-            
-            # 2. 内容优化
-            optimized_chunks = await optimize_content(chunks)
-            
-            # 3. 翻译
-            translated_content = await translate_document(optimized_chunks, source_lang, target_lang)
-            
-            # 生成翻译后的文件名
-            original_name = file.filename
-            name_parts = original_name.rsplit('.', 1)
-            if len(name_parts) == 2:
-                translated_filename = f"{name_parts[0]}_{target_lang}.{name_parts[1]}"
-            else:
-                translated_filename = f"{original_name}_{target_lang}"
-            
-            # 生成任务ID并存储文件
             task_id = str(uuid.uuid4())
             
-                        # 存储翻译结果
-            output_file = TEMP_DIR / f"{task_id}.md"
+            # 创建任务专用目录
+            task_dir = TEMP_DIR / task_id
+            task_dir.mkdir(exist_ok=True)
+            
+            # 直接保存原文件
+            output_file = task_dir / "result.md"
             with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(translated_content)
+                f.write(file_content)
             
-            # 获取文件大小
-            file_size = output_file.stat().st_size
-            
-            # 返回任务ID和文件信息
-            return {
-                "task_id": task_id,
-                "filename": translated_filename,
-                "original_filename": original_name,
-                "source_language": source_lang,
-                "target_language": target_lang,
-                "file_size": file_size,
-                "timestamp": datetime.now().isoformat(),
-                "status": "completed"
+            # 初始化任务状态
+            task_status[task_id] = {
+                "status": "completed",
+                "progress": 100,
+                "message": "源语言和目标语言相同，无需翻译",
+                "created_at": datetime.now().isoformat(),
+                "filename": file.filename,
+                "file_size": len(content),
+                "result_file": str(output_file),
+                "error": None,
+                "processing_options": {
+                    "source_language": sourceLanguage,
+                    "target_language": targetLanguage
+                }
             }
             
-        except Exception as e:
-            # 翻译过程中出错
-            raise HTTPException(
-                status_code=500,
-                detail=f"翻译处理失败: {str(e)}"
-            )
+            return {
+                "task_id": task_id,
+                "status": "completed",
+                "message": "源语言和目标语言相同，无需翻译"
+            }
+        
+        # 生成任务ID
+        task_id = str(uuid.uuid4())
+        
+        # 创建任务专用目录
+        task_dir = TEMP_DIR / task_id
+        task_dir.mkdir(exist_ok=True)
+        
+        # 保存上传的文件
+        input_file = task_dir / "input.md"
+        with open(input_file, "w", encoding='utf-8') as buffer:
+            buffer.write(file_content)
+        
+        # 初始化任务状态
+        task_status[task_id] = {
+            "status": "processing",
+            "progress": 0,
+            "message": "开始处理Markdown翻译",
+            "created_at": datetime.now().isoformat(),
+            "filename": file.filename,
+            "file_size": len(content),
+            "output_dir": str(task_dir),
+            "result_file": None,
+            "error": None,
+            "processing_options": {
+                "source_language": sourceLanguage,
+                "target_language": targetLanguage
+            }
+        }
+        
+        # 启动后台任务
+        background_tasks.add_task(
+            process_markdown_translation_task,
+            task_id,
+            str(input_file),
+            source_lang,
+            target_lang
+        )
+        
+        return {
+            "task_id": task_id,
+            "status": "processing",
+            "message": "Markdown翻译任务已启动"
+        }
         
     except HTTPException:
         raise
@@ -203,6 +227,15 @@ async def translate_markdown(
             status_code=500,
             detail=f"服务器内部错误: {str(e)}"
         )
+
+
+@app.get("/status/{task_id}")
+async def get_task_status(task_id: str):
+    """查询任务状态"""
+    if task_id not in task_status:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    
+    return task_status[task_id]
 
 
 @app.get("/download/{task_id}")
@@ -223,14 +256,33 @@ async def download_result(task_id: str):
         except ValueError:
             raise HTTPException(status_code=400, detail="无效的任务ID")
         
-        # 查找文件
-        output_file = TEMP_DIR / f"{task_id}.md"
+        # 检查任务是否存在
+        if task_id not in task_status:
+            raise HTTPException(status_code=404, detail="任务不存在")
         
-        if not output_file.exists():
-            raise HTTPException(status_code=404, detail="文件不存在或已过期")
+        task_info = task_status[task_id]
+        
+        # 检查任务是否完成
+        if task_info["status"] != "completed":
+            raise HTTPException(status_code=400, detail="任务尚未完成")
+        
+        # 检查结果文件是否存在
+        if not task_info["result_file"] or not os.path.exists(task_info["result_file"]):
+            raise HTTPException(status_code=404, detail="结果文件不存在或已过期")
+        
+        # 生成下载文件名
+        original_name = task_info["filename"]
+        processing_options = task_info["processing_options"]
+        target_language = processing_options["target_language"]
+        
+        name_parts = original_name.rsplit('.', 1)
+        if len(name_parts) == 2:
+            download_filename = f"{name_parts[0]}_{target_language}.{name_parts[1]}"
+        else:
+            download_filename = f"{original_name}_{target_language}"
         
         # 读取文件内容
-        with open(output_file, 'r', encoding='utf-8') as f:
+        with open(task_info["result_file"], 'r', encoding='utf-8') as f:
             content = f.read()
         
         # 返回文件
@@ -238,7 +290,7 @@ async def download_result(task_id: str):
             content=content,
             media_type="text/markdown",
             headers={
-                "Content-Disposition": f'attachment; filename="translated_{task_id}.md"'
+                "Content-Disposition": f'attachment; filename="{download_filename}"'
             }
         )
         
@@ -246,6 +298,102 @@ async def download_result(task_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"下载文件错误: {str(e)}")
+
+
+async def process_markdown_translation_task(
+    task_id: str,
+    file_path: str,
+    source_lang: str,
+    target_lang: str
+):
+    """
+    异步处理Markdown翻译任务 - 使用线程池避免阻塞事件循环
+    """
+    # 使用线程池执行同步的CPU密集型任务
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as executor:
+        await loop.run_in_executor(
+            executor, 
+            _process_markdown_translation_task_sync,
+            task_id, file_path, source_lang, target_lang
+        )
+
+
+def _process_markdown_translation_task_sync(
+    task_id: str,
+    file_path: str,
+    source_lang: str,
+    target_lang: str
+):
+    """
+    同步处理Markdown翻译的后台任务
+    """
+    try:
+        # 更新任务状态
+        task_status[task_id]["message"] = "读取文件内容"
+        task_status[task_id]["progress"] = 10
+        
+        # 读取输入文件
+        with open(file_path, 'r', encoding='utf-8') as f:
+            file_content = f.read()
+        
+        # 准备输出文件路径
+        task_dir = Path(task_status[task_id]["output_dir"])
+        output_file_path = task_dir / "result.md"
+        
+        # 执行翻译流程
+        task_status[task_id]["message"] = "智能分块处理"
+        task_status[task_id]["progress"] = 30
+        
+        # 注意：这里需要在主线程中运行异步函数
+        import asyncio
+        
+        # 创建新的事件循环来运行异步函数
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            # 1. 智能分块
+            chunks = loop.run_until_complete(optimize_text(file_content))
+            
+            task_status[task_id]["message"] = "内容优化"
+            task_status[task_id]["progress"] = 50
+            
+            # 2. 内容优化
+            optimized_chunks = loop.run_until_complete(optimize_content(chunks))
+            
+            task_status[task_id]["message"] = "正在翻译"
+            task_status[task_id]["progress"] = 70
+            
+            # 3. 翻译
+            translated_content = loop.run_until_complete(translate_document(optimized_chunks, source_lang, target_lang))
+            
+        finally:
+            loop.close()
+        
+        # 保存翻译结果
+        task_status[task_id]["message"] = "保存翻译结果"
+        task_status[task_id]["progress"] = 90
+        
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            f.write(translated_content)
+        
+        # 更新任务状态为完成
+        task_status[task_id]["status"] = "completed"
+        task_status[task_id]["progress"] = 100
+        task_status[task_id]["message"] = "翻译完成"
+        task_status[task_id]["result_file"] = str(output_file_path)
+        task_status[task_id]["file_size"] = output_file_path.stat().st_size
+        
+        print(f"Markdown翻译任务 {task_id} 完成")
+        
+    except Exception as e:
+        # 处理失败
+        error_message = f"Markdown翻译处理失败: {str(e)}"
+        task_status[task_id]["status"] = "failed"
+        task_status[task_id]["error"] = error_message
+        task_status[task_id]["message"] = error_message
+        print(f"Markdown翻译任务 {task_id} 失败: {error_message}")
 
 
 if __name__ == "__main__":

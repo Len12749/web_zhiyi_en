@@ -408,7 +408,10 @@ export default function PDFToMarkdownPage() {
                       <AlertCircle className="h-5 w-5 text-red-600" />
                     )}
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {processingStatus.message}
+                      {processingStatus.status === 'uploading' ? '上传中' : 
+                       processingStatus.status === 'processing' ? '处理中' : 
+                       processingStatus.status === 'completed' ? '已完成' : 
+                       processingStatus.message}
                     </span>
                   </div>
 

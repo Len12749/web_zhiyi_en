@@ -4,34 +4,22 @@
 import { sseConnectionManager } from './connection-manager';
 import { notificationSSEManager } from './notification-manager';
 
-// 服务器启动时自动清理所有SSE连接
-if (typeof window === 'undefined') {
-  // 只在服务器端执行
-  console.log('🚀 服务器启动，开始清理所有SSE连接...');
-  
-  // 清理任务SSE连接
-  sseConnectionManager.cleanup();
-  
-  // 清理通知SSE连接
-  notificationSSEManager.cleanup();
-  
-  console.log('✅ 所有SSE连接清理完成');
-}
+// 注意：自动清理逻辑已移至启动脚本，避免模块导入时重复执行
 
 // 导出清理函数，供手动调用
 export function cleanupAllSSEConnections() {
-  console.log('🧹 手动清理所有SSE连接...');
-  
   const taskStats = sseConnectionManager.getStats();
   const notificationStats = notificationSSEManager.getStats();
+  const totalConnections = taskStats.totalConnections + notificationStats.totalConnections;
   
   sseConnectionManager.cleanup();
   notificationSSEManager.cleanup();
   
-  console.log('📊 清理前统计:');
-  console.log(`  - 任务SSE连接: ${taskStats.totalConnections} 个`);
-  console.log(`  - 通知SSE连接: ${notificationStats.totalConnections} 个`);
-  console.log('✅ 所有SSE连接已清理完成');
+  if (totalConnections > 0) {
+    console.log(`✅ 已清理 ${totalConnections} 个SSE连接`);
+  } else {
+    console.log('✅ SSE连接清理完成（无遗留连接）');
+  }
 }
 
 // 导出获取统计信息的函数
