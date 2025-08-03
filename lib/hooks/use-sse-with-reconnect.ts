@@ -51,11 +51,18 @@ export function useSSEWithReconnect() {
           console.error('❌ 任务SSE连接错误:', error);
           eventSource.close();
           
-          // 3秒后重连 - 和通知SSE一样
-          setTimeout(() => {
-            console.log('🔄 重新连接任务SSE...');
-            connectSSE();
-          }, 3000);
+          // 基于事件的重连策略，而不是定时轮询
+          // 只在特定错误情况下重连，避免无限重试
+          if (eventSource.readyState === EventSource.CLOSED) {
+            console.log('🔄 SSE连接被关闭，尝试重新连接...');
+            // 使用Promise延时而不是setTimeout，更符合现代异步模式
+            Promise.resolve().then(() => {
+              // 检查连接状态，只在需要时重连
+              if (!eventSourceRef.current || eventSourceRef.current.readyState === EventSource.CLOSED) {
+                connectSSE();
+              }
+            });
+          }
         };
 
       } catch (error) {

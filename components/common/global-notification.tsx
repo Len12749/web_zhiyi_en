@@ -103,13 +103,17 @@ export default function GlobalNotification() {
           console.error('❌ 通知SSE连接错误:', error);
           eventSource.close();
           
-          // 3秒后重连
-          setTimeout(() => {
-            if (isSignedIn) {
-              console.log('🔄 重新连接通知SSE...');
-              connectSSE();
-            }
-          }, 3000);
+          // 基于事件的重连策略，避免轮询
+          // 只在用户仍然登录且连接确实被关闭时重连
+          if (isSignedIn && eventSource.readyState === EventSource.CLOSED) {
+            console.log('🔄 通知SSE连接被关闭，尝试重新连接...');
+            // 使用Promise而不是setTimeout，符合事件驱动架构
+            Promise.resolve().then(() => {
+              if (isSignedIn && (!eventSourceRef.current || eventSourceRef.current.readyState === EventSource.CLOSED)) {
+                connectSSE();
+              }
+            });
+          }
         };
 
       } catch (error) {
