@@ -16,6 +16,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -85,7 +86,8 @@ async def parse_pdf(
     table_mode: str = Form("markdown"),
     enable_translation: str = Form("false"),
     target_language: str = Form("zh"),
-    output_options: str = Form("original")
+    output_options: str = Form("original"),
+    skip_rotation_detection: str = Form("false")
 ):
     """
     解析PDF文件
@@ -96,12 +98,16 @@ async def parse_pdf(
         enable_translation: 是否启用翻译 ("true" 或 "false")
         target_language: 目标语言
         output_options: 输出选项，逗号分隔 ("original,translated,bilingual")
+        skip_rotation_detection: 是否跳过旋转检测 ("true" 或 "false")
     
     Returns:
         任务ID和状态
     """
     # 解析翻译参数
     include_translation = enable_translation.lower() == "true"
+    
+    # 解析旋转检测参数
+    skip_rotation = skip_rotation_detection.lower() == "true"
     
     # 解析输出选项
     output_opts = [opt.strip() for opt in output_options.split(',') if opt.strip()]
@@ -146,7 +152,8 @@ async def parse_pdf(
             "translated_only": translated_only,
             "bilingual_output": bilingual_output,
             "include_original": include_original,
-            "original_output_options": original_output_options
+            "original_output_options": original_output_options,
+            "skip_rotation_detection": skip_rotation
         }
     }
     
@@ -161,7 +168,8 @@ async def parse_pdf(
         translated_only,
         bilingual_output,
         include_original,
-        original_output_options
+        original_output_options,
+        skip_rotation
     )
     
     return {
@@ -210,10 +218,37 @@ async def process_pdf_task(
     translated_only: bool,
     bilingual_output: bool,
     include_original: bool,
-    original_output_options: list[str]
+    original_output_options: list[str],
+    skip_rotation_detection: bool
 ):
     """
-    处理PDF的后台任务
+    异步处理PDF任务 - 使用线程池避免阻塞事件循环
+    """
+    # 使用线程池执行同步的CPU密集型任务
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as executor:
+        await loop.run_in_executor(
+            executor, 
+            _process_pdf_task_sync,
+            task_id, pdf_path, table_format, include_translation, target_language,
+            translated_only, bilingual_output, include_original, original_output_options,
+            skip_rotation_detection
+        )
+
+def _process_pdf_task_sync(
+    task_id: str,
+    pdf_path: str,
+    table_format: str,
+    include_translation: bool,
+    target_language: str,
+    translated_only: bool,
+    bilingual_output: bool,
+    include_original: bool,
+    original_output_options: list[str],
+    skip_rotation_detection: bool
+):
+    """
+    同步处理PDF的后台任务
     """
     try:
         # 更新任务状态
