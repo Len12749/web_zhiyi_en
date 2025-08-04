@@ -81,7 +81,8 @@ async def translate_pdf(
     file: UploadFile = File(..., description="要翻译的PDF文件"),
     sourceLanguage: str = Form("en", description="源语言代码"),
     targetLanguage: str = Form("zh", description="目标语言代码"),
-    sideBySide: bool = Form(False, description="是否并排显示原文和译文")
+    sideBySide: bool = Form(False, description="是否并排显示原文和译文"),
+    callback_url: str | None = Form(None, description="任务完成回调地址，可选")
 ):
     """
     翻译PDF文件，保留原始排版 - 异步处理
@@ -153,6 +154,7 @@ async def translate_pdf(
             # 初始化任务状态
             task_status[task_id] = {
                 "status": "completed",
+                "callback_url": callback_url,
                 "progress": 100,
                 "message": "源语言和目标语言相同，无需翻译",
                 "created_at": datetime.now().isoformat(),
@@ -194,6 +196,7 @@ async def translate_pdf(
             "filename": file.filename,
             "file_size": len(content),
             "output_dir": str(task_dir),
+            "callback_url": callback_url,
             "result_file": None,
             "error": None,
             "processing_options": {
@@ -210,7 +213,8 @@ async def translate_pdf(
             str(input_file),
             source_lang,
             target_lang,
-            sideBySide
+            sideBySide,
+            callback_url
         )
         
         return {
@@ -298,7 +302,8 @@ async def process_pdf_translation_task(
     pdf_path: str,
     source_lang: str,
     target_lang: str,
-    side_by_side: bool
+    side_by_side: bool,
+    callback_url: str | None = None
 ):
     """
     异步处理PDF翻译任务 - 使用线程池避免阻塞事件循环
@@ -309,7 +314,7 @@ async def process_pdf_translation_task(
         await loop.run_in_executor(
             executor, 
             _process_pdf_translation_task_sync,
-            task_id, pdf_path, source_lang, target_lang, side_by_side
+            task_id, pdf_path, source_lang, target_lang, side_by_side, callback_url
         )
 
 
@@ -318,7 +323,8 @@ def _process_pdf_translation_task_sync(
     pdf_path: str,
     source_lang: str,
     target_lang: str,
-    side_by_side: bool
+    side_by_side: bool,
+    callback_url: str | None = None
 ):
     """
     同步处理PDF翻译的后台任务
@@ -366,6 +372,18 @@ def _process_pdf_translation_task_sync(
         task_status[task_id]["file_size"] = output_pdf_path.stat().st_size
         
         print(f"PDF翻译任务 {task_id} 完成")
+        # 任务完成后回调
+        if callback_url:
+            try:
+                import requests, json
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "completed",
+                    "message": "翻译完成"
+                }, timeout=10)
+                print(f"✅ 已向回调地址发送完成通知: {callback_url}")
+            except Exception as cb_err:
+                print(f"⚠️ 回调通知失败: {cb_err}")
         
     except Exception as e:
         # 处理失败
@@ -374,6 +392,18 @@ def _process_pdf_translation_task_sync(
         task_status[task_id]["error"] = error_message
         task_status[task_id]["message"] = error_message
         print(f"PDF翻译任务 {task_id} 失败: {error_message}")
+        # 回调失败通知
+        if callback_url:
+            try:
+                import requests, json
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "failed",
+                    "message": error_message
+                }, timeout=10)
+                print(f"✅ 已向回调地址发送失败通知: {callback_url}")
+            except Exception as cb_err:
+                print(f"⚠️ 回调通知失败: {cb_err}")
 
 
 if __name__ == "__main__":

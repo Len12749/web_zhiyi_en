@@ -138,6 +138,8 @@ export class PDFToMarkdownClient extends CoreServiceClient {
       }
     }
 
+    const callbackUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/api/tasks/webhook'
+    additionalData.callback_url = callbackUrl
     return this.uploadFile('/parse', file, additionalData)
   }
 
@@ -190,9 +192,11 @@ export class MarkdownTranslationClient extends CoreServiceClient {
     sourceLanguage: string,
     targetLanguage: string
   ): Promise<{ task_id: string; message: string }> {
+    const callbackUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/api/tasks/webhook'
     return this.uploadFile('/translate', file, {
-      sourceLanguage: sourceLanguage,
-      targetLanguage: targetLanguage,
+      sourceLanguage,
+      targetLanguage,
+      callback_url: callbackUrl,
     })
   }
 
@@ -220,9 +224,11 @@ export class PDFTranslationClient extends CoreServiceClient {
     sourceLanguage: string,
     targetLanguage: string
   ): Promise<{ task_id: string; message: string }> {
+    const callbackUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/api/tasks/webhook'
     return this.uploadFile('/translate-pdf', file, {
-      sourceLanguage: sourceLanguage,
-      targetLanguage: targetLanguage,
+      sourceLanguage,
+      targetLanguage,
+      callback_url: callbackUrl,
     })
   }
 

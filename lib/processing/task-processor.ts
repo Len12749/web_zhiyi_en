@@ -40,10 +40,11 @@ export class TaskProcessor {
   private taskType: TaskType
   private externalTaskId?: string
 
-  constructor(taskId: number, userId: string, taskType: TaskType) {
+  constructor(taskId: number, userId: string, taskType: TaskType, externalTaskId?: string) {
     this.taskId = taskId
     this.userId = userId
     this.taskType = taskType
+    this.externalTaskId = externalTaskId
   }
 
   // 计算任务所需积分 - 使用统一的精确计算逻辑
@@ -163,15 +164,16 @@ export class TaskProcessor {
           throw new Error(`不支持的任务类型: ${this.taskType}`)
       }
 
-      if (isAsyncTask && result.task_id) {
-        // 异步任务：保存外部任务ID并开始监控
-        console.log(`[${this.taskId}] 异步任务，外部任务ID: ${result.task_id}`)
-        this.externalTaskId = result.task_id
-        await updateTaskStatus(this.taskId, 'processing', 10, '任务已提交，开始处理...', result.task_id)
-        
-        await this.pushStatusUpdate('processing', 10, '任务已提交，开始处理...')
-        await this.monitorAsyncTask()
-      } else {
+              if (isAsyncTask && result.task_id) {
+          // 异步任务：保存外部任务ID，任务交由外部回调完成，不再本地轮询
+          console.log(`[${this.taskId}] 异步任务，外部任务ID: ${result.task_id}`)
+          this.externalTaskId = result.task_id
+          await updateTaskStatus(this.taskId, 'processing', 10, '任务已提交，等待外部完成...', result.task_id)
+
+          // 立即向前端推送当前状态，没有本地轮询
+          await this.pushStatusUpdate('processing', 10, '任务已提交，等待外部完成...')
+          return
+        } else {
         // 同步任务：直接处理结果
         console.log(`[${this.taskId}] 同步任务 ${this.taskType}，直接处理结果`)
         await this.handleSyncResult(result)
@@ -349,6 +351,11 @@ export class TaskProcessor {
 
 
   // 下载并保存结果
+  // 供Webhook回调调用，用于完成异步任务（下载结果并更新状态）
+  public async completeExternalTask(): Promise<void> {
+    await this.downloadResult();
+  }
+
   private async downloadResult(): Promise<void> {
     if (!this.externalTaskId) {
       throw new Error('外部任务ID未设置')

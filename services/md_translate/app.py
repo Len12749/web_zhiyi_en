@@ -77,7 +77,8 @@ async def translate_markdown(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="要翻译的Markdown文件"),
     sourceLanguage: str = Form("auto", description="源语言代码"),
-    targetLanguage: str = Form("zh", description="目标语言代码")
+    targetLanguage: str = Form("zh", description="目标语言代码"),
+    callback_url: str | None = Form(None, description="任务完成回调地址，可选")
 ):
     """
     翻译Markdown文件
@@ -157,6 +158,7 @@ async def translate_markdown(
             # 初始化任务状态
             task_status[task_id] = {
                 "status": "completed",
+                "callback_url": callback_url,
                 "progress": 100,
                 "message": "源语言和目标语言相同，无需翻译",
                 "created_at": datetime.now().isoformat(),
@@ -170,6 +172,18 @@ async def translate_markdown(
                 }
             }
             
+                    # 如果有回调地址，发送完成通知
+            if callback_url:
+                try:
+                    import requests, json
+                    requests.post(callback_url, json={
+                        "externalTaskId": task_id,
+                        "status": "completed",
+                        "message": "源语言和目标语言相同，无需翻译"
+                    }, timeout=10)
+                    print(f"✅ 已向回调地址发送完成通知: {callback_url}")
+                except Exception as cb_err:
+                    print(f"⚠️ 回调通知失败: {cb_err}")
             return {
                 "task_id": task_id,
                 "status": "completed",
@@ -197,6 +211,7 @@ async def translate_markdown(
             "filename": file.filename,
             "file_size": len(content),
             "output_dir": str(task_dir),
+            "callback_url": callback_url,
             "result_file": None,
             "error": None,
             "processing_options": {
@@ -211,7 +226,8 @@ async def translate_markdown(
             task_id,
             str(input_file),
             source_lang,
-            target_lang
+            target_lang,
+            callback_url
         )
         
         return {
@@ -304,7 +320,8 @@ async def process_markdown_translation_task(
     task_id: str,
     file_path: str,
     source_lang: str,
-    target_lang: str
+    target_lang: str,
+    callback_url: str | None = None
 ):
     """
     异步处理Markdown翻译任务 - 使用线程池避免阻塞事件循环
@@ -315,7 +332,7 @@ async def process_markdown_translation_task(
         await loop.run_in_executor(
             executor, 
             _process_markdown_translation_task_sync,
-            task_id, file_path, source_lang, target_lang
+            task_id, file_path, source_lang, target_lang, callback_url
         )
 
 
@@ -323,7 +340,8 @@ def _process_markdown_translation_task_sync(
     task_id: str,
     file_path: str,
     source_lang: str,
-    target_lang: str
+    target_lang: str,
+    callback_url: str | None = None
 ):
     """
     同步处理Markdown翻译的后台任务
@@ -386,6 +404,18 @@ def _process_markdown_translation_task_sync(
         task_status[task_id]["file_size"] = output_file_path.stat().st_size
         
         print(f"Markdown翻译任务 {task_id} 完成")
+        # 任务完成后回调
+        if callback_url:
+            try:
+                import requests, json
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "completed",
+                    "message": "翻译完成"
+                }, timeout=10)
+                print(f"✅ 已向回调地址发送完成通知: {callback_url}")
+            except Exception as cb_err:
+                print(f"⚠️ 回调通知失败: {cb_err}")
         
     except Exception as e:
         # 处理失败
@@ -394,6 +424,18 @@ def _process_markdown_translation_task_sync(
         task_status[task_id]["error"] = error_message
         task_status[task_id]["message"] = error_message
         print(f"Markdown翻译任务 {task_id} 失败: {error_message}")
+        # 回调失败通知
+        if callback_url:
+            try:
+                import requests, json
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "failed",
+                    "message": error_message
+                }, timeout=10)
+                print(f"✅ 已向回调地址发送失败通知: {callback_url}")
+            except Exception as cb_err:
+                print(f"⚠️ 回调通知失败: {cb_err}")
 
 
 if __name__ == "__main__":
