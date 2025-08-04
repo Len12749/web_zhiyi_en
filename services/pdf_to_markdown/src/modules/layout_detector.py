@@ -180,6 +180,9 @@ class LayoutDetector:
         for page_idx, page_info in enumerate(pages_info):
             page_start_time = time.time()
             
+            # 添加当前处理页数的日志输出
+            print(f"正在处理第 {page_idx + 1}/{len(pages_info)} 页...")
+            
             if self.debug_mode:
                 print(f"正在处理页面 {page_info.page_num}/{len(pages_info)}...")
             
