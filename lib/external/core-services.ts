@@ -143,15 +143,7 @@ export class PDFToMarkdownClient extends CoreServiceClient {
     return this.uploadFile('/parse', file, additionalData)
   }
 
-  async getTaskStatus(taskId: string): Promise<{
-    task_id: string
-    status: string
-    progress: number
-    message?: string
-    result_path?: string
-  }> {
-    return this.makeRequest(`/status/${taskId}`)
-  }
+  // ✅ 已移除getTaskStatus方法，使用webhook回调替代轮询
 
   async downloadResult(taskId: string): Promise<Blob> {
     const response = await fetch(`${this.baseURL}/download/${taskId}`, {
@@ -177,17 +169,7 @@ export class ImageToMarkdownClient extends CoreServiceClient {
     return this.uploadFile('/recognize', file, { callback_url: callbackUrl })
   }
 
-  async getTaskStatus(taskId: string): Promise<any> {
-    const response = await fetch(`${this.baseURL}/status/${taskId}`, {
-      signal: AbortSignal.timeout(this.timeout)
-    })
-
-    if (!response.ok) {
-      throw new Error(`获取任务状态失败: ${response.status} ${response.statusText}`)
-    }
-
-    return response.json()
-  }
+  // ✅ 已移除getTaskStatus方法，使用webhook回调替代轮询
 
   async downloadResult(taskId: string): Promise<Blob> {
     const response = await fetch(`${this.baseURL}/download/${taskId}`, {
@@ -319,17 +301,7 @@ export class FormatConversionClient extends CoreServiceClient {
     return result
   }
 
-  async getTaskStatus(taskId: string): Promise<any> {
-    const response = await fetch(`${this.baseURL}/status/${taskId}`, {
-      signal: AbortSignal.timeout(this.timeout)
-    })
-
-    if (!response.ok) {
-      throw new Error(`获取任务状态失败: ${response.status} ${response.statusText}`)
-    }
-
-    return response.json()
-  }
+  // ✅ 已移除getTaskStatus方法，使用webhook回调替代轮询
 
   async downloadResult(taskId: string): Promise<Blob> {
     const response = await fetch(`${this.baseURL}/download/${taskId}`, {

@@ -165,7 +165,7 @@ export class TaskProcessor {
       }
 
               if (isAsyncTask && result.task_id) {
-          // 异步任务：保存外部任务ID，启动监控
+          // 异步任务：保存外部任务ID，等待webhook回调
           console.log(`[${this.taskId}] 异步任务，外部任务ID: ${result.task_id}`)
           this.externalTaskId = result.task_id
           await updateTaskStatus(this.taskId, 'processing', 10, '任务已提交，等待外部完成...', result.task_id)
@@ -276,10 +276,6 @@ export class TaskProcessor {
         return 'application/octet-stream'
     }
   }
-
-  // ✅ 已移除monitorAsyncTask方法，所有任务都使用webhook回调，无需轮询监控
-
-
 
 
 

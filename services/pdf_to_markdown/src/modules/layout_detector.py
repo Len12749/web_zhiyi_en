@@ -2,6 +2,7 @@ import os
 import time
 import numpy as np
 import paddlex
+import threading
 from typing import List, Optional, Dict, Tuple
 import cv2
 import psutil
@@ -29,6 +30,10 @@ class LayoutDetector:
     支持多种元素类型的检测和分类，为后续内容解析和阅读顺序分析提供基础。
     可选择GPU加速以提高处理大型文档的速度。
     """
+    
+    # 类级别的模型加载锁，确保并发安全
+    _model_lock = threading.Lock()
+    _global_model_cache = {}
     
     def __init__(self, model_dir: str = None, use_gpu: bool = False, confidence_threshold: float = 0.5, debug_mode: bool = False):
         """
@@ -96,21 +101,50 @@ class LayoutDetector:
     
     def load_model(self) -> bool:
         """
-        加载版面检测模型
+        线程安全的版面检测模型加载方法
+        
+        使用类级别锁和模型缓存，避免并发加载冲突
+        
         Returns:
-            加载是否成功
+            bool: 是否成功加载模型
         """
-        start_time = time.time()
-        try:
-            device = 'gpu' if self.use_gpu else 'cpu'
-            self.predictor = paddlex.create_predictor('PP-DocLayout-L', self.model_dir, device=device)
-            if self.debug_mode:
-                print(f"版面检测模型加载成功，耗时: {time.time() - start_time:.2f}秒")
+        # 如果模型已加载，直接返回
+        if hasattr(self, 'predictor') and self.predictor:
             return True
-        except Exception as e:
-            if self.debug_mode:
+        
+        # 创建模型缓存键
+        device = 'gpu' if self.use_gpu else 'cpu'
+        cache_key = f"PP-DocLayout-L_{self.model_dir}_{device}"
+        
+        # 使用类级别锁保证线程安全
+        with self._model_lock:
+            # 双重检查：锁内再次检查是否已加载
+            if hasattr(self, 'predictor') and self.predictor:
+                return True
+                
+            # 检查全局缓存中是否已有相同配置的模型
+            if cache_key in self._global_model_cache:
+                print(f"从缓存加载版面检测模型...")
+                self.predictor = self._global_model_cache[cache_key]
+                print(f"版面检测模型加载成功（缓存）")
+                return True
+            
+            start_time = time.time()
+            try:
+                print(f"加载版面检测模型...")
+                self.predictor = paddlex.create_predictor('PP-DocLayout-L', self.model_dir, device=device)
+                
+                # 将模型添加到全局缓存
+                self._global_model_cache[cache_key] = self.predictor
+                
+                if self.debug_mode:
+                    print(f"版面检测模型加载成功，耗时: {time.time() - start_time:.2f}秒")
+                else:
+                    print(f"版面检测模型加载成功")
+                return True
+            except Exception as e:
                 print(f"版面检测模型加载失败: {str(e)}")
-            return False
+                return False
     
     def detect_layout(self, pages_info: List[PDFPage], state: ProcessingState) -> Tuple[List[LayoutDetectionResult], ProcessingState]:
         """

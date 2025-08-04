@@ -5,6 +5,7 @@ import numpy as np
 import logging
 import psutil
 import paddlex
+import threading
 from typing import Tuple, Optional, Dict, Union, List
 
 from ..core.data_structures import PDFPage, DebugInfo, ProcessingState
@@ -13,6 +14,10 @@ from ..utils.logger import setup_logger
 
 class RotationDetector:
     """PDF页面旋转检测器，使用本地PP-LCNet_x1_0_doc_ori_infer模型检测页面方向"""
+    
+    # 类级别的模型加载锁，确保并发安全
+    _model_lock = threading.Lock()
+    _global_model_cache = {}
     
     def __init__(self, model_dir: Optional[str] = None, use_gpu: bool = False, debug_mode: bool = False):
         """
@@ -61,49 +66,72 @@ class RotationDetector:
     
     def load_model(self) -> bool:
         """
-        加载旋转检测模型
+        线程安全的旋转检测模型加载方法
+        
+        使用类级别锁和模型缓存，避免并发加载冲突
         
         Returns:
             bool: 加载是否成功
         """
+        # 如果模型已加载，直接返回
         if self.model_loaded:
             return True
+        
+        # 创建模型缓存键
+        device = 'gpu' if self.use_gpu else 'cpu'
+        cache_key = f"PP-LCNet_x1_0_doc_ori_{self.model_dir}_{device}"
+        
+        # 使用类级别锁保证线程安全
+        with self._model_lock:
+            # 双重检查：锁内再次检查是否已加载
+            if self.model_loaded:
+                return True
+                
+            # 检查全局缓存中是否已有相同配置的模型
+            if cache_key in self._global_model_cache:
+                self.logger.info(f"从缓存加载旋转检测模型...")
+                self.predictor = self._global_model_cache[cache_key]
+                self.model_loaded = True
+                self.logger.info(f"旋转检测模型加载成功（缓存）")
+                return True
             
-        start_time = time.time()
-        try:
-            # 检查模型路径是否存在
-            if not os.path.exists(self.model_dir):
-                raise FileNotFoundError(f"模型路径不存在: {self.model_dir}")
-            
-            # 检查必要的模型文件
-            required_files = ['inference.yml', 'inference.json', 'inference.pdiparams']
-            for file_name in required_files:
-                file_path = os.path.join(self.model_dir, file_name)
-                if not os.path.exists(file_path):
-                    raise FileNotFoundError(f"模型文件不存在: {file_path}")
-            
-            # 使用paddlex加载模型
-            device = 'gpu' if self.use_gpu else 'cpu'
-            self.predictor = paddlex.create_predictor(
-                'PP-LCNet_x1_0_doc_ori', 
-                self.model_dir, 
-                device=device
-            )
-            
-            self.model_loaded = True
-            load_time = time.time() - start_time
-            
-            self.logger.info(f"旋转检测模型加载成功，耗时: {load_time:.2f}秒")
-            
-            if self.debug_mode:
-                self.logger.info(f"模型设备: {device}")
-                self.logger.info(f"内存使用: {self._get_memory_usage():.2f} MB")
-            
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"旋转检测模型加载失败: {str(e)}")
-            return False
+            start_time = time.time()
+            try:
+                # 检查模型路径是否存在
+                if not os.path.exists(self.model_dir):
+                    raise FileNotFoundError(f"模型路径不存在: {self.model_dir}")
+                
+                # 检查必要的模型文件
+                required_files = ['inference.yml', 'inference.json', 'inference.pdiparams']
+                for file_name in required_files:
+                    file_path = os.path.join(self.model_dir, file_name)
+                    if not os.path.exists(file_path):
+                        raise FileNotFoundError(f"模型文件不存在: {file_path}")
+                
+                # 使用paddlex加载模型
+                self.predictor = paddlex.create_predictor(
+                    'PP-LCNet_x1_0_doc_ori', 
+                    self.model_dir, 
+                    device=device
+                )
+                
+                # 将模型添加到全局缓存
+                self._global_model_cache[cache_key] = self.predictor
+                
+                self.model_loaded = True
+                load_time = time.time() - start_time
+                
+                self.logger.info(f"旋转检测模型加载成功，耗时: {load_time:.2f}秒")
+                
+                if self.debug_mode:
+                    self.logger.info(f"模型设备: {device}")
+                    self.logger.info(f"内存使用: {self._get_memory_usage():.2f} MB")
+                
+                return True
+                
+            except Exception as e:
+                self.logger.error(f"旋转检测模型加载失败: {str(e)}")
+                return False
     
     def detect_rotation(self, page: PDFPage, state: Optional[ProcessingState] = None) -> Tuple[int, PDFPage]:
         """

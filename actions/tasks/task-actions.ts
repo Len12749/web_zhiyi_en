@@ -401,6 +401,23 @@ export async function failTask(
       })
       .where(eq(processingTasks.id, taskId));
 
+    // 推送失败状态到SSE
+    try {
+      const { sseConnectionManager } = await import('@/lib/sse/connection-manager');
+      sseConnectionManager.pushToTask(taskId, {
+        type: 'status_update',
+        data: {
+          status: 'failed',
+          progress: 0,
+          message: errorMessage
+        }
+      });
+      console.log(`[${taskId}] 失败状态已推送到SSE`);
+    } catch (sseError) {
+      console.error(`[${taskId}] SSE推送失败:`, sseError);
+      // SSE推送失败不影响主要逻辑
+    }
+
     // 创建失败通知
     const taskTypeNames: { [key: string]: string } = {
       'pdf-to-markdown': 'PDF解析',

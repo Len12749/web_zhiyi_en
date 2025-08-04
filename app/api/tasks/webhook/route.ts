@@ -42,17 +42,24 @@ export async function POST(request: Request) {
 
     // 根据状态处理
     if (status === 'completed') {
-      // 实例化处理器以完成剩余流程（下载结果、保存、推送 SSE 等）
-      const processor = new TaskProcessor(
-        task.id,
-        task.userId,
-        task.taskType as TaskType,
-        externalTaskId
-      )
+      try {
+        // 实例化处理器以完成剩余流程（下载结果、保存、推送 SSE 等）
+        const processor = new TaskProcessor(
+          task.id,
+          task.userId,
+          task.taskType as TaskType,
+          externalTaskId
+        )
 
-      await processor.completeExternalTask()
+        await processor.completeExternalTask()
 
-      return NextResponse.json({ success: true })
+        return NextResponse.json({ success: true })
+      } catch (error) {
+        console.error(`[Webhook] 完成任务失败 [${task.id}]:`, error)
+        // 如果完成流程失败，标记任务为失败并返还积分
+        await failTask(task.id, 'COMPLETION_ERROR', error instanceof Error ? error.message : '完成处理失败')
+        return NextResponse.json({ success: true, message: '任务完成失败，已返还积分' })
+      }
     } else if (status === 'failed') {
       await failTask(task.id, 'EXTERNAL_TASK_FAILED', message || '外部任务失败')
       return NextResponse.json({ success: true })

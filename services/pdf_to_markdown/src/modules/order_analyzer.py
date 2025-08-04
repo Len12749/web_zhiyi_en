@@ -12,6 +12,7 @@ import time
 import cv2
 import torch
 import psutil
+import threading
 from collections import defaultdict
 from typing import List, Tuple, Dict, Any, Optional, Union
 
@@ -145,6 +146,10 @@ class OrderAnalyzer:
     各个区域（段落、标题、图表等）的逻辑顺序关系。
     """
     
+    # 类级别的模型加载锁，确保并发安全
+    _model_lock = threading.Lock()
+    _global_model_cache = {}
+    
     def __init__(self, model_dir: str = None, use_gpu: bool = False, debug_mode: bool = False):
         """
         初始化阅读顺序分析器
@@ -194,48 +199,72 @@ class OrderAnalyzer:
     
     def load_model(self) -> bool:
         """
-        加载阅读顺序分析模型
+        线程安全的模型加载方法
         
-        按照开发手册要求：先根据配置文件初始化模型，然后加载权重文件
+        使用类级别锁和模型缓存，避免并发加载冲突
         
         Returns:
             bool: 是否成功加载模型
         """
-        try:
-            print(f"加载阅读顺序模型...")
-            print(f"从 {self.model_path} 加载模型...")
-            
-            # 检查模型路径是否存在
-            if not os.path.exists(self.model_path):
-                raise FileNotFoundError(f"模型路径不存在: {self.model_path}")
-            
-            # 检查必要的模型文件
-            config_path = os.path.join(self.model_path, "config.json")
-            model_safetensors_path = os.path.join(self.model_path, "model.safetensors")
-            
-            if not os.path.exists(config_path):
-                raise FileNotFoundError(f"配置文件不存在: {config_path}")
-            if not os.path.exists(model_safetensors_path):
-                raise FileNotFoundError(f"权重文件不存在: {model_safetensors_path}")
-            
-            # 使用from_pretrained方法加载模型（会自动处理配置和权重）
-            self.reader_model = LayoutLMv3ForBboxClassification.from_pretrained(self.model_path)
-            self.reader_model.to(self.device)
-            self.reader_model.eval()
-            
-            self.model_loaded = True
-            print(f"阅读顺序模型加载成功")
-            
-            if self.debug_mode:
-                print(f"模型设备: {self.device}")
-                print(f"模型参数数量: {sum(p.numel() for p in self.reader_model.parameters())}")
-                print(f"内存使用: {self._get_memory_usage():.2f} MB")
-            
+        # 如果模型已加载，直接返回
+        if self.model_loaded and hasattr(self, 'reader_model'):
             return True
-        except Exception as e:
-            print(f"加载阅读顺序模型失败: {str(e)}")
-            self.model_loaded = False
-            return False
+        
+        # 创建模型缓存键
+        cache_key = f"{self.model_path}_{self.device}"
+        
+        # 使用类级别锁保证线程安全
+        with self._model_lock:
+            # 双重检查：锁内再次检查是否已加载
+            if self.model_loaded and hasattr(self, 'reader_model'):
+                return True
+                
+            # 检查全局缓存中是否已有相同配置的模型
+            if cache_key in self._global_model_cache:
+                print(f"从缓存加载阅读顺序模型...")
+                self.reader_model = self._global_model_cache[cache_key]
+                self.model_loaded = True
+                print(f"阅读顺序模型加载成功（缓存）")
+                return True
+            
+            try:
+                print(f"加载阅读顺序模型...")
+                print(f"从 {self.model_path} 加载模型...")
+                
+                # 检查模型路径是否存在
+                if not os.path.exists(self.model_path):
+                    raise FileNotFoundError(f"模型路径不存在: {self.model_path}")
+                
+                # 检查必要的模型文件
+                config_path = os.path.join(self.model_path, "config.json")
+                model_safetensors_path = os.path.join(self.model_path, "model.safetensors")
+                
+                if not os.path.exists(config_path):
+                    raise FileNotFoundError(f"配置文件不存在: {config_path}")
+                if not os.path.exists(model_safetensors_path):
+                    raise FileNotFoundError(f"权重文件不存在: {model_safetensors_path}")
+                
+                # 使用from_pretrained方法加载模型（会自动处理配置和权重）
+                self.reader_model = LayoutLMv3ForBboxClassification.from_pretrained(self.model_path)
+                self.reader_model.to(self.device)
+                self.reader_model.eval()
+                
+                # 将模型添加到全局缓存
+                self._global_model_cache[cache_key] = self.reader_model
+                
+                self.model_loaded = True
+                print(f"阅读顺序模型加载成功")
+                
+                if self.debug_mode:
+                    print(f"模型设备: {self.device}")
+                    print(f"模型参数数量: {sum(p.numel() for p in self.reader_model.parameters())}")
+                    print(f"内存使用: {self._get_memory_usage():.2f} MB")
+                
+                return True
+            except Exception as e:
+                print(f"加载阅读顺序模型失败: {str(e)}")
+                self.model_loaded = False
+                return False
     
     def BboxesMasks(self, boxes):
         """
