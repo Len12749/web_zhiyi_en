@@ -87,7 +87,8 @@ async def parse_pdf(
     enable_translation: str = Form("false"),
     target_language: str = Form("zh"),
     output_options: str = Form("original"),
-    skip_rotation_detection: str = Form("false")
+    skip_rotation_detection: str = Form("false"),
+    callback_url: Optional[str] = Form(None, description="任务完成回调地址，可选")
 ):
     """
     解析PDF文件
@@ -143,6 +144,7 @@ async def parse_pdf(
         "filename": file.filename,
         "file_size": len(content),
         "output_dir": str(task_dir / "output"),
+        "callback_url": callback_url,
         "result_file": None,
         "error": None,
         "processing_options": {
@@ -169,7 +171,8 @@ async def parse_pdf(
         bilingual_output,
         include_original,
         original_output_options,
-        skip_rotation
+        skip_rotation,
+        callback_url
     )
     
     return {
@@ -219,7 +222,8 @@ async def process_pdf_task(
     bilingual_output: bool,
     include_original: bool,
     original_output_options: list[str],
-    skip_rotation_detection: bool
+    skip_rotation_detection: bool,
+    callback_url: Optional[str] = None
 ):
     """
     异步处理PDF任务 - 使用线程池避免阻塞事件循环
@@ -232,7 +236,7 @@ async def process_pdf_task(
             _process_pdf_task_sync,
             task_id, pdf_path, table_format, include_translation, target_language,
             translated_only, bilingual_output, include_original, original_output_options,
-            skip_rotation_detection
+            skip_rotation_detection, callback_url
         )
 
 def _process_pdf_task_sync(
@@ -245,7 +249,8 @@ def _process_pdf_task_sync(
     bilingual_output: bool,
     include_original: bool,
     original_output_options: list[str],
-    skip_rotation_detection: bool
+    skip_rotation_detection: bool,
+    callback_url: Optional[str] = None
 ):
     """
     同步处理PDF的后台任务
@@ -416,6 +421,19 @@ def _process_pdf_task_sync(
         
         logger.info(f"任务 {task_id} 完成")
         
+        # 任务完成后回调
+        if callback_url:
+            try:
+                import requests
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "completed",
+                    "message": "PDF解析完成"
+                }, timeout=10)
+                logger.info(f"✅ 已向回调地址发送完成通知: {callback_url}")
+            except Exception as cb_err:
+                logger.warning(f"⚠️ 回调通知失败: {cb_err}")
+        
     except Exception as e:
         # 任务失败
         error_msg = str(e)
@@ -427,6 +445,19 @@ def _process_pdf_task_sync(
             "error": error_msg,
             "failed_at": datetime.now().isoformat()
         })
+        
+        # 回调失败通知
+        if callback_url:
+            try:
+                import requests
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "failed",
+                    "message": f"处理失败: {error_msg}"
+                }, timeout=10)
+                logger.info(f"✅ 已向回调地址发送失败通知: {callback_url}")
+            except Exception as cb_err:
+                logger.warning(f"⚠️ 回调通知失败: {cb_err}")
 
 def create_result_zip(output_dir: str, task_id: str, zip_filename: str = None) -> str:
     """创建结果ZIP文件"""
