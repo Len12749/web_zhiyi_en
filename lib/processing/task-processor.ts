@@ -127,7 +127,7 @@ export class TaskProcessor {
         case 'image-to-markdown':
           await this.pushStatusUpdate('processing', 20, '正在识别图片内容...')
           result = await coreServices.imageToMarkdown.recognizeImage(file)
-          isAsyncTask = false
+          isAsyncTask = true
           break
 
         case 'markdown-translation':
@@ -173,8 +173,10 @@ export class TaskProcessor {
           // 立即向前端推送当前状态
           await this.pushStatusUpdate('processing', 10, '任务已提交，等待外部完成...')
           
-          // 启动监控
-          await this.monitorAsyncTask()
+          // 图片转Markdown由外部回调，不轮询
+          if (this.taskType !== 'image-to-markdown') {
+            await this.monitorAsyncTask()
+          }
           return
         } else {
         // 同步任务：直接处理结果
@@ -300,6 +302,10 @@ export class TaskProcessor {
             statusResult = await coreServices.formatConversion.getTaskStatus(this.externalTaskId)
             console.log(`[${this.taskId}] 格式转换状态查询结果:`, statusResult)
             break
+          case 'image-to-markdown':
+            statusResult = await coreServices.imageToMarkdown.getTaskStatus(this.externalTaskId)
+            console.log(`[${this.taskId}] 图片转Markdown状态查询结果:`, statusResult)
+            break
           case 'markdown-translation':
           case 'pdf-translation':
             // 对于翻译任务，直接尝试下载
@@ -350,6 +356,23 @@ export class TaskProcessor {
               statusResult.message || '正在转换格式...'
             )
           }
+        } else if (this.taskType === 'image-to-markdown') {
+          if (statusResult.status === 'completed') {
+            console.log(`[${this.taskId}] 图片转Markdown任务已完成，开始下载`)
+            await this.pushStatusUpdate('processing', 90, '正在下载处理结果...')
+            await this.downloadResult()
+            return
+          } else if (statusResult.status === 'failed') {
+            throw new Error(statusResult.message || statusResult.error || '图片识别失败')
+          } else {
+            // 更新进度
+            const progress = statusResult.progress || Math.min(80, 10 + attempts * 2)
+            await this.pushStatusUpdate(
+              'processing',
+              progress,
+              statusResult.message || '正在识别图片...'
+            )
+          }
         }
 
       } catch (error) {
@@ -393,6 +416,9 @@ export class TaskProcessor {
         break
       case 'format-conversion':
         blob = await coreServices.formatConversion.downloadResult(this.externalTaskId)
+        break
+      case 'image-to-markdown':
+        blob = await coreServices.imageToMarkdown.downloadResult(this.externalTaskId)
         break
       case 'markdown-translation':
         blob = await coreServices.markdownTranslation.downloadResult(this.externalTaskId)

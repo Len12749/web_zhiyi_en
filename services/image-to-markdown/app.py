@@ -9,16 +9,17 @@ import os
 import tempfile
 import base64
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 import uuid
 import asyncio
 from datetime import datetime
 import aiohttp
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
+from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from PIL import Image
@@ -44,6 +45,9 @@ AI_API_KEY = os.getenv("AI_API_KEY", "sk-litellm-master-key-2024")
 SUPPORTED_IMAGE_FORMATS = {
     'image/jpeg', 'image/jpg', 'image/png'
 }
+
+# 任务状态存储
+task_status: Dict[str, Dict[str, Any]] = {}
 
 @app.get("/")
 async def root():
@@ -196,10 +200,12 @@ def validate_image(image_bytes: bytes, content_type: str) -> tuple[bool, str]:
 
 @app.post("/recognize")
 async def recognize_image(
-    file: UploadFile = File(..., description="要识别的图片文件")
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(..., description="要识别的图片文件"),
+    callback_url: str | None = Form(None)
 ):
     """
-    识别图片中的文字内容并转换为Markdown格式
+    异步识别图片中的文字内容并转换为Markdown格式
     """
     try:
         # 检查文件类型
@@ -209,43 +215,63 @@ async def recognize_image(
                 detail=f"不支持的文件类型。支持的格式: {', '.join(SUPPORTED_IMAGE_FORMATS)}"
             )
         
-        # 读取文件内容
-        image_bytes = await file.read()
-        
         # 检查文件大小（限制为100MB）
-        if len(image_bytes) > 100 * 1024 * 1024:
+        file.file.seek(0, 2)  # 移动到文件末尾
+        file_size = file.file.tell()
+        file.file.seek(0)  # 重置到文件开头
+        
+        if file_size > 100 * 1024 * 1024:
             raise HTTPException(
                 status_code=400,
                 detail="文件大小超过限制（最大100MB）"
             )
+        
+        # 生成任务ID
+        task_id = str(uuid.uuid4())
+        
+        # 创建任务目录
+        PROJECT_ROOT = Path(__file__).parent
+        task_dir = PROJECT_ROOT / "temp" / task_id
+        task_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 保存上传的文件
+        image_bytes = await file.read()
+        input_path = task_dir / file.filename
+        with open(input_path, 'wb') as f:
+            f.write(image_bytes)
         
         # 验证图片
         is_valid, validation_message = validate_image(image_bytes, file.content_type)
         if not is_valid:
             raise HTTPException(status_code=400, detail=validation_message)
         
-        # 使用AI API识别图片
-        recognized_text = await process_image_with_ai(image_bytes, file.content_type)
+        # 初始化任务状态
+        task_status[task_id] = {
+            "status": "processing",
+            "progress": 0,
+            "message": "开始图片识别",
+            "created_at": datetime.now().isoformat(),
+            "filename": file.filename,
+            "file_size": file_size,
+            "content_type": file.content_type,
+            "result_file": None,
+            "callback_url": callback_url,
+            "error": None
+        }
         
-        # 生成结果文件名
-        original_name = file.filename or "image"
-        result_filename = original_name.rsplit('.', 1)[0] + '_recognized.md'
-        
-        # 返回识别结果（JSON格式，与其他服务保持一致）
-        return JSONResponse(
-            content={
-                "success": True,
-                "markdown_content": recognized_text,
-                "processing_time": 0.0,  # 处理时间（如需要可以计算实际时间）
-                "original_filename": file.filename or "unknown",
-                "result_filename": result_filename,
-                "timestamp": datetime.now().isoformat()
-            },
-            headers={
-                "X-Original-Filename": file.filename or "unknown",
-                "X-Recognition-Timestamp": datetime.now().isoformat(),
-            }
+        # 启动后台任务
+        background_tasks.add_task(
+            process_recognition_task,
+            task_id,
+            str(input_path),
+            file.content_type
         )
+        
+        return {
+            "task_id": task_id,
+            "status": "processing",
+            "message": "图片识别任务已启动"
+        }
     
     except HTTPException:
         raise
@@ -471,6 +497,81 @@ print(f"统计结果: {stats}")
 
 *文件名：{filename}*  
 *识别时间：{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*"""
+
+# === 异步任务相关端点和函数 ===
+
+@app.get("/status/{task_id}")
+async def get_task_status(task_id: str):
+    """查询图片识别任务状态"""
+    if task_id not in task_status:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    return task_status[task_id]
+
+@app.get("/download/{task_id}")
+async def download_result(task_id: str):
+    """下载识别结果 Markdown 文件"""
+    if task_id not in task_status:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    info = task_status[task_id]
+    if info["status"] != "completed":
+        raise HTTPException(status_code=400, detail="任务未完成")
+    result_file = info.get("result_file")
+    if not result_file or not Path(result_file).exists():
+        raise HTTPException(status_code=404, detail="结果文件不存在")
+    filename_stem = Path(info.get("filename") or "image").stem
+    return FileResponse(result_file, filename=f"{filename_stem}_recognized.md", media_type="text/markdown")
+
+async def process_recognition_task(task_id: str, input_path: str, content_type: str):
+    """后台线程入口，调用同步函数处理识别"""
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as pool:
+        await loop.run_in_executor(pool, _process_recognition_task_sync, task_id, input_path, content_type)
+
+def _process_recognition_task_sync(task_id: str, input_path: str, content_type: str):
+    """同步执行识别并写入结果/状态"""
+    try:
+        task_status[task_id]["message"] = "准备识别图片"
+        task_status[task_id]["progress"] = 10
+        with open(input_path, "rb") as f:
+            image_bytes = f.read()
+        # 调用异步 AI 识别接口
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            text = loop.run_until_complete(process_image_with_ai(image_bytes, content_type))
+        finally:
+            loop.close()
+        task_status[task_id]["message"] = "保存识别结果..."
+        task_status[task_id]["progress"] = 90
+        result_file = Path(input_path).parent / f"result_{task_id}.md"
+        result_file.write_text(text, encoding="utf-8")
+        task_status[task_id].update({
+            "status": "completed",
+            "progress": 100,
+            "message": "识别完成",
+            "result_file": str(result_file),
+            "markdown_content": text,
+            "completed_at": datetime.now().isoformat(),
+        })
+        # 如果有回调地址，主动通知
+        cb = task_status[task_id].get("callback_url")
+        if cb:
+            import requests, json
+            try:
+                requests.post(cb, json={
+                    "externalTaskId": task_id,
+                    "status": "completed"
+                }, timeout=10)
+            except Exception as _:
+                pass
+    except Exception as e:
+        task_status[task_id].update({
+            "status": "failed",
+            "progress": 0,
+            "message": f"识别失败: {str(e)}",
+            "error": str(e),
+            "failed_at": datetime.now().isoformat(),
+        })
 
 if __name__ == "__main__":
     print("=" * 60)

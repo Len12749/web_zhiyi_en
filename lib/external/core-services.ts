@@ -172,12 +172,33 @@ export class ImageToMarkdownClient extends CoreServiceClient {
     super(CORE_SERVICES.IMAGE_TO_MARKDOWN)
   }
 
-  async recognizeImage(file: File): Promise<{
-    success: boolean
-    markdown_content: string
-    processing_time: number
-  }> {
-    return this.uploadFile('/recognize', file)
+  async recognizeImage(file: File): Promise<{ task_id: string; status: string; message: string }> {
+    const callbackUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/api/tasks/webhook'
+    return this.uploadFile('/recognize', file, { callback_url: callbackUrl })
+  }
+
+  async getTaskStatus(taskId: string): Promise<any> {
+    const response = await fetch(`${this.baseURL}/status/${taskId}`, {
+      signal: AbortSignal.timeout(this.timeout)
+    })
+
+    if (!response.ok) {
+      throw new Error(`获取任务状态失败: ${response.status} ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  async downloadResult(taskId: string): Promise<Blob> {
+    const response = await fetch(`${this.baseURL}/download/${taskId}`, {
+      signal: AbortSignal.timeout(this.timeout)
+    })
+
+    if (!response.ok) {
+      throw new Error(`下载结果失败: ${response.status} ${response.statusText}`)
+    }
+
+    return response.blob()
   }
 }
 
