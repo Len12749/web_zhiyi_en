@@ -258,7 +258,7 @@ export class FormatConversionClient extends CoreServiceClient {
   async convertFile(
     file: File,
     targetFormat: 'word' | 'html' | 'pdf' | 'latex'
-  ): Promise<Blob> {
+  ): Promise<{ task_id: string; status: string; message: string }> {
     // 格式映射：前端格式 -> 后端API格式
     const formatMapping: Record<string, string> = {
       'word': 'docx',
@@ -290,10 +290,34 @@ export class FormatConversionClient extends CoreServiceClient {
       throw new Error(`格式转换失败: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
-    const blob = await response.blob()
-    console.log(`格式转换成功: 生成文件大小 ${blob.size} bytes`)
+    const result = await response.json()
+    console.log(`格式转换任务创建成功: 任务ID ${result.task_id}`)
     
-    return blob
+    return result
+  }
+
+  async getTaskStatus(taskId: string): Promise<any> {
+    const response = await fetch(`${this.baseURL}/status/${taskId}`, {
+      signal: AbortSignal.timeout(this.timeout)
+    })
+
+    if (!response.ok) {
+      throw new Error(`获取任务状态失败: ${response.status} ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  async downloadResult(taskId: string): Promise<Blob> {
+    const response = await fetch(`${this.baseURL}/download/${taskId}`, {
+      signal: AbortSignal.timeout(this.timeout)
+    })
+
+    if (!response.ok) {
+      throw new Error(`下载结果失败: ${response.status} ${response.statusText}`)
+    }
+
+    return response.blob()
   }
 }
 

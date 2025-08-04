@@ -9,12 +9,15 @@ import os
 import tempfile
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 from enum import Enum
 import uuid
 import shutil
+import asyncio
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -44,6 +47,9 @@ class PDFTheme(str, Enum):
 
 # 获取项目根目录
 PROJECT_ROOT = Path(__file__).parent
+
+# 任务状态存储
+task_status: Dict[str, Dict[str, Any]] = {}
 
 def ensure_pandoc():
     """确保Pandoc可用"""
@@ -147,12 +153,13 @@ async def root():
 
 @app.post("/convert")
 async def convert_markdown(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     format: OutputFormat = Form(...),
     pdf_theme: Optional[PDFTheme] = Form(None)
 ):
     """
-    转换Markdown文件到指定格式
+    异步转换Markdown文件到指定格式
     
     Args:
         file: 上传的Markdown文件
@@ -160,7 +167,7 @@ async def convert_markdown(
         pdf_theme: PDF主题 (仅当format为pdf时使用)
     
     Returns:
-        转换后的文件
+        任务ID和状态信息
     """
     
     # 验证文件类型
@@ -171,41 +178,81 @@ async def convert_markdown(
     if format == OutputFormat.PDF and pdf_theme is None:
         pdf_theme = PDFTheme.EISVOGEL  # 设置默认主题
     
-    # 创建临时目录
-    temp_dir = Path(tempfile.mkdtemp())
+    # 生成任务ID
+    task_id = str(uuid.uuid4())
     
-    try:
-        # 保存上传的文件
-        input_path = temp_dir / file.filename
-        with open(input_path, 'wb') as f:
-            content = await file.read()
-            f.write(content)
-        
-        # 执行转换
-        output_path = convert_file(input_path, format, pdf_theme)
-        
-        # 检查输出文件是否存在
-        if not output_path.exists():
-            raise HTTPException(status_code=500, detail="转换失败：输出文件未生成")
-        
-        # 生成下载文件名
-        original_name = Path(file.filename).stem
-        download_filename = f"{original_name}.{format.value}"
-        
-        # 返回文件
-        return FileResponse(
-            path=str(output_path),
-            filename=download_filename,
-            media_type='application/octet-stream'
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # 创建任务目录
+    task_dir = PROJECT_ROOT / "temp" / task_id
+    task_dir.mkdir(parents=True, exist_ok=True)
     
-    finally:
-        # 清理临时文件（延迟删除，确保文件传输完成）
-        # 在生产环境中，可以考虑使用后台任务来清理
-        pass
+    # 保存上传的文件
+    input_path = task_dir / file.filename
+    with open(input_path, 'wb') as f:
+        content = await file.read()
+        f.write(content)
+    
+    # 初始化任务状态
+    task_status[task_id] = {
+        "status": "processing",
+        "progress": 0,
+        "message": "开始格式转换",
+        "created_at": datetime.now().isoformat(),
+        "filename": file.filename,
+        "file_size": len(content),
+        "target_format": format.value,
+        "pdf_theme": pdf_theme.value if pdf_theme else None,
+        "result_file": None,
+        "error": None
+    }
+    
+    # 启动后台任务
+    background_tasks.add_task(
+        process_conversion_task,
+        task_id,
+        str(input_path),
+        format,
+        pdf_theme
+    )
+    
+    return {
+        "task_id": task_id,
+        "status": "processing",
+        "message": "格式转换任务已启动"
+    }
+
+@app.get("/status/{task_id}")
+async def get_task_status(task_id: str):
+    """查询任务状态"""
+    if task_id not in task_status:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    
+    return task_status[task_id]
+
+@app.get("/download/{task_id}")
+async def download_result(task_id: str):
+    """下载转换结果"""
+    if task_id not in task_status:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    
+    task_info = task_status[task_id]
+    
+    if task_info["status"] != "completed":
+        raise HTTPException(status_code=400, detail="任务未完成")
+    
+    result_file = task_info["result_file"]
+    if not result_file or not Path(result_file).exists():
+        raise HTTPException(status_code=404, detail="结果文件不存在")
+    
+    # 生成下载文件名
+    original_name = Path(task_info["filename"]).stem
+    target_format = task_info["target_format"]
+    download_filename = f"{original_name}.{target_format}"
+    
+    return FileResponse(
+        path=result_file,
+        filename=download_filename,
+        media_type="application/octet-stream"
+    )
 
 @app.get("/formats")
 async def get_supported_formats():
@@ -223,6 +270,69 @@ async def get_supported_formats():
             {"value": "academic", "label": "Academic", "description": "学术主题"}
         ]
     }
+
+async def process_conversion_task(
+    task_id: str,
+    input_path: str,
+    format: OutputFormat,
+    pdf_theme: Optional[PDFTheme]
+):
+    """
+    异步处理格式转换任务
+    """
+    # 使用线程池执行同步的CPU密集型任务
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as executor:
+        await loop.run_in_executor(
+            executor, 
+            _process_conversion_task_sync,
+            task_id, input_path, format, pdf_theme
+        )
+
+def _process_conversion_task_sync(
+    task_id: str,
+    input_path: str,
+    format: OutputFormat,
+    pdf_theme: Optional[PDFTheme]
+):
+    """
+    同步处理格式转换的后台任务
+    """
+    try:
+        # 更新任务状态
+        task_status[task_id]["message"] = "准备转换"
+        task_status[task_id]["progress"] = 10
+        
+        input_file = Path(input_path)
+        
+        # 执行转换
+        task_status[task_id]["message"] = "正在转换格式"
+        task_status[task_id]["progress"] = 50
+        
+        output_path = convert_file(input_file, format, pdf_theme)
+        
+        # 检查输出文件是否存在
+        if not output_path.exists():
+            raise Exception("转换失败：输出文件未生成")
+        
+        # 更新任务状态为完成
+        task_status[task_id].update({
+            "status": "completed",
+            "progress": 100,
+            "message": "转换完成",
+            "result_file": str(output_path),
+            "completed_at": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        # 更新任务状态为失败
+        task_status[task_id].update({
+            "status": "failed",
+            "progress": 0,
+            "message": f"转换失败: {str(e)}",
+            "error": str(e),
+            "failed_at": datetime.now().isoformat()
+        })
 
 if __name__ == "__main__":
     print("启动格式转换服务...")

@@ -157,7 +157,7 @@ export class TaskProcessor {
             file,
             formatParams.targetFormat
           )
-          isAsyncTask = false
+          isAsyncTask = true
           break
 
         default:
@@ -165,13 +165,16 @@ export class TaskProcessor {
       }
 
               if (isAsyncTask && result.task_id) {
-          // 异步任务：保存外部任务ID，任务交由外部回调完成，不再本地轮询
+          // 异步任务：保存外部任务ID，启动监控
           console.log(`[${this.taskId}] 异步任务，外部任务ID: ${result.task_id}`)
           this.externalTaskId = result.task_id
           await updateTaskStatus(this.taskId, 'processing', 10, '任务已提交，等待外部完成...', result.task_id)
 
-          // 立即向前端推送当前状态，没有本地轮询
+          // 立即向前端推送当前状态
           await this.pushStatusUpdate('processing', 10, '任务已提交，等待外部完成...')
+          
+          // 启动监控
+          await this.monitorAsyncTask()
           return
         } else {
         // 同步任务：直接处理结果
@@ -293,6 +296,10 @@ export class TaskProcessor {
             statusResult = await coreServices.pdfToMarkdown.getTaskStatus(this.externalTaskId)
             console.log(`[${this.taskId}] PDF状态查询结果:`, statusResult)
             break
+          case 'format-conversion':
+            statusResult = await coreServices.formatConversion.getTaskStatus(this.externalTaskId)
+            console.log(`[${this.taskId}] 格式转换状态查询结果:`, statusResult)
+            break
           case 'markdown-translation':
           case 'pdf-translation':
             // 对于翻译任务，直接尝试下载
@@ -324,6 +331,23 @@ export class TaskProcessor {
               'processing',
               progress,
               statusResult.message || '正在处理中...'
+            )
+          }
+        } else if (this.taskType === 'format-conversion') {
+          if (statusResult.status === 'completed') {
+            console.log(`[${this.taskId}] 格式转换任务已完成，开始下载`)
+            await this.pushStatusUpdate('processing', 90, '正在下载处理结果...')
+            await this.downloadResult()
+            return
+          } else if (statusResult.status === 'failed') {
+            throw new Error(statusResult.message || statusResult.error || '格式转换失败')
+          } else {
+            // 更新进度
+            const progress = statusResult.progress || Math.min(80, 10 + attempts * 2)
+            await this.pushStatusUpdate(
+              'processing',
+              progress,
+              statusResult.message || '正在转换格式...'
             )
           }
         }
@@ -366,6 +390,9 @@ export class TaskProcessor {
     switch (this.taskType) {
       case 'pdf-to-markdown':
         blob = await coreServices.pdfToMarkdown.downloadResult(this.externalTaskId)
+        break
+      case 'format-conversion':
+        blob = await coreServices.formatConversion.downloadResult(this.externalTaskId)
         break
       case 'markdown-translation':
         blob = await coreServices.markdownTranslation.downloadResult(this.externalTaskId)
