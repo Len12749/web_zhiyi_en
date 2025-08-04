@@ -173,10 +173,8 @@ export class TaskProcessor {
           // 立即向前端推送当前状态
           await this.pushStatusUpdate('processing', 10, '任务已提交，等待外部完成...')
           
-          // 图片转Markdown由外部回调，不轮询
-          if (this.taskType !== 'image-to-markdown') {
-            await this.monitorAsyncTask()
-          }
+          // ✅ 所有异步任务都使用webhook回调，无需轮询监控，直接等待回调即可
+          console.log(`[${this.taskId}] 任务已提交，等待webhook回调完成处理`)
           return
         } else {
         // 同步任务：直接处理结果
@@ -279,119 +277,7 @@ export class TaskProcessor {
     }
   }
 
-  // 监控异步任务状态
-  private async monitorAsyncTask(): Promise<void> {
-    if (!this.externalTaskId) {
-      throw new Error('外部任务ID未设置')
-    }
-
-    const maxAttempts = 360 // 最多监控1小时 (360 * 10秒)
-    let attempts = 0
-
-    while (attempts < maxAttempts) {
-      try {
-        let statusResult: any
-
-        // 根据任务类型查询状态
-        switch (this.taskType) {
-          case 'pdf-to-markdown':
-            statusResult = await coreServices.pdfToMarkdown.getTaskStatus(this.externalTaskId)
-            console.log(`[${this.taskId}] PDF状态查询结果:`, statusResult)
-            break
-          case 'format-conversion':
-            statusResult = await coreServices.formatConversion.getTaskStatus(this.externalTaskId)
-            console.log(`[${this.taskId}] 格式转换状态查询结果:`, statusResult)
-            break
-          case 'image-to-markdown':
-            statusResult = await coreServices.imageToMarkdown.getTaskStatus(this.externalTaskId)
-            console.log(`[${this.taskId}] 图片转Markdown状态查询结果:`, statusResult)
-            break
-          case 'markdown-translation':
-          case 'pdf-translation':
-            // 对于翻译任务，直接尝试下载
-            try {
-              await this.downloadResult()
-              return
-            } catch (error) {
-              console.log(`[${this.taskId}] 翻译任务下载失败，继续等待: ${error instanceof Error ? error.message : error}`)
-              const progress = Math.min(80, 10 + attempts * 2)
-              await this.pushStatusUpdate('processing', progress, '正在翻译中，请稍候...')
-            }
-            break
-          default:
-            throw new Error(`不支持的异步任务类型: ${this.taskType}`)
-        }
-
-        if (this.taskType === 'pdf-to-markdown') {
-          if (statusResult.status === 'completed') {
-            console.log(`[${this.taskId}] PDF任务已完成，开始下载`)
-            await this.pushStatusUpdate('processing', 90, '正在下载处理结果...')
-            await this.downloadResult()
-            return
-          } else if (statusResult.status === 'failed') {
-            throw new Error(statusResult.message || '外部服务处理失败')
-          } else {
-            // 更新进度
-            const progress = Math.min(80, 10 + attempts * 2)
-            await this.pushStatusUpdate(
-              'processing',
-              progress,
-              statusResult.message || '正在处理中...'
-            )
-          }
-        } else if (this.taskType === 'format-conversion') {
-          if (statusResult.status === 'completed') {
-            console.log(`[${this.taskId}] 格式转换任务已完成，开始下载`)
-            await this.pushStatusUpdate('processing', 90, '正在下载处理结果...')
-            await this.downloadResult()
-            return
-          } else if (statusResult.status === 'failed') {
-            throw new Error(statusResult.message || statusResult.error || '格式转换失败')
-          } else {
-            // 更新进度
-            const progress = statusResult.progress || Math.min(80, 10 + attempts * 2)
-            await this.pushStatusUpdate(
-              'processing',
-              progress,
-              statusResult.message || '正在转换格式...'
-            )
-          }
-        } else if (this.taskType === 'image-to-markdown') {
-          if (statusResult.status === 'completed') {
-            console.log(`[${this.taskId}] 图片转Markdown任务已完成，开始下载`)
-            await this.pushStatusUpdate('processing', 90, '正在下载处理结果...')
-            await this.downloadResult()
-            return
-          } else if (statusResult.status === 'failed') {
-            throw new Error(statusResult.message || statusResult.error || '图片识别失败')
-          } else {
-            // 更新进度
-            const progress = statusResult.progress || Math.min(80, 10 + attempts * 2)
-            await this.pushStatusUpdate(
-              'processing',
-              progress,
-              statusResult.message || '正在识别图片...'
-            )
-          }
-        }
-
-      } catch (error) {
-        console.error(`监控任务状态失败 [${this.taskId}]:`, error)
-      }
-
-      // 发送心跳保持连接活跃
-      this.sendHeartbeat()
-      
-      // 等待10秒再次检查
-      await new Promise(resolve => setTimeout(resolve, 10000))
-      attempts++
-    }
-
-    // 任务处理超时，调用failTask返还积分
-    console.error(`[${this.taskId}] 任务处理超时`)
-    await failTask(this.taskId, 'TIMEOUT_ERROR', '任务处理超时')
-    throw new Error('任务处理超时')
-  }
+  // ✅ 已移除monitorAsyncTask方法，所有任务都使用webhook回调，无需轮询监控
 
 
 

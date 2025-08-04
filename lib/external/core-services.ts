@@ -289,6 +289,7 @@ export class FormatConversionClient extends CoreServiceClient {
     }
     
     const apiFormat = formatMapping[targetFormat] || targetFormat
+    const callbackUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/api/tasks/webhook'
     
     console.log(`格式转换请求: ${file.name} (${file.size} bytes) -> ${targetFormat} (API: ${apiFormat})`)
 
@@ -298,6 +299,7 @@ export class FormatConversionClient extends CoreServiceClient {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('format', apiFormat)  // 使用映射后的格式
+        formData.append('callback_url', callbackUrl)  // 现在支持webhook回调
         return formData
       })(),
       signal: AbortSignal.timeout(this.timeout),

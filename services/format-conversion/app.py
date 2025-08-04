@@ -156,7 +156,8 @@ async def convert_markdown(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     format: OutputFormat = Form(...),
-    pdf_theme: Optional[PDFTheme] = Form(None)
+    pdf_theme: Optional[PDFTheme] = Form(None),
+    callback_url: Optional[str] = Form(None, description="任务完成回调地址，可选")
 ):
     """
     异步转换Markdown文件到指定格式
@@ -201,6 +202,7 @@ async def convert_markdown(
         "file_size": len(content),
         "target_format": format.value,
         "pdf_theme": pdf_theme.value if pdf_theme else None,
+        "callback_url": callback_url,
         "result_file": None,
         "error": None
     }
@@ -211,7 +213,8 @@ async def convert_markdown(
         task_id,
         str(input_path),
         format,
-        pdf_theme
+        pdf_theme,
+        callback_url
     )
     
     return {
@@ -275,7 +278,8 @@ async def process_conversion_task(
     task_id: str,
     input_path: str,
     format: OutputFormat,
-    pdf_theme: Optional[PDFTheme]
+    pdf_theme: Optional[PDFTheme],
+    callback_url: Optional[str] = None
 ):
     """
     异步处理格式转换任务
@@ -286,14 +290,15 @@ async def process_conversion_task(
         await loop.run_in_executor(
             executor, 
             _process_conversion_task_sync,
-            task_id, input_path, format, pdf_theme
+            task_id, input_path, format, pdf_theme, callback_url
         )
 
 def _process_conversion_task_sync(
     task_id: str,
     input_path: str,
     format: OutputFormat,
-    pdf_theme: Optional[PDFTheme]
+    pdf_theme: Optional[PDFTheme],
+    callback_url: Optional[str] = None
 ):
     """
     同步处理格式转换的后台任务
@@ -324,15 +329,46 @@ def _process_conversion_task_sync(
             "completed_at": datetime.now().isoformat()
         })
         
+        print(f"格式转换任务 {task_id} 完成")
+        
+        # 任务完成后回调
+        if callback_url:
+            try:
+                import requests
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "completed",
+                    "message": "转换完成"
+                }, timeout=10)
+                print(f"✅ 已向回调地址发送完成通知: {callback_url}")
+            except Exception as cb_err:
+                print(f"⚠️ 回调通知失败: {cb_err}")
+        
     except Exception as e:
         # 更新任务状态为失败
+        error_message = f"转换失败: {str(e)}"
         task_status[task_id].update({
             "status": "failed",
             "progress": 0,
-            "message": f"转换失败: {str(e)}",
+            "message": error_message,
             "error": str(e),
             "failed_at": datetime.now().isoformat()
         })
+        
+        print(f"格式转换任务 {task_id} 失败: {error_message}")
+        
+        # 回调失败通知
+        if callback_url:
+            try:
+                import requests
+                requests.post(callback_url, json={
+                    "externalTaskId": task_id,
+                    "status": "failed",
+                    "message": error_message
+                }, timeout=10)
+                print(f"✅ 已向回调地址发送失败通知: {callback_url}")
+            except Exception as cb_err:
+                print(f"⚠️ 回调通知失败: {cb_err}")
 
 if __name__ == "__main__":
     print("启动格式转换服务...")
