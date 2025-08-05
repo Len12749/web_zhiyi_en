@@ -480,7 +480,7 @@ export class TaskProcessor {
   private async getTaskParams(): Promise<any> {
     try {
       const { getTaskById } = await import('@/actions/tasks/task-actions')
-      const result = await getTaskById(this.taskId)
+      const result = await getTaskById(this.taskId, true)
       return result.task?.processingParams || {}
     } catch (error) {
       console.error('获取任务参数失败:', error)

@@ -187,36 +187,49 @@ export async function getUserTasks(limit: number = 50): Promise<{ success: boole
 /**
  * 根据ID获取任务
  */
-export async function getTaskById(taskId: number): Promise<{ success: boolean; task?: ProcessingTask; message: string }> {
+export async function getTaskById(taskId: number, skipUserCheck = false): Promise<{ success: boolean; task?: ProcessingTask; message: string }> {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return {
-        success: false,
-        message: "用户未登录"
-      };
+    let task;
+    if (skipUserCheck) {
+      task = await db
+        .select()
+        .from(processingTasks)
+        .where(eq(processingTasks.id, taskId))
+        .limit(1);
+    } else {
+      const { userId } = auth();
+      if (!userId) {
+        return {
+          success: false,
+          message: "用户未登录"
+        };
+      }
+      task = await db
+        .select()
+        .from(processingTasks)
+        .where(and(
+          eq(processingTasks.id, taskId),
+          eq(processingTasks.userId, userId)
+        ))
+        .limit(1);
     }
-
-    const task = await db
-      .select()
-      .from(processingTasks)
-      .where(and(
-        eq(processingTasks.id, taskId),
-        eq(processingTasks.userId, userId)
-      ))
-      .limit(1);
-
     if (task.length === 0) {
       return {
         success: false,
         message: "任务不存在或无权限访问"
       };
     }
-
+    let processingParams = task[0].processingParams;
+    if (typeof processingParams === 'string') {
+      try {
+        processingParams = JSON.parse(processingParams);
+      } catch {
+        processingParams = {};
+      }
+    }
     return {
       success: true,
-      task: task[0] as ProcessingTask,
+      task: { ...task[0], processingParams },
       message: "获取任务成功"
     };
   } catch (error) {
