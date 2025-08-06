@@ -506,7 +506,7 @@ export default function FormatConversionPage() {
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
                   <li>• 格式转换：1积分/KB</li>
                   <li>• 支持多种输出格式</li>
-                  <li>• 处理失败将返还积分</li>
+                  <li>• 首次下载时扣除积分</li>
                 </ul>
               </motion.div>
             </div>

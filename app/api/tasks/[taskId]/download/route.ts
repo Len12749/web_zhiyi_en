@@ -4,6 +4,10 @@ import { getTaskById } from "@/actions/tasks/task-actions";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
+import { db } from "@/db";
+import { processingTasks } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { updateUserPoints, getCurrentUser } from "@/actions/auth/user-actions";
 
 // 强制动态渲染，避免静态生成错误
 export const dynamic = 'force-dynamic';
@@ -85,6 +89,51 @@ export async function GET(
         { success: false, message: "结果文件不存在" },
         { status: 404 }
       );
+    }
+
+    // 检查是否已经下载过，如果是首次下载则扣除积分
+    if (!task.hasBeenDownloaded) {
+      // 获取用户信息，检查积分是否足够
+      const userResult = await getCurrentUser();
+      if (!userResult.success || !userResult.user) {
+        return NextResponse.json(
+          { success: false, message: "获取用户信息失败" },
+          { status: 500 }
+        );
+      }
+
+      const user = userResult.user;
+      if (!user.hasInfinitePoints && user.points < task.requiredPoints) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: `积分不足，下载需要 ${task.requiredPoints} 积分，当前余额 ${user.points} 积分` 
+          },
+          { status: 402 } // 402 Payment Required
+        );
+      }
+
+      // 扣除积分
+      if (!user.hasInfinitePoints) {
+        const pointsResult = await updateUserPoints(
+          userId,
+          -task.requiredPoints,
+          `下载文件 - ${task.inputFilename}`
+        );
+
+        if (!pointsResult.success) {
+          return NextResponse.json(
+            { success: false, message: "积分扣除失败，无法下载" },
+            { status: 500 }
+          );
+        }
+      }
+
+      // 标记为已下载
+      await db
+        .update(processingTasks)
+        .set({ hasBeenDownloaded: true })
+        .where(eq(processingTasks.id, taskId));
     }
 
     // 读取文件

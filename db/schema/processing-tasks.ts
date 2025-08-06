@@ -23,8 +23,8 @@ export const processingTasks = pgTable('processing_tasks', {
   externalTaskId: varchar('external_task_id', { length: 255 }),
   
   // 积分
-  estimatedPoints: integer('estimated_points').default(0),
-  actualPointsUsed: integer('actual_points_used').default(0),
+  requiredPoints: integer('required_points').default(0), // 任务所需积分
+  hasBeenDownloaded: boolean('has_been_downloaded').default(false), // 是否已经下载过
   
   // 结果
   resultStoragePath: varchar('result_storage_path', { length: 500 }),

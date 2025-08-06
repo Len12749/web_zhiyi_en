@@ -19,8 +19,8 @@ export interface ProcessingTask {
   inputStoragePath: string;
   processingParams: any;
   externalTaskId: string | null;
-  estimatedPoints: number;
-  actualPointsUsed: number;
+  requiredPoints: number;
+  hasBeenDownloaded: boolean;
   resultStoragePath: string | null;
   resultFileSize: number | null;
   resultFilename: string | null;
@@ -83,7 +83,7 @@ export async function createProcessingTask(
       };
     }
 
-    // 检查用户积分并立即扣除（防止并发任务漏洞）
+    // 检查用户积分是否足够（但不扣除）
     const userResult = await getCurrentUser();
     if (!userResult.success || !userResult.user) {
       return {
@@ -99,20 +99,8 @@ export async function createProcessingTask(
         message: `积分不足，需要 ${estimatedPoints} 积分，当前余额 ${user.points} 积分`
       };
     }
-
-    // 立即扣除积分（防止并发任务超支）
-    const pointsResult = await updateUserPoints(
-      userId,
-      -estimatedPoints,
-      `任务开始处理 - ${inputFilename}（预扣积分）`
-    );
-
-    if (!pointsResult.success) {
-      return {
-        success: false,
-        message: "积分扣除失败，任务无法创建"
-      };
-    }
+    
+    // 注意：不再在此处扣除积分，而是在首次下载时扣除
 
     // 创建任务记录
     const newTask = await db
@@ -126,8 +114,8 @@ export async function createProcessingTask(
         inputFileSize,
         inputStoragePath,
         processingParams,
-        estimatedPoints,
-        actualPointsUsed: 0,
+        requiredPoints: estimatedPoints,
+        hasBeenDownloaded: false,
         retryCount: 0,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7天后过期
       })
@@ -311,8 +299,7 @@ export async function completeTask(
 
     const currentTask = task[0];
 
-    // 积分已在任务创建时扣除，这里只需要更新任务状态
-    // 更新任务为完成状态
+    // 更新任务为完成状态（积分在下载时扣除）
     await db
       .update(processingTasks)
       .set({
@@ -321,7 +308,6 @@ export async function completeTask(
         resultStoragePath,
         resultFileSize,
         resultFilename,
-        actualPointsUsed: currentTask.estimatedPoints,
         completedAt: new Date(),
       })
       .where(eq(processingTasks.id, taskId));
@@ -383,17 +369,7 @@ export async function failTask(
 
     const currentTask = task[0];
 
-    // 任务失败时返还积分
-    const pointsRefundResult = await updateUserPoints(
-      currentTask.userId,
-      currentTask.estimatedPoints,
-      `任务处理失败，返还积分 - ${currentTask.inputFilename}`
-    );
-
-    if (!pointsRefundResult.success) {
-      console.error("返还积分失败:", pointsRefundResult.message);
-      // 继续执行，不阻塞任务状态更新
-    }
+    // 任务失败时不需要返还积分，因为现在是在下载时才扣除积分
 
     // 更新任务为失败状态
     await db

@@ -34,7 +34,8 @@ interface FileHistoryItem {
   inputFileSize: number;
   resultFilename: string | null;
   resultFileSize: number | null;
-  actualPointsUsed: number;
+  requiredPoints: number;
+  hasBeenDownloaded: boolean;
   errorMessage: string | null;
   createdAt: string;
   completedAt: string | null;
@@ -361,8 +362,9 @@ export default function FileHistoryPage() {
                   <div className="col-span-3">文件信息</div>
                   <div className="col-span-2">类型</div>
                   <div className="col-span-2">状态</div>
-                  <div className="col-span-2">时间</div>
+                  <div className="col-span-1">时间</div>
                   <div className="col-span-1">积分</div>
+                  <div className="col-span-1">支付状态</div>
                   <div className="col-span-2">操作</div>
                 </div>
               </div>
@@ -440,13 +442,13 @@ export default function FileHistoryPage() {
                         </div>
 
                         {/* 时间 */}
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900 dark:text-white">
+                        <div className="col-span-1">
+                          <p className="text-xs text-gray-900 dark:text-white">
                             {formatTime(file.createdAt)}
                           </p>
                           {file.completedAt && (
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              完成于 {formatTime(file.completedAt)}
+                              完成于 {formatTime(file.completedAt).split(' ')[1]}
                             </p>
                           )}
                         </div>
@@ -454,8 +456,21 @@ export default function FileHistoryPage() {
                         {/* 积分 */}
                         <div className="col-span-1">
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {file.actualPointsUsed || 0}
+                            {file.requiredPoints}
                           </span>
+                        </div>
+                        
+                        {/* 支付状态 */}
+                        <div className="col-span-1">
+                          {file.taskStatus === 'completed' ? (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${file.hasBeenDownloaded ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'}`}>
+                              {file.hasBeenDownloaded ? '已支付' : '未支付'}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              -
+                            </span>
+                          )}
                         </div>
 
                         {/* 操作 */}
@@ -516,6 +531,7 @@ export default function FileHistoryPage() {
             <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
               <li>• 处理完成的文件将保留7天，请及时下载</li>
               <li>• 您可以随时删除不需要的文件释放存储空间</li>
+              <li>• 首次下载才会支付积分，已支付的文件可以重复下载，不会重复扣除积分</li>
               <li>• 处理失败的文件不消耗积分，可以重新处理</li>
               <li>• 支持批量下载和删除操作，提高操作效率</li>
             </ul>

@@ -517,7 +517,7 @@ export default function MarkdownTranslationPage() {
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
                   <li>• Markdown翻译：5积分/KB</li>
                   <li>• 保留原文档格式结构</li>
-                  <li>• 处理失败将返还积分</li>
+                  <li>• 首次下载时扣除积分</li>
                 </ul>
               </motion.div>
             </div>

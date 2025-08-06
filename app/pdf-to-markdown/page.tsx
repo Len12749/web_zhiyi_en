@@ -657,7 +657,7 @@ export default function PDFToMarkdownPage() {
               <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
                 <li>• PDF解析：5积分/页</li>
                 <li>• PDF解析+翻译：8积分/页（总计）</li>
-                <li>• 处理失败将返还积分</li>
+                <li>• 首次下载时扣除积分</li>
               </ul>
             </motion.div>
 

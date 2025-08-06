@@ -285,6 +285,18 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: pointsAnimation.isVisible ? 0.6 : 0 }}
             className="text-center space-y-4"
           >
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 max-w-2xl mx-auto mb-4">
+              <h4 className="text-md font-medium text-blue-900 dark:text-blue-300 mb-2">
+                积分扣除说明
+              </h4>
+              <p className="text-sm text-blue-800 dark:text-blue-400 mb-2">
+                我们采用"先处理后付费"模式：
+              </p>
+              <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 text-left">
+                <li>• 上传文件时仅检查积分是否足够，但不会立即扣除</li>
+                <li>• 首次下载文件时才会扣除相应积分</li>
+              </ul>
+            </div>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
               <span className="font-semibold">1元 = 100积分</span>
             </p>
