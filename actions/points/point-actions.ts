@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs";
 import { db } from "@/db";
-import { users, pointTransactions, userCheckins, redeemCodes, codeRedemptions } from "@/db/schema";
+import { users, pointTransactions, userCheckins, redeemCodes } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { updateUserPoints, getCurrentUser } from "@/actions/auth/user-actions";
 import { createNotification } from "@/actions/notifications/notification-actions";
@@ -11,6 +11,7 @@ export interface PointTransaction {
   id: number;
   userId: string;
   taskId: number | null;
+  redeemCodeId: number | null;
   amount: number;
   transactionType: string;
   description: string;
@@ -197,10 +198,11 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     // 检查用户是否已使用过此兑换码
     const existingRedemption = await db
       .select()
-      .from(codeRedemptions)
+      .from(pointTransactions)
       .where(and(
-        eq(codeRedemptions.codeId, codeInfo.id),
-        eq(codeRedemptions.userId, userId)
+        eq(pointTransactions.redeemCodeId, codeInfo.id),
+        eq(pointTransactions.userId, userId),
+        eq(pointTransactions.transactionType, 'REDEEM')
       ))
       .limit(1);
 
@@ -210,6 +212,15 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
         message: "您已使用过此兑换码"
       };
     }
+
+    // 创建积分交易记录并增加用户积分
+    const transaction = await db.insert(pointTransactions).values({
+      userId,
+      redeemCodeId: codeInfo.id,
+      amount: codeInfo.pointsValue,
+      transactionType: 'REDEEM',
+      description: `兑换码兑换 - ${code}`,
+    }).returning();
 
     // 增加用户积分
     const pointsResult = await updateUserPoints(
@@ -224,13 +235,6 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
         message: "兑换失败，积分更新错误"
       };
     }
-
-    // 记录兑换
-    const redemption = await db.insert(codeRedemptions).values({
-      codeId: codeInfo.id,
-      userId,
-      pointsEarned: codeInfo.pointsValue,
-    }).returning();
 
     // 更新兑换码使用次数
     await db

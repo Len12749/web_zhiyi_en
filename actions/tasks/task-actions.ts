@@ -13,7 +13,6 @@ export interface ProcessingTask {
   userId: string;
   taskType: string;
   taskStatus: string;
-  progressPercent: number;
   statusMessage: string | null;
   inputFilename: string;
   inputFileSize: number;
@@ -122,7 +121,6 @@ export async function createProcessingTask(
         userId,
         taskType,
         taskStatus: "pending",
-        progressPercent: 0,
         statusMessage: "任务已创建，等待处理",
         inputFilename,
         inputFileSize,
@@ -247,7 +245,7 @@ export async function getTaskById(taskId: number, skipUserCheck = false): Promis
 export async function updateTaskStatus(
   taskId: number,
   status: string,
-  progressPercent?: number,
+  progressPercent?: number, // 保留参数以兼容现有代码，但不再使用
   statusMessage?: string,
   externalTaskId?: string
 ): Promise<{ success: boolean; message: string }> {
@@ -256,10 +254,6 @@ export async function updateTaskStatus(
       taskStatus: status,
       statusMessage: statusMessage || null,
     };
-
-    if (progressPercent !== undefined) {
-      updateData.progressPercent = progressPercent;
-    }
 
     if (externalTaskId) {
       updateData.externalTaskId = externalTaskId;
@@ -323,7 +317,6 @@ export async function completeTask(
       .update(processingTasks)
       .set({
         taskStatus: "completed",
-        progressPercent: 100,
         statusMessage: "处理完成",
         resultStoragePath,
         resultFileSize,
@@ -421,7 +414,7 @@ export async function failTask(
         type: 'status_update',
         data: {
           status: 'failed',
-          progress: 0,
+          progress: 0, // 保留前端显示用
           message: errorMessage
         }
       });

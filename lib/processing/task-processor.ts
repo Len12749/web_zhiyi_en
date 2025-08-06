@@ -74,12 +74,12 @@ export class TaskProcessor {
   // 推送SSE状态更新 - 完全按照通知SSE的简单机制
   private async pushStatusUpdate(
     status: string,
-    progress: number,
+    progress: number, // 保留参数以兼容现有代码，但数据库中不再存储
     message?: string
   ) {
     // 更新数据库状态
     try {
-      await updateTaskStatus(this.taskId, status, progress, message)
+      await updateTaskStatus(this.taskId, status, undefined, message)
     } catch (error) {
       console.error(`[${this.taskId}] 更新数据库状态失败:`, error)
     }
@@ -88,7 +88,7 @@ export class TaskProcessor {
     try {
       sseConnectionManager.pushToTask(this.taskId, {
         type: 'status_update',
-        data: { status, progress, message }
+        data: { status, progress, message } // 仍然在SSE消息中包含progress，供前端显示
       })
     } catch (error) {
       console.error(`[${this.taskId}] SSE推送失败:`, error)

@@ -8,7 +8,7 @@ export const processingTasks = pgTable('processing_tasks', {
   // 任务信息
   taskType: varchar('task_type', { length: 50 }).notNull(), // pdf_to_markdown, translation, etc.
   taskStatus: varchar('task_status', { length: 20 }).default('pending').notNull(), // pending, processing, completed, failed
-  progressPercent: integer('progress_percent').default(0),
+
   statusMessage: text('status_message'),
   
   // 输入文件
