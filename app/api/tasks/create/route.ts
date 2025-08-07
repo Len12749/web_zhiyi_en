@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // 计算所需积分
     const estimatedPoints = TaskProcessor.calculatePoints(
-      taskType,
+      taskType as TaskType,
       inputFileSize,
       processingParams as any,
       pageCount

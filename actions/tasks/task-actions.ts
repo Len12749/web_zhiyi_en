@@ -58,8 +58,11 @@ export async function createProcessingTask(
     let estimatedPoints = 0;
     switch (taskType) {
       case 'pdf-to-markdown':
+        // PDF解析任务需要页数，并且需要检查是否启用翻译
+        estimatedPoints = calculatePoints(taskType, inputFileSize, pageCount, processingParams.enableTranslation);
+        break;
       case 'pdf-translation':
-        // 这些任务需要页数
+        // PDF翻译任务需要页数
         estimatedPoints = calculatePoints(taskType, inputFileSize, pageCount);
         break;
       case 'format-conversion':

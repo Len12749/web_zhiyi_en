@@ -81,6 +81,7 @@ export function calculatePoints(
       if (!pageCount || pageCount <= 0) {
         return 0; // 必须有实际页数
       }
+      // 根据是否开启翻译计算积分
       return enableTranslation ? pageCount * 8 : pageCount * 5;
       
     case 'image-to-markdown':
