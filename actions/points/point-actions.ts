@@ -6,6 +6,7 @@ import { users, pointTransactions, userCheckins, redeemCodes } from "@/db/schema
 import { eq, desc, and } from "drizzle-orm";
 import { updateUserPoints, getCurrentUser } from "@/actions/auth/user-actions";
 import { createNotification } from "@/actions/notifications/notification-actions";
+import { getBeijingDateString } from "@/lib/utils";
 
 export interface PointTransaction {
   id: number;
@@ -41,9 +42,8 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
     }
 
     // 检查今天是否已签到
-    // 使用用户本地时区的日期，而不是UTC
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; // YYYY-MM-DD格式
+    // 使用统一的工具函数获取北京时间
+    const today = getBeijingDateString(); // YYYY-MM-DD格式
     const existingCheckin = await db
       .select()
       .from(userCheckins)
@@ -119,9 +119,8 @@ export async function checkTodayCheckin(): Promise<{ success: boolean; hasChecke
       };
     }
 
-    // 使用用户本地时区的日期，而不是UTC
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // 使用统一的工具函数获取北京时间
+    const today = getBeijingDateString();
     const existingCheckin = await db
       .select()
       .from(userCheckins)

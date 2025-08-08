@@ -487,4 +487,14 @@ export function getAcceptedTypes(taskType: TaskType): string {
   if (!config) return '';
   
   return config.mimeTypes.join(',');
+}
+
+/**
+ * 获取北京时间（UTC+8）的日期字符串，格式为YYYY-MM-DD
+ */
+export function getBeijingDateString(): string {
+  const serverDate = new Date();
+  // 转换为北京时间 (UTC+8)
+  const beijingTime = new Date(serverDate.getTime() + (8 * 60 * 60 * 1000));
+  return `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')}`;
 } 

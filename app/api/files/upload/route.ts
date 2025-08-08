@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { mkdir, writeFile } from 'fs/promises';
-import { validateFileFormat, FILE_FORMAT_CONFIG, type TaskType } from '@/lib/utils';
+import { validateFileFormat, FILE_FORMAT_CONFIG, type TaskType, getBeijingDateString } from '@/lib/utils';
 import { getPDFPageCount } from '@/lib/external/pdf-utils';
 
 // 强制动态渲染，避免静态生成错误
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
 
     // 获取数据存储路径
     const dataStoragePath = process.env.DATA_STORAGE_PATH || './data';
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // 使用统一的工具函数获取北京时间
+    const today = getBeijingDateString();
     const timestamp = Date.now();
     
     const uploadDir = join(
