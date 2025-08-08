@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
 
     // 获取数据存储路径
     const dataStoragePath = process.env.DATA_STORAGE_PATH || './data';
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const timestamp = Date.now();
     
     const uploadDir = join(

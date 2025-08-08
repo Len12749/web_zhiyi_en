@@ -41,7 +41,9 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
     }
 
     // 检查今天是否已签到
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD格式
+    // 使用用户本地时区的日期，而不是UTC
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; // YYYY-MM-DD格式
     const existingCheckin = await db
       .select()
       .from(userCheckins)
@@ -117,7 +119,9 @@ export async function checkTodayCheckin(): Promise<{ success: boolean; hasChecke
       };
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    // 使用用户本地时区的日期，而不是UTC
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const existingCheckin = await db
       .select()
       .from(userCheckins)
