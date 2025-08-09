@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useUser, SignInButton } from '@clerk/nextjs';
-import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock, Users, GraduationCap, Award, BookOpen } from 'lucide-react';
+import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useScrollAnimation } from '@/lib/hooks/use-scroll-animation';
@@ -12,7 +12,7 @@ const features = [
   {
     id: 'pdf-to-markdown',
     title: 'PDF解析',
-    description: '将PDF解析成可编辑的Markdown文本，保留图片，同时支持翻译（自动检测源语言），可以选择把表格解析成markdown格式或图片格式。',
+    description: '利用自研模型将PDF解析成可编辑的Markdown文本，同时支持翻译。利用大模型的推理能力，数学公式输出规范，并可以选择把表格解析成markdown格式或图片格式。',
     icon: FileText,
     href: '/pdf-to-markdown',
     gradient: 'from-blue-500 to-cyan-500',
@@ -20,7 +20,7 @@ const features = [
   },
   {
     id: 'image-to-markdown',
-    title: '图片转Markdown',
+    title: '手写图片识别',
     description: '利用大模型将上传的图片解析成Markdown文本，支持多种图片格式，智能识别文本内容。',
     icon: Image,
     href: '/image-to-markdown',
@@ -30,7 +30,7 @@ const features = [
   {
     id: 'markdown-translation',
     title: 'Markdown翻译',
-    description: '将Markdown进行翻译，保留原排版，支持多种语言间的互译，确保格式完整性。',
+    description: '利用自研翻译策略结合大语言模型对Markdown文件进行翻译，具有良好的上下文一致性并支持多种语言间的互译。',
     icon: Languages,
     href: '/markdown-translation',
     gradient: 'from-green-500 to-emerald-500',
@@ -38,8 +38,8 @@ const features = [
   },
   {
     id: 'pdf-translation',
-    title: 'PDF翻译',
-    description: '将PDF进行翻译，保留原排版，支持多语言翻译，保持文档的原始格式和布局。',
+    title: 'PDF保留排版翻译',
+    description: '利用自研模型对PDF进行保留原排版翻译，保持文档的原始格式和布局，支持多语言翻译。',
     icon: Globe,
     href: '/pdf-translation',
     gradient: 'from-orange-500 to-red-500',
@@ -83,28 +83,7 @@ const benefits = [
   },
 ];
 
-const teamInfo = [
-  {
-    icon: Users,
-    title: '团队专业全面',
-    description: '涵盖经济学、数学、计算机、物理学等多个专业领域',
-  },
-  {
-    icon: GraduationCap,
-    title: '知名高校背景',
-    description: '团队成员来自北京理工大学、大连理工大学等国内知名大学',
-  },
-  {
-    icon: Award,
-    title: 'AI技术专家',
-    description: '拥有熟悉开发大模型的专家成员，AI开发技术经验丰富',
-  },
-  {
-    icon: BookOpen,
-    title: '学术成果丰硕',
-    description: '团队成员有成果发表在CSSCI《科学学研究》（第一作者）、SCI《Frontiers of Physics》等期刊上',
-  },
-];
+
 
 export default function HomePage() {
   const { isSignedIn, isLoaded } = useUser();
@@ -114,7 +93,6 @@ export default function HomePage() {
   const featuresAnimation = useScrollAnimation();
   const pointsAnimation = useScrollAnimation();
   const benefitsAnimation = useScrollAnimation();
-  const teamAnimation = useScrollAnimation();
 
   return (
     <div className="min-h-screen">
@@ -129,12 +107,12 @@ export default function HomePage() {
           >
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                智译平台
+                智译
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              基于AI的智能文档处理服务平台，让文档处理变得简单高效
+              基于大语言模型的智能文档处理服务平台，让文档处理变得简单高效
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -165,7 +143,6 @@ export default function HomePage() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">核心功能</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">六大强大功能，满足您的文档处理需求</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -265,9 +242,9 @@ export default function HomePage() {
                 {[
                   { service: 'PDF解析', cost: '5积分/页' },
                   { service: 'PDF解析+翻译', cost: '8积分/页' },
-                  { service: '图片转Markdown', cost: '5积分/张' },
+                  { service: '手写图片识别', cost: '5积分/张' },
                   { service: 'Markdown翻译', cost: '5积分/KB' },
-                  { service: 'PDF翻译', cost: '3积分/页' },
+                  { service: 'PDF保留排版翻译', cost: '3积分/页' },
                   { service: '格式转换', cost: '1积分/KB' },
                 ].map((item, index) => (
                   <li key={index} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
@@ -289,12 +266,12 @@ export default function HomePage() {
               <h4 className="text-md font-medium text-blue-900 dark:text-blue-300 mb-2">
                 积分扣除说明
               </h4>
-              <p className="text-sm text-blue-800 dark:text-blue-400 mb-2">
+              <p className="text-sm text-blue-800 dark:text-blue-400 mb-2 text-left">
                 我们采用"先处理后付费"模式：
               </p>
               <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 text-left">
-                <li>• 上传文件时仅检查积分是否足够，但不会立即扣除</li>
-                <li>• 首次下载文件时才会扣除相应积分</li>
+                <li className="text-left">• 上传文件时仅检查积分是否足够，但不会立即扣除</li>
+                <li className="text-left">• 首次下载文件时才会扣除相应积分</li>
               </ul>
             </div>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
@@ -328,7 +305,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">为什么选择智译平台？</h2>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">为什么选择智译？</h2>
             <p className="text-xl text-gray-600 dark:text-gray-300">专业、安全、高效的文档处理服务</p>
           </motion.div>
 
@@ -355,54 +332,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section ref={teamAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">专业团队</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">汇聚各领域精英，为您提供最优质的服务</p>
-          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            {teamInfo.map((info, index) => {
-              const Icon = info.icon;
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ duration: 0.6, delay: teamAnimation.isVisible ? 0.1 * index : 0 }}
-                  className="text-center group bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300"
-                >
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Icon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{info.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">{info.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={teamAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: teamAnimation.isVisible ? 0.6 : 0 }}
-            className="text-center"
-          >
-            <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-              <Link href="/about">
-                关于我们
-              </Link>
-            </Button>
-          </motion.div>
-        </div>
-      </section>
     </div>
   );
 } 

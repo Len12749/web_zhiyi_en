@@ -15,10 +15,10 @@ if (typeof window === 'undefined') {
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "智译平台 - 智能文档处理服务",
+  title: "智译 - 智能文档处理服务",
   description: "基于AI的文档处理平台，支持PDF解析、图片转Markdown、文档翻译、格式转换等功能",
   keywords: ["AI", "文档处理", "PDF解析", "翻译", "Markdown"],
-  authors: [{ name: "智译平台" }],
+  authors: [{ name: "智译" }],
 };
 
 export const viewport: Viewport = {
