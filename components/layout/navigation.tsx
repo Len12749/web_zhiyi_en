@@ -115,12 +115,12 @@ export function Navigation() {
               {/* Always show login/signup buttons for signed out users */}
               <SignedOut>
                 <SignInButton mode="modal">
-                  <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+                  <button className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors">
                     登录
                   </button>
                 </SignInButton>
                 <SignUpButton mode="modal">
-                  <button className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                  <button className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md transition-colors shadow-md hover:shadow-lg">
                     注册
                   </button>
                 </SignUpButton>
@@ -242,7 +242,7 @@ export function Navigation() {
                     <SignInButton mode="modal">
                       <button 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors w-full text-left"
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors w-full text-left"
                       >
                         <User className="h-4 w-4" />
                         <span>登录</span>
@@ -251,7 +251,7 @@ export function Navigation() {
                     <SignUpButton mode="modal">
                       <button 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors w-full text-left"
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transition-colors w-full text-left shadow-md hover:shadow-lg"
                       >
                         <User className="h-4 w-4" />
                         <span>注册</span>
