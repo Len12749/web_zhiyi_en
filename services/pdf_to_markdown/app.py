@@ -33,8 +33,8 @@ from src.modules import (
 from src.utils.logger import setup_logger
 
 # 创建临时目录
-TEMP_DIR = Path("File") / "pdf_to_markdown_temp"
-TEMP_DIR.mkdir(exist_ok=True)
+TEMP_DIR = Path(__file__).parent / "File" / "pdf_to_markdown_temp"
+TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 # 创建FastAPI应用
 app = FastAPI(title="PDF转Markdown服务", description="PDF文件解析为Markdown的API", version="1.0.0")
