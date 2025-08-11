@@ -6,7 +6,7 @@ echo Virtual Environment: docling
 echo Port: 8003
 echo ========================================
 
-cd /d "%~dp0..\..\services\md_translate"
+cd /d "%~dp0..\..\..\md_translate"
 
 call conda activate docling
 

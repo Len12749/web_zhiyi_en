@@ -6,7 +6,7 @@ echo Virtual Environment: test
 echo Port: 8005
 echo ========================================
 
-cd /d "%~dp0..\..\services\pdf_translator"
+cd /d "%~dp0..\..\..\pdf_translator"
 
 call conda activate test
 

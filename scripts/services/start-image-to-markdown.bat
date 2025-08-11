@@ -6,7 +6,7 @@ echo Virtual Environment: docling
 echo Port: 8004
 echo ========================================
 
-cd /d "%~dp0..\..\services\image-to-markdown"
+cd /d "%~dp0..\..\..\image-to-markdown"
 
 call conda activate docling
 

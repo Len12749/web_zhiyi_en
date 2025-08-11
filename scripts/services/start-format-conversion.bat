@@ -6,7 +6,7 @@ echo Virtual Environment: docling
 echo Port: 8001
 echo ========================================
 
-cd /d "%~dp0..\..\services\format-conversion"
+cd /d "%~dp0..\..\..\format-conversion"
 
 call conda activate docling
 
