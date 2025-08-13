@@ -133,9 +133,9 @@ interface NotificationItem {
 const navigationItems = [
   { href: '/', label: '首页', icon: Home },
   { href: '/pdf-to-markdown', label: 'PDF解析', icon: FileText },
-  { href: '/image-to-markdown', label: '图片转Markdown', icon: Image },
+  { href: '/image-to-markdown', label: '手写图片识别', icon: Image },
   { href: '/markdown-translation', label: 'Markdown翻译', icon: Languages },
-  { href: '/pdf-translation', label: 'PDF翻译', icon: Globe },
+  { href: '/pdf-translation', label: 'PDF保留排版翻译', icon: Globe },
   { href: '/format-conversion', label: '格式转换', icon: RefreshCw },
   { href: '/file-history', label: '文件历史', icon: History },
   { href: '/about', label: '关于我们', icon: Info },

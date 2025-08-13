@@ -9,9 +9,9 @@
 智译平台采用微服务架构，各服务独立运行，通过HTTP API进行通信。核心业务服务包括：
 
 1. **PDF解析服务**：将PDF文档转换为Markdown格式
-2. **图片转Markdown服务**：识别图片中的文字内容并转换为Markdown格式
+2. **手写图片识别服务**：识别图片中的文字内容并转换为Markdown格式
 3. **Markdown翻译服务**：翻译Markdown文档，保留原格式
-4. **PDF翻译服务**：翻译PDF文档，保留原排版
+4. **PDF保留排版翻译服务**：翻译PDF文档，保留原排版
 5. **格式转换服务**：将Markdown文档转换为其他格式(Word、HTML、PDF、LaTeX)
 
 所有服务均支持异步任务处理和SSE（Server-Sent Events）实时状态推送，确保用户能够获得即时的处理进度反馈。
@@ -36,7 +36,7 @@
 
 **服务端口**：8002
 
-### 2. 图片转Markdown服务 (image-to-markdown)
+### 2. 手写图片识别服务 (image-to-markdown)
 
 **功能**：识别图片中的文字、公式、表格等内容，转换为Markdown格式。
 
@@ -70,7 +70,7 @@
 
 **服务端口**：8003
 
-### 4. PDF翻译服务 (pdf_translator)
+### 4. PDF保留排版翻译服务 (pdf_translator)
 
 **功能**：翻译PDF文档，保留原始排版和布局。
 
@@ -133,9 +133,9 @@
 所有服务都可以通过项目根目录下的`scripts/services`文件夹中的批处理文件启动：
 
 - `start-pdf-to-markdown.bat`：启动PDF解析服务
-- `start-image-to-markdown.bat`：启动图片转Markdown服务
+- `start-image-to-markdown.bat`：启动手写图片识别服务
 - `start-markdown-translation.bat`：启动Markdown翻译服务
-- `start-pdf-translation.bat`：启动PDF翻译服务
+- `start-pdf-translation.bat`：启动PDF保留排版翻译服务
 - `start-format-conversion.bat`：启动格式转换服务
 - `service-manager.bat`：统一管理所有服务的启动和停止
 

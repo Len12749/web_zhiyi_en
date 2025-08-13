@@ -43,8 +43,8 @@ start "PDF to Markdown" "%~dp0start-pdf-to-markdown.bat"
 goto MENU
 
 :START_IMG_MD
-echo Starting Image to Markdown Service...
-start "Image to Markdown" "%~dp0start-image-to-markdown.bat"
+echo Starting Handwritten Image Recognition Service...
+start "Handwritten Image Recognition" "%~dp0start-image-to-markdown.bat"
 goto MENU
 
 :START_MD_TRANS
@@ -53,8 +53,8 @@ start "Markdown Translation" "%~dp0start-markdown-translation.bat"
 goto MENU
 
 :START_PDF_TRANS
-echo Starting PDF Translation Service...
-start "PDF Translation" "%~dp0start-pdf-translation.bat"
+echo Starting PDF Layout-Preserving Translation Service...
+start "PDF Layout-Preserving Translation" "%~dp0start-pdf-translation.bat"
 goto MENU
 
 :START_FORMAT_CONV
@@ -69,11 +69,11 @@ echo.
 timeout /t 3
 start "PDF to Markdown" "%~dp0start-pdf-to-markdown.bat"
 timeout /t 1
-start "Image to Markdown" "%~dp0start-image-to-markdown.bat"  
+start "Handwritten Image Recognition" "%~dp0start-image-to-markdown.bat"  
 timeout /t 1
 start "Markdown Translation" "%~dp0start-markdown-translation.bat"
 timeout /t 1
-start "PDF Translation" "%~dp0start-pdf-translation.bat"
+start "PDF Layout-Preserving Translation" "%~dp0start-pdf-translation.bat"
 timeout /t 1
 start "Format Conversion" "%~dp0start-format-conversion.bat"
 
@@ -95,9 +95,9 @@ if errorlevel 1 (
 
 curl -s http://localhost:8004/health >nul 2>&1
 if errorlevel 1 (
-    echo [X] Image to Markdown (Port 8004): Not running
+    echo [X] Handwritten Image Recognition (Port 8004): Not running
 ) else (
-    echo [OK] Image to Markdown (Port 8004): Running
+    echo [OK] Handwritten Image Recognition (Port 8004): Running
 )
 
 curl -s http://localhost:8003/health >nul 2>&1  
@@ -109,9 +109,9 @@ if errorlevel 1 (
 
 curl -s http://localhost:8005/health >nul 2>&1
 if errorlevel 1 (
-    echo [X] PDF Translation (Port 8005): Not running  
+    echo [X] PDF Layout-Preserving Translation (Port 8005): Not running  
 ) else (
-    echo [OK] PDF Translation (Port 8005): Running
+    echo [OK] PDF Layout-Preserving Translation (Port 8005): Running
 )
 
 curl -s http://localhost:8001/ >nul 2>&1

@@ -7,9 +7,9 @@
 - [核心服务配置](#核心服务配置)
 - [通用API流程](#通用api流程)
 - [PDF解析服务](#pdf解析服务)
-- [图片转Markdown服务](#图片转markdown服务)
+- [手写图片识别服务](#手写图片识别服务)
 - [Markdown翻译服务](#markdown翻译服务)
-- [PDF翻译服务](#pdf翻译服务)
+- [PDF保留排版翻译服务](#pdf保留排版翻译服务)
 - [格式转换服务](#格式转换服务)
 - [SSE实时状态更新](#sse实时状态更新)
 - [Webhook回调](#webhook回调)
@@ -21,10 +21,10 @@
 ```javascript
 const CORE_SERVICES = {
   FORMAT_CONVERSION: 'http://localhost:8001',     // 格式转换
-  PDF_TO_MARKDOWN: 'http://localhost:8002',       // PDF转Markdown
+  PDF_TO_MARKDOWN: 'http://localhost:8002',       // PDF解析
   MARKDOWN_TRANSLATION: 'http://localhost:8003',  // Markdown翻译
-  IMAGE_TO_MARKDOWN: 'http://localhost:8004',     // 图片转Markdown
-  PDF_TRANSLATION: 'http://localhost:8005',       // PDF翻译
+  IMAGE_TO_MARKDOWN: 'http://localhost:8004',     // 手写图片识别
+  PDF_TRANSLATION: 'http://localhost:8005',       // PDF保留排版翻译
 }
 ```
 
@@ -180,7 +180,7 @@ interface PDFToMarkdownParams {
    - 表格图片(如选择image表格模式)
    - 翻译内容(如启用翻译)
 
-## 图片转Markdown服务
+## 手写图片识别服务
 
 将图片内容识别并转换为Markdown文本。
 
@@ -229,8 +229,8 @@ interface ImageToMarkdownParams {
 
 ### API调用流程
 
-1. **上传图片文件**：通过`/api/files/upload`上传图片文件(JPEG、PNG、GIF、WEBP)
-2. **创建任务**：通过`/api/tasks/create`创建图片转Markdown任务
+1. **上传图片文件**：通过`/api/files/upload`上传图片文件(JPEG、PNG)
+2. **创建任务**：通过`/api/tasks/create`创建手写图片识别任务
 3. **图像识别**：服务识别图片中的文本内容、表格、图表等，并转换为结构化的Markdown格式
 4. **结果返回**：处理完成后返回Markdown文本文件，包含:
    - 识别的文本内容
@@ -312,7 +312,7 @@ const SUPPORTED_LANGUAGES = {
    - 保留链接URL和图片路径
    - 翻译文本内容、标题、列表项等
 
-## PDF翻译服务
+## PDF保留排版翻译服务
 
 翻译PDF文档内容，保留原始排版。
 

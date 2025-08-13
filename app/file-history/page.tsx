@@ -44,9 +44,9 @@ interface FileHistoryItem {
 
 const taskTypeNames: Record<TaskType, string> = {
   'pdf-to-markdown': 'PDF解析',
-  'image-to-markdown': '图片转Markdown',
+  'image-to-markdown': '手写图片识别',
   'markdown-translation': 'Markdown翻译',
-  'pdf-translation': 'PDF翻译',
+  'pdf-translation': 'PDF保留排版翻译',
   'format-conversion': '格式转换'
 };
 

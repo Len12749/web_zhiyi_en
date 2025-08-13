@@ -52,7 +52,7 @@ export default function PDFTranslationPage() {
     { code: 'zh', name: '中文' },
   ];
 
-  // 目标语言列表 (与后端PDF翻译服务的LANGUAGE_MAPPING保持一致)
+  // 目标语言列表 (与后端PDF保留排版翻译服务的LANGUAGE_MAPPING保持一致)
   const targetLanguages = [
     { code: 'zh', name: '中文' },
     { code: 'en', name: '英语' },
@@ -277,7 +277,7 @@ export default function PDFTranslationPage() {
               <Globe className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              PDF翻译
+              PDF保留排版翻译
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               将PDF文档翻译为目标语言，保留原有的版式和排版
@@ -564,7 +564,7 @@ export default function PDFTranslationPage() {
                   积分消耗说明
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• PDF翻译：3积分/页</li>
+                  <li>• PDF保留排版翻译：3积分/页</li>
                   <li>• 保留原文档排版</li>
                   <li>• 首次下载时扣除积分</li>
                 </ul>

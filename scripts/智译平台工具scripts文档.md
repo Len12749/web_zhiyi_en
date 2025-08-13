@@ -15,9 +15,9 @@ scripts/
 ├── services/                      # 微服务管理脚本
 │   ├── service-manager.bat        # 服务管理器（主控制面板）
 │   ├── start-pdf-to-markdown.bat  # PDF解析服务启动脚本
-│   ├── start-image-to-markdown.bat # 图片转Markdown服务启动脚本
+│   ├── start-image-to-markdown.bat # 手写图片识别服务启动脚本
 │   ├── start-markdown-translation.bat # Markdown翻译服务启动脚本
-│   ├── start-pdf-translation.bat  # PDF翻译服务启动脚本
+│   ├── start-pdf-translation.bat  # PDF保留排版翻译服务启动脚本
 │   └── start-format-conversion.bat # 格式转换服务启动脚本
 ├── start.js                       # Next.js应用启动脚本
 └── admin_script.py                # 管理员工具脚本（积分系统管理）
@@ -74,7 +74,7 @@ Please select service to start:
    - 环境：docling
 
 2. **start-image-to-markdown.bat**
-   - 功能：启动图片转Markdown服务
+   - 功能：启动手写图片识别服务
    - 端口：8004
    - 环境：docling
 
@@ -84,7 +84,7 @@ Please select service to start:
    - 环境：docling
 
 4. **start-pdf-translation.bat**
-   - 功能：启动PDF翻译服务
+   - 功能：启动PDF保留排版翻译服务
    - 端口：8005
    - 环境：test
 

@@ -130,7 +130,7 @@ export default function DashboardPage() {
       color: 'bg-blue-500',
     },
     {
-      title: '图片转Markdown',
+      title: '手写图片识别',
       description: '智能识别图片内容',
       icon: Image,
       href: '/image-to-markdown',
@@ -144,7 +144,7 @@ export default function DashboardPage() {
       color: 'bg-purple-500',
     },
     {
-      title: 'PDF翻译',
+      title: 'PDF保留排版翻译',
       description: '保留排版的PDF翻译',
       icon: Globe,
       href: '/pdf-translation',

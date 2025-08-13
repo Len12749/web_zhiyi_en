@@ -203,7 +203,7 @@ export default function ImageToMarkdownPage() {
               <ImageIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              图片转Markdown
+              手写图片识别
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               利用AI智能识别图片内容，将图片转换为结构化的Markdown文本
