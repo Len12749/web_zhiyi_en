@@ -15,7 +15,7 @@ import {
   Repeat
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { calculatePoints, validateFileFormat, getAcceptedExtensions, type TaskType } from '@/lib/utils';
+import { calculatePoints, validateFileFormat, getAcceptedExtensions, formatFileSize, type TaskType } from '@/lib/utils';
 import { AuthGuard } from '@/components/common/auth-guard';
 
 interface ProcessingStatus {
@@ -271,7 +271,7 @@ export default function FormatConversionPage() {
                           {selectedFile.name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {/* formatFileSize(selectedFile.size) */}
+                          {formatFileSize(selectedFile.size)}
                         </p>
                       </div>
                       <Button
@@ -416,7 +416,7 @@ export default function FormatConversionPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">大小：</span>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {/* formatFileSize(selectedFile.size) */}
+                            {formatFileSize(selectedFile.size)}
                           </span>
                         </div>
                       </div>
