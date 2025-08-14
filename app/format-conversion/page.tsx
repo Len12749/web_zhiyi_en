@@ -358,7 +358,27 @@ export default function FormatConversionPage() {
                     {processingStatus.status === 'completed' && processingStatus.downloadUrl && (
                       <div className="flex space-x-3">
                         <Button
-                          onClick={() => window.open(processingStatus.downloadUrl)}
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(processingStatus.downloadUrl!);
+                              if (response.ok) {
+                                window.open(processingStatus.downloadUrl);
+                              } else {
+                                // 处理不同的错误状态码
+                                const errorData = await response.json().catch(() => ({}));
+                                
+                                if (response.status === 402) {
+                                  // 积分不足的情况
+                                  alert(errorData.message || "您的积分不足，无法下载此文件");
+                                } else {
+                                  alert(errorData.message || "文件下载失败，请稍后再试");
+                                }
+                              }
+                            } catch (error) {
+                              console.error('下载失败:', error);
+                              alert("下载过程中发生错误，请稍后再试");
+                            }
+                          }}
                           className="flex-1"
                         >
                           <Download className="h-4 w-4 mr-2" />

@@ -119,6 +119,7 @@ export default function FileHistoryPage() {
   const handleDownload = async (fileId: number, filename: string) => {
     try {
       const response = await fetch(`/api/tasks/${fileId}/download`);
+      
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -130,11 +131,19 @@ export default function FileHistoryPage() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } else {
-        alert('下载失败');
+        // 处理不同的错误状态码
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 402) {
+          // 积分不足的情况
+          alert(errorData.message || "您的积分不足，无法下载此文件");
+        } else {
+          alert(errorData.message || "文件下载失败，请稍后再试");
+        }
       }
     } catch (error) {
       console.error('下载失败:', error);
-      alert('下载失败');
+      alert("下载过程中发生错误，请稍后再试");
     }
   };
 
