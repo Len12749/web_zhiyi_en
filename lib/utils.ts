@@ -82,26 +82,25 @@ export function calculatePoints(
         return 0; // 必须有实际页数
       }
       // 根据是否开启翻译计算积分
-      return enableTranslation ? pageCount * 8 : pageCount * 5;
+      return enableTranslation ? pageCount * 3 : pageCount * 2;
       
     case 'image-to-markdown':
       return 5; // 固定5积分每张图片
       
     case 'markdown-translation':
-      // fileSizeOrPageCount 是文件大小（字节）
-      const sizeInKB = Math.ceil(fileSizeOrPageCount / 1024); // 向上取整到KB
-      return sizeInKB * 5;
+
+      // 改为按字符计算，每10000字符2积分，不足10000按10000计算
+      const charCount = fileSizeOrPageCount; // 这里假设传入的是字符数
+      return Math.max(1, Math.ceil(charCount / 10000)) * 2;
       
     case 'pdf-translation':
       if (!pageCount || pageCount <= 0) {
         return 0; // 必须有实际页数
       }
-      return pageCount * 3;
+      return pageCount * 2;
       
     case 'format-conversion':
-      // fileSizeOrPageCount 是文件大小（字节）
-      const formatSizeInKB = Math.ceil(fileSizeOrPageCount / 1024); // 向上取整到KB
-      return formatSizeInKB * 1; // 每KB 1积分
+      return 1; // 固定1积分每次
       
     default:
       return 0;

@@ -60,7 +60,7 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
       };
     }
 
-    const pointsEarned = 5; // 每日签到5积分
+    const pointsEarned = 10; // 每日签到10积分
 
     // 记录签到
     await db.insert(userCheckins).values({
@@ -392,6 +392,8 @@ export async function getPointsSummary(): Promise<{
         totalEarned,
         totalSpent,
         todayChecked,
+        membershipType: user.membershipType,
+        membershipExpiry: user.membershipExpiry,
       },
       message: "获取积分统计成功"
     };

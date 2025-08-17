@@ -31,6 +31,8 @@ export default function MarkdownTranslationPage() {
   const { user } = useUser();
   const { connect: connectSSE, disconnect: disconnectSSE } = useSSEWithReconnect();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileCharCount, setFileCharCount] = useState<number | null>(null);
+  const [estimatedPoints, setEstimatedPoints] = useState<number | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>({
@@ -67,7 +69,7 @@ export default function MarkdownTranslationPage() {
     }
   }, []);
 
-  const validateAndSetFile = (file: File) => {
+  const validateAndSetFile = async (file: File) => {
     console.log('选择的文件:', {
       name: file.name,
       size: file.size,
@@ -85,6 +87,23 @@ export default function MarkdownTranslationPage() {
     
     setSelectedFile(file);
     setErrorMessage('');
+    
+    // 读取文件内容并计算字符数
+    try {
+      const text = await file.text();
+      const charCount = text.length;
+      setFileCharCount(charCount);
+      
+      // 计算预估积分 - 每10000字符2积分，不足10000按10000计算
+      const points = Math.max(1, Math.ceil(charCount / 10000)) * 2;
+      setEstimatedPoints(points);
+    } catch (err) {
+      console.error('计算文件字符数失败:', err);
+      // 如果读取失败，使用文件大小作为备选
+      setFileCharCount(file.size);
+      setEstimatedPoints(Math.max(1, Math.ceil(file.size / 10000)) * 2);
+    }
+    
     console.log('文件验证通过，已设置文件');
   };
 
@@ -97,7 +116,7 @@ export default function MarkdownTranslationPage() {
       const file = e.dataTransfer.files[0];
       validateAndSetFile(file);
     }
-  }, []);
+  }, [validateAndSetFile]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -142,10 +161,14 @@ export default function MarkdownTranslationPage() {
         throw new Error(uploadResult.message || '文件上传失败');
       }
 
+      // 获取字符数
+      const charCount = uploadResult.data?.additionalInfo?.charCount || selectedFile.size;
+      
       // 构建处理参数
       const processingParams = {
         sourceLanguage,
         targetLanguage,
+        charCount, // 将字符数传递给后端
       };
 
       // 创建处理任务
@@ -271,6 +294,9 @@ export default function MarkdownTranslationPage() {
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {formatFileSize(selectedFile.size)}
+                        </p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          {fileCharCount?.toLocaleString() || '...'} 字符
                         </p>
                       </div>
                       <Button
@@ -433,9 +459,9 @@ export default function MarkdownTranslationPage() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">大小：</span>
+                          <span className="text-gray-600 dark:text-gray-400">字符数：</span>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {formatFileSize(selectedFile.size)}
+                            {fileCharCount?.toLocaleString() || '计算中...'} 字符
                           </span>
                         </div>
                       </div>
@@ -535,7 +561,7 @@ export default function MarkdownTranslationPage() {
                   积分消耗说明
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• Markdown翻译：5积分/KB</li>
+                  <li>• Markdown翻译：2积分/万字符</li>
                   <li>• 保留原文档格式结构</li>
                   <li>• 首次下载时扣除积分</li>
                 </ul>

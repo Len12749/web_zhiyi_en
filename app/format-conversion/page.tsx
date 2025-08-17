@@ -524,7 +524,7 @@ export default function FormatConversionPage() {
                   积分消耗说明
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• 格式转换：1积分/KB</li>
+                  <li>• 格式转换：1积分/次</li>
                   <li>• 支持多种输出格式</li>
                   <li>• 首次下载时扣除积分</li>
                 </ul>

@@ -5,7 +5,7 @@ export const userCheckins = pgTable('user_checkins', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id', { length: 255 }).notNull().references(() => users.clerkId, { onDelete: 'cascade' }),
   checkinDate: date('checkin_date').notNull(),
-  pointsEarned: integer('points_earned').default(5),
+  pointsEarned: integer('points_earned').default(10),
   createdAt: timestamp('created_at').defaultNow(),
 }, (table) => ({
   unq: unique().on(table.userId, table.checkinDate),

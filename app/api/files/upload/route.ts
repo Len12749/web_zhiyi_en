@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, writeFile, readFile } from 'fs/promises';
 import { validateFileFormat, FILE_FORMAT_CONFIG, type TaskType, getBeijingDateString } from '@/lib/utils';
 import { getPDFPageCount } from '@/lib/external/pdf-utils';
 
@@ -142,8 +142,30 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-    } else if (taskType === 'markdown-translation' || taskType === 'format-conversion') {
-      // Markdown文件默认按文件大小计费，页数检测不是必需的
+    } else if (taskType === 'markdown-translation') {
+      // Markdown翻译按字符数计费
+      try {
+        // 读取文件内容并计算字符数
+        const fileContent = await readFile(filePath, 'utf-8');
+        const charCount = fileContent.length;
+        
+        additionalInfo = {
+          pageCount: 1, // 保留兼容性
+          needsPageDetection: false,
+          pageDetectionMethod: 'default',
+          charCount: charCount, // 添加字符数信息
+        };
+      } catch (err) {
+        console.error('计算文件字符数失败:', err);
+        additionalInfo = {
+          pageCount: 1,
+          needsPageDetection: false,
+          pageDetectionMethod: 'default',
+          charCount: file.size, // 如果读取失败，使用文件大小作为备选
+        };
+      }
+    } else if (taskType === 'format-conversion') {
+      // 格式转换按次数计费
       additionalInfo = {
         pageCount: 1, // 默认值
         needsPageDetection: false,

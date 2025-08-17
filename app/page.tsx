@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useUser, SignInButton } from '@clerk/nextjs';
-import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock } from 'lucide-react';
+import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { SubscriptionCard, SubscriptionPlan } from '@/components/common/subscription-card';
 import { useScrollAnimation } from '@/lib/hooks/use-scroll-animation';
 
 const features = [
@@ -16,7 +17,7 @@ const features = [
     icon: FileText,
     href: '/pdf-to-markdown',
     gradient: 'from-blue-500 to-cyan-500',
-    points: '5积分/页，含翻译8积分/页',
+    points: '2积分/页，含翻译3积分/页',
   },
   {
     id: 'image-to-markdown',
@@ -34,7 +35,7 @@ const features = [
     icon: Languages,
     href: '/markdown-translation',
     gradient: 'from-green-500 to-emerald-500',
-    points: '5积分/KB',
+    points: '2积分/万字符',
   },
   {
     id: 'pdf-translation',
@@ -43,7 +44,7 @@ const features = [
     icon: Globe,
     href: '/pdf-translation',
     gradient: 'from-orange-500 to-red-500',
-    points: '3积分/页',
+    points: '2积分/页',
   },
   {
     id: 'format-conversion',
@@ -52,7 +53,7 @@ const features = [
     icon: RefreshCw,
     href: '/format-conversion',
     gradient: 'from-indigo-500 to-purple-500',
-    points: '2积分/KB',
+    points: '1积分/次',
   },
   {
     id: 'file-history',
@@ -69,7 +70,7 @@ const benefits = [
   {
     icon: Zap,
     title: '高效处理',
-    description: '基于最新AI技术，快速准确地处理各类文档',
+    description: '基于大模型语言，快速准确地处理各类文档',
   },
   {
     icon: Shield,
@@ -83,15 +84,45 @@ const benefits = [
   },
 ];
 
+const subscriptionPlans: SubscriptionPlan[] = [
+  {
+    name: '普通版',
+    price: {
+      monthly: 10,
+      yearly: 100
+    },
+    features: [
+      '每月4000积分',
+      '高级用户标识'
+    ],
+    color: 'blue'
+  },
+  {
+    name: '高级版',
+    price: {
+      monthly: 30,
+      yearly: 300
+    },
+    features: [
+      '每月10000积分',
+      '高级用户标识'
+    ],
+    color: 'purple'
+  }
+];
+
 
 
 export default function HomePage() {
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [isSubscriptionCardOpen, setIsSubscriptionCardOpen] = useState(false);
   const { isSignedIn, isLoaded } = useUser();
   
   // 为每个section创建滚动动画hook
   const heroAnimation = useScrollAnimation();
   const featuresAnimation = useScrollAnimation();
   const pointsAnimation = useScrollAnimation();
+  const subscriptionAnimation = useScrollAnimation();
   const benefitsAnimation = useScrollAnimation();
 
   return (
@@ -211,8 +242,8 @@ export default function HomePage() {
               </h3>
               <ul className="space-y-3">
                 {[
-                  { text: '注册即送', points: '20积分' },
-                  { text: '每日签到领取', points: '5积分' },
+                  { text: '注册即送', points: '100积分' },
+                  { text: '每日签到领取', points: '10积分' },
                   { text: '特殊节日免费赠送积分', points: null },
                   { text: '兑换码', points: null },
                   { text: '充值', points: null },
@@ -240,12 +271,12 @@ export default function HomePage() {
               </h3>
               <ul className="space-y-3">
                 {[
-                  { service: 'PDF解析', cost: '5积分/页' },
-                  { service: 'PDF解析+翻译', cost: '8积分/页' },
+                  { service: 'PDF解析', cost: '2积分/页' },
+                  { service: 'PDF解析+翻译', cost: '3积分/页' },
                   { service: '手写图片识别', cost: '5积分/张' },
-                  { service: 'Markdown翻译', cost: '5积分/KB' },
-                  { service: 'PDF保留排版翻译', cost: '3积分/页' },
-                  { service: '格式转换', cost: '1积分/KB' },
+                  { service: 'Markdown翻译', cost: '2积分/万字符' },
+                  { service: 'PDF保留排版翻译', cost: '2积分/页' },
+                  { service: '格式转换', cost: '1积分/次' },
                 ].map((item, index) => (
                   <li key={index} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
                     <span>{item.service}</span>
@@ -274,9 +305,7 @@ export default function HomePage() {
                 <li className="text-left">• 首次下载文件时才会扣除相应积分</li>
               </ul>
             </div>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              <span className="font-semibold">1元 = 100积分</span>
-            </p>
+
             {isLoaded && (
               isSignedIn ? (
                 <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
@@ -296,8 +325,68 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Subscription Section */}
+      <section ref={subscriptionAnimation.ref} className="py-20 px-4 bg-white dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={subscriptionAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">会员订阅</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">选择适合您的订阅计划，享受更多积分</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {subscriptionPlans.map((plan, index) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={subscriptionAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.6, delay: subscriptionAnimation.isVisible ? 0.1 * index : 0 }}
+                className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 relative"
+              >
+
+                <h3 className={`text-2xl font-bold mb-4 text-${plan.color}-600 dark:text-${plan.color}-400`}>{plan.name}</h3>
+                <div className="mb-6">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                    ${plan.price.monthly}<span className="text-lg text-gray-500 dark:text-gray-400">/月</span>
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    或 ${plan.price.yearly}/年
+                  </p>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center text-gray-700 dark:text-gray-300">
+                      <div className={`w-5 h-5 rounded-full bg-${plan.color}-100 dark:bg-${plan.color}-900/20 flex items-center justify-center mr-3`}>
+                        <svg className={`w-3 h-3 text-${plan.color}-500`} fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  className={`w-full bg-${plan.color}-500 hover:bg-${plan.color}-600 text-white py-2 px-4 rounded-lg transition-colors`}
+                  onClick={() => {
+                    setSelectedPlan(plan);
+                    setIsSubscriptionCardOpen(true);
+                  }}
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  订阅{plan.name}
+                </Button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
-      <section ref={benefitsAnimation.ref} className="py-20 px-4 bg-white dark:bg-slate-900">
+      <section ref={benefitsAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -333,6 +422,14 @@ export default function HomePage() {
       </section>
 
 
+      {/* 订阅卡片弹窗 */}
+      {selectedPlan && (
+        <SubscriptionCard
+          plan={selectedPlan}
+          isOpen={isSubscriptionCardOpen}
+          onClose={() => setIsSubscriptionCardOpen(false)}
+        />
+      )}
     </div>
   );
 } 

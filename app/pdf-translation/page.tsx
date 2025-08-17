@@ -584,7 +584,7 @@ export default function PDFTranslationPage() {
                   积分消耗说明
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• PDF保留排版翻译：3积分/页</li>
+                  <li>• PDF保留排版翻译：2积分/页</li>
                   <li>• 保留原文档排版</li>
                   <li>• 首次下载时扣除积分</li>
                 </ul>

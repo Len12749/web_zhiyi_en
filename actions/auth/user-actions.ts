@@ -11,6 +11,8 @@ export interface User {
   email: string;
   points: number;
   hasInfinitePoints: boolean;
+  membershipType: string;
+  membershipExpiry: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,15 +43,16 @@ export async function initializeUser(clerkId: string, email: string): Promise<{ 
       .values({
         clerkId,
         email,
-        points: 20, // 初始20积分
+        points: 100, // 初始100积分
         hasInfinitePoints: false,
+        membershipType: 'free',
       })
       .returning();
 
     // 记录初始积分交易
     await db.insert(pointTransactions).values({
       userId: clerkId,
-      amount: 20,
+      amount: 100,
       transactionType: "INITIAL",
       description: "新用户注册赠送积分",
     });

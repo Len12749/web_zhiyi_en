@@ -67,8 +67,9 @@ export async function createProcessingTask(
         break;
       case 'format-conversion':
       case 'markdown-translation':
-        // 这些任务按文件大小计算
-        estimatedPoints = calculatePoints(taskType, inputFileSize);
+        // 使用字符数计算积分
+        const charCount = processingParams?.charCount || inputFileSize; // 使用字符数，如果没有则回退到文件大小
+        estimatedPoints = calculatePoints(taskType, charCount);
         break;
       case 'image-to-markdown':
         // 手写图片识别固定积分

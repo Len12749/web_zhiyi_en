@@ -16,9 +16,11 @@ import {
   RefreshCw,
   History,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SubscriptionManagement } from '@/components/common/subscription-management';
 import { makeApiRequest } from '@/lib/utils';
 
 interface PointsSummary {
@@ -27,6 +29,8 @@ interface PointsSummary {
   totalEarned: number;
   totalSpent: number;
   todayChecked: boolean;
+  membershipType?: string;
+  membershipExpiry?: Date | null;
 }
 
 interface AsyncState<T> {
@@ -374,12 +378,25 @@ export default function DashboardPage() {
                   <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {user?.firstName || '用户'}
-                  </h3>
+                  <div className="flex items-center">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      {user?.firstName || '用户'}
+                    </h3>
+                    {pointsSummary.data?.membershipType && pointsSummary.data.membershipType !== 'free' && (
+                      <span className="ml-2 flex items-center px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs rounded-full">
+                        <Crown className="h-3 w-3 mr-1" />
+                        {pointsSummary.data.membershipType === 'standard' ? '普通会员' : '高级会员'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {user?.emailAddresses[0]?.emailAddress}
                   </p>
+                  {pointsSummary.data?.membershipExpiry && pointsSummary.data.membershipType !== 'free' && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      会员到期: {new Date(pointsSummary.data.membershipExpiry).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -429,7 +446,7 @@ export default function DashboardPage() {
               </div>
               
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                每日签到可获得 5 积分奖励
+                每日签到可获得 10 积分奖励
               </p>
 
               {checkinAction.error && (
@@ -463,6 +480,19 @@ export default function DashboardPage() {
                   </>
                 )}
               </Button>
+            </motion.div>
+            
+            {/* 会员订阅卡片 */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-6"
+            >
+              <SubscriptionManagement 
+                membershipType={pointsSummary.data?.membershipType || 'free'}
+                membershipExpiry={pointsSummary.data?.membershipExpiry || null}
+              />
             </motion.div>
 
             {/* 兑换码卡片 */}
