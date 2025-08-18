@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("通知SSE连接错误:", error);
     return NextResponse.json(
-      { success: false, message: "建立通知SSE连接失败" },
+              { success: false, message: "Failed to establish notification SSE connection" },
       { status: 500 }
     );
   }

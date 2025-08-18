@@ -21,7 +21,7 @@ export async function GET(
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -29,7 +29,7 @@ export async function GET(
     const taskId = parseInt(params.taskId);
     if (isNaN(taskId)) {
       return NextResponse.json(
-        { success: false, message: "无效的任务ID" },
+        { success: false, message: "Invalid task ID" },
         { status: 400 }
       );
     }
@@ -39,7 +39,7 @@ export async function GET(
     
     if (!taskResult.success || !taskResult.task) {
       return NextResponse.json(
-        { success: false, message: "任务不存在" },
+        { success: false, message: "Task not found" },
         { status: 404 }
       );
     }
@@ -49,21 +49,21 @@ export async function GET(
     // 验证任务状态和权限
     if (task.userId !== userId) {
       return NextResponse.json(
-        { success: false, message: "无权限访问此任务" },
+        { success: false, message: "No permission to access this task" },
         { status: 403 }
       );
     }
 
     if (task.taskStatus !== 'completed') {
       return NextResponse.json(
-        { success: false, message: "任务尚未完成" },
+        { success: false, message: "Task not completed yet" },
         { status: 400 }
       );
     }
 
     if (!task.resultStoragePath || !task.resultFilename) {
       return NextResponse.json(
-        { success: false, message: "任务结果文件不存在" },
+        { success: false, message: "Task result file not found" },
         { status: 404 }
       );
     }
@@ -86,7 +86,7 @@ export async function GET(
     if (!existsSync(filePath)) {
       console.error(`文件不存在: ${filePath}`);
       return NextResponse.json(
-        { success: false, message: "结果文件不存在" },
+        { success: false, message: "Result file not found" },
         { status: 404 }
       );
     }
@@ -97,7 +97,7 @@ export async function GET(
       const userResult = await getCurrentUser();
       if (!userResult.success || !userResult.user) {
         return NextResponse.json(
-          { success: false, message: "获取用户信息失败" },
+          { success: false, message: "Failed to get user information" },
           { status: 500 }
         );
       }
@@ -107,7 +107,7 @@ export async function GET(
         return NextResponse.json(
           { 
             success: false, 
-            message: `积分不足，下载需要 ${task.requiredPoints} 积分，当前余额 ${user.points} 积分` 
+            message: `Insufficient points. Download requires ${task.requiredPoints} points, current balance is ${user.points} points` 
           },
           { status: 402 } // 402 Payment Required
         );
@@ -123,7 +123,7 @@ export async function GET(
 
         if (!pointsResult.success) {
           return NextResponse.json(
-            { success: false, message: "积分扣除失败，无法下载" },
+            { success: false, message: "Failed to deduct points, unable to download" },
             { status: 500 }
           );
         }
@@ -174,7 +174,7 @@ export async function GET(
   } catch (error) {
     console.error("下载任务文件API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

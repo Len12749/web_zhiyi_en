@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     if (!Array.isArray(taskIds) || taskIds.length === 0) {
       return NextResponse.json(
-        { success: false, message: "无效的任务ID列表" },
+        { success: false, message: "Invalid task ID list" },
         { status: 400 }
       );
     }
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     if (validTasks.length === 0) {
       return NextResponse.json(
-        { success: false, message: "没有可下载的文件" },
+        { success: false, message: "No files available for download" },
         { status: 404 }
       );
     }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("批量下载API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+              { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

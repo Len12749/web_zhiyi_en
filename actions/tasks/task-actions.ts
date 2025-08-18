@@ -50,7 +50,7 @@ export async function createProcessingTask(
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -83,7 +83,7 @@ export async function createProcessingTask(
     if (estimatedPoints === 0) {
       return {
         success: false,
-        message: "无法计算积分：缺少必要的文件信息（如PDF页数）。请确保文件完整且格式正确。"
+        message: "Unable to calculate points: missing required file information (such as PDF page count). Please ensure the file is complete and in the correct format."
       };
     }
 
@@ -92,7 +92,7 @@ export async function createProcessingTask(
     if (!userResult.success || !userResult.user) {
       return {
         success: false,
-        message: "获取用户信息失败"
+        message: "Failed to get user information"
       };
     }
 
@@ -100,7 +100,7 @@ export async function createProcessingTask(
     if (!user.hasInfinitePoints && user.points < estimatedPoints) {
       return {
         success: false,
-        message: `积分不足，需要 ${estimatedPoints} 积分，当前余额 ${user.points} 积分`
+        message: `Insufficient points. Required: ${estimatedPoints} points, Current balance: ${user.points} points`
       };
     }
     
@@ -113,7 +113,7 @@ export async function createProcessingTask(
         userId,
         taskType,
         taskStatus: "pending",
-        statusMessage: "任务已创建，等待处理",
+        statusMessage: "Task created, waiting for processing",
         inputFilename,
         inputFileSize,
         inputStoragePath,
@@ -128,13 +128,13 @@ export async function createProcessingTask(
     return {
       success: true,
       taskId: newTask[0].id,
-      message: "任务创建成功"
+      message: "Task created successfully"
     };
   } catch (error) {
     console.error("创建处理任务失败:", error);
     return {
       success: false,
-      message: "创建处理任务失败"
+      message: "Failed to create processing task"
     };
   }
 }
@@ -149,7 +149,7 @@ export async function getUserTasks(limit: number = 50): Promise<{ success: boole
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -163,13 +163,13 @@ export async function getUserTasks(limit: number = 50): Promise<{ success: boole
     return {
       success: true,
       tasks: tasks as ProcessingTask[],
-      message: "获取任务列表成功"
+      message: "Task list retrieved successfully"
     };
   } catch (error) {
     console.error("获取用户任务失败:", error);
     return {
       success: false,
-      message: "获取任务列表失败"
+      message: "Failed to retrieve task list"
     };
   }
 }
@@ -191,7 +191,7 @@ export async function getTaskById(taskId: number, skipUserCheck = false): Promis
       if (!userId) {
         return {
           success: false,
-          message: "用户未登录"
+          message: "User not logged in"
         };
       }
       task = await db
@@ -206,7 +206,7 @@ export async function getTaskById(taskId: number, skipUserCheck = false): Promis
     if (task.length === 0) {
       return {
         success: false,
-        message: "任务不存在或无权限访问"
+        message: "Task not found or access denied"
       };
     }
     let processingParams = task[0].processingParams;
@@ -220,13 +220,13 @@ export async function getTaskById(taskId: number, skipUserCheck = false): Promis
     return {
       success: true,
       task: { ...task[0], processingParams },
-      message: "获取任务成功"
+      message: "Task retrieved successfully"
     };
   } catch (error) {
     console.error("获取任务失败:", error);
     return {
       success: false,
-      message: "获取任务失败"
+      message: "Failed to retrieve task"
     };
   }
 }
@@ -266,13 +266,13 @@ export async function updateTaskStatus(
 
     return {
       success: true,
-      message: "任务状态更新成功"
+      message: "Task status updated successfully"
     };
   } catch (error) {
     console.error("更新任务状态失败:", error);
     return {
       success: false,
-      message: "更新任务状态失败"
+      message: "Failed to update task status"
     };
   }
 }
@@ -308,7 +308,7 @@ export async function completeTask(
       .update(processingTasks)
       .set({
         taskStatus: "completed",
-        statusMessage: "处理完成",
+        statusMessage: "Processing completed",
         resultStoragePath,
         resultFileSize,
         resultFilename,
@@ -316,34 +316,34 @@ export async function completeTask(
       })
       .where(eq(processingTasks.id, taskId));
 
-    // 创建完成通知
+    // Create completion notification
     const taskTypeNames: { [key: string]: string } = {
       'pdf-to-markdown': 'PDF Parsing',
       'image-to-markdown': 'Image Recognition',
-      'markdown-translation': 'Markdown翻译',
-      'pdf-translation': 'PDF保留排版翻译',
-      'format-conversion': '格式转换'
+      'markdown-translation': 'Markdown Translation',
+      'pdf-translation': 'PDF Translation',
+      'format-conversion': 'Format Conversion'
     };
 
-    const taskTypeName = taskTypeNames[currentTask.taskType] || '文件处理';
+    const taskTypeName = taskTypeNames[currentTask.taskType] || 'File Processing';
     
     await createNotification(
       currentTask.userId,
       'success',
-      `${taskTypeName}完成`,
-      `您的文件 "${currentTask.inputFilename}" 已成功处理完成，可以下载了。`,
+      `${taskTypeName} Completed`,
+      `Your file "${currentTask.inputFilename}" has been successfully processed and is ready for download.`,
       taskId
     );
 
     return {
       success: true,
-      message: "任务完成"
+      message: "Task completed"
     };
   } catch (error) {
     console.error("完成任务失败:", error);
     return {
       success: false,
-      message: "完成任务失败"
+      message: "Failed to complete task"
     };
   }
 }
@@ -380,7 +380,7 @@ export async function failTask(
       .update(processingTasks)
       .set({
         taskStatus: "failed",
-        statusMessage: "处理失败",
+        statusMessage: "Processing failed",
         errorCode,
         errorMessage,
         completedAt: new Date(),
@@ -404,34 +404,34 @@ export async function failTask(
       // SSE推送失败不影响主要逻辑
     }
 
-    // 创建失败通知
+    // Create failure notification
     const taskTypeNames: { [key: string]: string } = {
       'pdf-to-markdown': 'PDF Parsing',
       'image-to-markdown': 'Image Recognition',
-      'markdown-translation': 'Markdown翻译',
-      'pdf-translation': 'PDF保留排版翻译',
-      'format-conversion': '格式转换'
+      'markdown-translation': 'Markdown Translation',
+      'pdf-translation': 'PDF Translation',
+      'format-conversion': 'Format Conversion'
     };
 
-    const taskTypeName = taskTypeNames[currentTask.taskType] || '文件处理';
+    const taskTypeName = taskTypeNames[currentTask.taskType] || 'File Processing';
     
     await createNotification(
       currentTask.userId,
       'error',
-      `${taskTypeName}失败`,
-      `文件 "${currentTask.inputFilename}" 处理失败：${errorMessage}。未消耗积分。`,
+      `${taskTypeName} Failed`,
+      `File "${currentTask.inputFilename}" processing failed: ${errorMessage}. No points consumed.`,
       taskId
     );
 
     return {
       success: true,
-      message: "任务标记为失败"
+      message: "Task marked as failed"
     };
   } catch (error) {
     console.error("标记任务失败失败:", error);
     return {
       success: false,
-      message: "标记任务失败失败"
+      message: "Failed to mark task as failed"
     };
   }
 }
@@ -446,7 +446,7 @@ export async function deleteTask(taskId: number): Promise<{ success: boolean; me
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -463,7 +463,7 @@ export async function deleteTask(taskId: number): Promise<{ success: boolean; me
     if (task.length === 0) {
       return {
         success: false,
-        message: "任务不存在或无权限删除"
+        message: "Task not found or access denied"
       };
     }
 
@@ -474,13 +474,13 @@ export async function deleteTask(taskId: number): Promise<{ success: boolean; me
 
     return {
       success: true,
-      message: "任务删除成功"
+      message: "Task deleted successfully"
     };
   } catch (error) {
     console.error("删除任务失败:", error);
     return {
       success: false,
-      message: "删除任务失败"
+      message: "Failed to delete task"
     };
   }
 } 

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "用户未认证",
+          message: "User not authenticated",
           code: "UNAUTHORIZED",
           timestamp: new Date().toISOString()
         },

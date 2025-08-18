@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (!taskType || !inputFilename || !inputFileSize || !inputStoragePath) {
       return NextResponse.json(
-        { success: false, message: "缺少必要参数" },
+        { success: false, message: "Missing required parameters" },
         { status: 400 }
       )
     }
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const maxFileSize = 300 * 1024 * 1024; // 300MB
     if (inputFileSize > maxFileSize) {
       return NextResponse.json(
-        { success: false, message: "文件大小超过限制(300MB)" },
+        { success: false, message: "File size exceeds limit (300MB)" },
         { status: 400 }
       );
     }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
             const { failTask } = await import('@/actions/tasks/task-actions');
             await failTask(result.taskId!, 
               "ASYNC_PROCESSING_ERROR",
-              error instanceof Error ? error.message : "处理失败"
+              error instanceof Error ? error.message : "Processing failed"
             );
           } catch (dbError) {
             console.error(`更新任务失败状态到数据库失败 [${result.taskId}]:`, dbError);
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
             data: {
                 status: "failed",
                 progress: 0,
-                message: error instanceof Error ? error.message : "处理失败",
+                message: error instanceof Error ? error.message : "Processing failed",
             }
           });
         }
@@ -102,19 +102,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         taskId: result.taskId,
-        message: "任务创建成功",
+        message: "Task created successfully",
         sseUrl,
         estimatedPoints,
       }, { status: 201 });
     } else {
       return NextResponse.json(result, { 
-        status: result.message.includes("积分不足") ? 402 : 500 
+        status: result.message.includes("Insufficient points") ? 402 : 500 
       });
     }
   } catch (error) {
     console.error("创建任务API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

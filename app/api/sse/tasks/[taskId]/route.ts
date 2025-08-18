@@ -17,7 +17,7 @@ export async function GET(
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -25,7 +25,7 @@ export async function GET(
     const taskId = parseInt(params.taskId);
     if (isNaN(taskId)) {
       return NextResponse.json(
-        { success: false, message: "无效的任务ID" },
+        { success: false, message: "Invalid task ID" },
         { status: 400 }
       );
     }
@@ -34,7 +34,7 @@ export async function GET(
     const taskResult = await getTaskById(taskId);
     if (!taskResult.success || !taskResult.task) {
       return NextResponse.json(
-        { success: false, message: "任务不存在或无权限访问" },
+        { success: false, message: "Task not found or access denied" },
         { status: 404 }
       );
     }
@@ -98,7 +98,7 @@ export async function GET(
   } catch (error) {
     console.error("任务SSE连接错误:", error);
     return NextResponse.json(
-      { success: false, message: "建立任务SSE连接失败" },
+              { success: false, message: "Failed to establish task SSE connection" },
       { status: 500 }
     );
   }

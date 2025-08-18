@@ -31,7 +31,7 @@ export async function initializeUser(clerkId: string, email: string): Promise<{ 
       return {
         success: true,
         user: existingUser[0] as User,
-        message: "用户已存在"
+        message: "User already exists"
       };
     }
 
@@ -57,13 +57,13 @@ export async function initializeUser(clerkId: string, email: string): Promise<{ 
     return {
       success: true,
       user: newUser[0] as User,
-      message: "用户创建成功"
+      message: "User created successfully"
     };
   } catch (error) {
     console.error("初始化用户失败:", error);
     return {
       success: false,
-      message: "初始化用户失败"
+      message: "Failed to initialize user"
     };
   }
 }
@@ -78,7 +78,7 @@ export async function getCurrentUser(): Promise<{ success: boolean; user?: User;
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -91,20 +91,20 @@ export async function getCurrentUser(): Promise<{ success: boolean; user?: User;
     if (user.length === 0) {
       return {
         success: false,
-        message: "用户不存在"
+        message: "User not found"
       };
     }
 
     return {
       success: true,
       user: user[0] as User,
-      message: "获取用户信息成功"
+      message: "User information retrieved successfully"
     };
   } catch (error) {
     console.error("获取用户信息失败:", error);
     return {
       success: false,
-      message: "获取用户信息失败"
+      message: "Failed to retrieve user information"
     };
   }
 }
@@ -124,7 +124,7 @@ export async function updateUserPoints(clerkId: string, pointsChange: number, de
     if (currentUser.length === 0) {
       return {
         success: false,
-        message: "用户不存在"
+        message: "User not found"
       };
     }
 
@@ -142,7 +142,7 @@ export async function updateUserPoints(clerkId: string, pointsChange: number, de
       return {
         success: true,
         newBalance: user.points,
-        message: "积分更新成功（无限积分用户）"
+        message: "Points updated successfully (unlimited points user)"
       };
     }
 
@@ -150,7 +150,7 @@ export async function updateUserPoints(clerkId: string, pointsChange: number, de
     if (pointsChange < 0 && user.points + pointsChange < 0) {
       return {
         success: false,
-        message: "积分余额不足"
+        message: "Insufficient point balance"
       };
     }
 
@@ -175,13 +175,13 @@ export async function updateUserPoints(clerkId: string, pointsChange: number, de
     return {
       success: true,
       newBalance,
-      message: "积分更新成功"
+      message: "Points updated successfully"
     };
   } catch (error) {
     console.error("更新用户积分失败:", error);
     return {
       success: false,
-      message: "更新用户积分失败"
+      message: "Failed to update user points"
     };
   }
 } 

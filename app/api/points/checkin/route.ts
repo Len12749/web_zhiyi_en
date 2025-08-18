@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "用户未认证",
+          message: "User not authenticated",
           code: "UNAUTHORIZED",
           timestamp: new Date().toISOString()
         },
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // 根据业务逻辑返回不同的HTTP状态码
     let statusCode = 200;
     if (!result.success) {
-      if (result.message === "今日已签到") {
+      if (result.message === "Already checked in today") {
         statusCode = 409; // Conflict
       } else {
         statusCode = 500; // Internal Server Error

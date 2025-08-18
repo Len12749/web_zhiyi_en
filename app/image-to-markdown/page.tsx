@@ -95,7 +95,7 @@ export default function ImageToMarkdownPage() {
       taskId: null,
       status: 'uploading',
       progress: 0,
-      message: '正在上传文件...',
+      message: 'Uploading file...',
     });
 
     try {
@@ -135,7 +135,7 @@ export default function ImageToMarkdownPage() {
           taskId: result.taskId,
           status: 'processing',
           progress: 0,
-          message: '任务已创建，开始处理...',
+          message: 'Task created, starting processing...',
         });
 
 

@@ -17,7 +17,7 @@ export async function GET(
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -25,7 +25,7 @@ export async function GET(
     const taskId = parseInt(params.taskId);
     if (isNaN(taskId)) {
       return NextResponse.json(
-        { success: false, message: "无效的任务ID" },
+        { success: false, message: "Invalid task ID" },
         { status: 400 }
       );
     }
@@ -33,12 +33,12 @@ export async function GET(
     const result = await getTaskById(taskId);
 
     return NextResponse.json(result, { 
-      status: result.success ? 200 : (result.message.includes("不存在") ? 404 : 500)
+      status: result.success ? 200 : (result.message.includes("not found") || result.message.includes("不存在") ? 404 : 500)
     });
   } catch (error) {
     console.error("获取任务详情API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -53,7 +53,7 @@ export async function DELETE(
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -61,7 +61,7 @@ export async function DELETE(
     const taskId = parseInt(params.taskId);
     if (isNaN(taskId)) {
       return NextResponse.json(
-        { success: false, message: "无效的任务ID" },
+        { success: false, message: "Invalid task ID" },
         { status: 400 }
       );
     }
@@ -77,7 +77,7 @@ export async function DELETE(
 
     if (deletedTasks.length === 0) {
       return NextResponse.json(
-        { success: false, message: "任务不存在或无权限删除" },
+        { success: false, message: "Task not found or access denied" },
         { status: 404 }
       );
     }
@@ -86,12 +86,12 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: "任务删除成功"
+      message: "Task deleted successfully"
     });
   } catch (error) {
     console.error("删除任务API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

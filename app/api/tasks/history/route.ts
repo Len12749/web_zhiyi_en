@@ -10,10 +10,10 @@ export async function GET(request: NextRequest) {
     const { userId } = auth();
     
     if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "用户未认证" },
-        { status: 401 }
-      );
+          return NextResponse.json(
+      { success: false, message: "User not authenticated" },
+      { status: 401 }
+    );
     }
 
     const result = await getUserTasks(50); // 获取最近50个任务
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("获取任务历史API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

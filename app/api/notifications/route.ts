@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("通知API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -74,14 +74,14 @@ export async function POST(request: NextRequest) {
       });
     } else {
       return NextResponse.json(
-        { success: false, message: "无效的操作" },
+        { success: false, message: "Invalid operation" },
         { status: 400 }
       );
     }
   } catch (error) {
     console.error("通知批量操作API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

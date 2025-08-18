@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "用户未认证",
+          message: "User not authenticated",
           code: "UNAUTHORIZED",
           timestamp: new Date().toISOString()
         },
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "请求体格式错误",
+          message: "Invalid request body format",
           code: "INVALID_JSON",
           timestamp: new Date().toISOString()
         },
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "请输入有效的兑换码",
+          message: "Please enter a valid redemption code",
           code: "INVALID_REDEEM_CODE",
           timestamp: new Date().toISOString()
         },

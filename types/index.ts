@@ -95,7 +95,7 @@ export interface FileUploadResult {
 
 // 支持的语言列表
 export const SUPPORTED_LANGUAGES = [
-  { code: 'zh', name: '中文' },
+  { code: 'zh', name: 'Chinese' },
   { code: 'en', name: 'English' },
   { code: 'ja', name: '日本語' },
   { code: 'ko', name: '한국어' },

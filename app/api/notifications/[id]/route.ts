@@ -18,7 +18,7 @@ export async function PATCH(
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -26,7 +26,7 @@ export async function PATCH(
     const notificationId = parseInt(params.id);
     if (isNaN(notificationId)) {
       return NextResponse.json(
-        { success: false, message: "无效的通知ID" },
+        { success: false, message: "Invalid notification ID" },
         { status: 400 }
       );
     }
@@ -41,14 +41,14 @@ export async function PATCH(
       });
     } else {
       return NextResponse.json(
-        { success: false, message: "无效的更新操作" },
+        { success: false, message: "Invalid update operation" },
         { status: 400 }
       );
     }
   } catch (error) {
     console.error("更新通知API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -64,7 +64,7 @@ export async function DELETE(
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -72,7 +72,7 @@ export async function DELETE(
     const notificationId = parseInt(params.id);
     if (isNaN(notificationId)) {
       return NextResponse.json(
-        { success: false, message: "无效的通知ID" },
+        { success: false, message: "Invalid notification ID" },
         { status: 400 }
       );
     }
@@ -84,7 +84,7 @@ export async function DELETE(
   } catch (error) {
     console.error("删除通知API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

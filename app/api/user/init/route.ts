@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !user?.emailAddresses[0]?.emailAddress) {
       return NextResponse.json(
-        { success: false, message: "用户未认证" },
+        { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     if (result.success) {
       return NextResponse.json(result, { 
-        status: result.user ? (result.message === "用户已存在" ? 200 : 201) : 200 
+        status: result.user ? (result.message === "User already exists" ? 200 : 201) : 200 
       });
     } else {
       return NextResponse.json(result, { status: 500 });
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("用户初始化API错误:", error);
     return NextResponse.json(
-      { success: false, message: "服务器内部错误" },
+      { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }

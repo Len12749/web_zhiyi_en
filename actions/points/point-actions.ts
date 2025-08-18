@@ -37,7 +37,7 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -56,7 +56,7 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
     if (existingCheckin.length > 0) {
       return {
         success: false,
-        message: "今日已签到"
+        message: "Already checked in today"
       };
     }
 
@@ -79,7 +79,7 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
     if (!pointsResult.success) {
       return {
         success: false,
-        message: "签到失败，积分更新错误"
+        message: "Check-in failed, points update error"
       };
     }
 
@@ -94,13 +94,13 @@ export async function dailyCheckin(): Promise<{ success: boolean; points?: numbe
     return {
       success: true,
       points: pointsEarned,
-      message: "签到成功"
+      message: "Check-in successful"
     };
   } catch (error) {
     console.error("每日签到失败:", error);
     return {
       success: false,
-      message: "签到失败"
+      message: "Check-in failed"
     };
   }
 }
@@ -115,7 +115,7 @@ export async function checkTodayCheckin(): Promise<{ success: boolean; hasChecke
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -133,13 +133,13 @@ export async function checkTodayCheckin(): Promise<{ success: boolean; hasChecke
     return {
       success: true,
       hasChecked: existingCheckin.length > 0,
-      message: "检查签到状态成功"
+      message: "Check-in status retrieved successfully"
     };
   } catch (error) {
     console.error("检查签到状态失败:", error);
     return {
       success: false,
-      message: "检查签到状态失败"
+      message: "Failed to check check-in status"
     };
   }
 }
@@ -154,7 +154,7 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -168,7 +168,7 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     if (redeemCodeRecord.length === 0) {
       return {
         success: false,
-        message: "兑换码不存在"
+        message: "Redemption code does not exist"
       };
     }
 
@@ -178,7 +178,7 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     if (!codeInfo.isActive) {
       return {
         success: false,
-        message: "兑换码已失效"
+        message: "Redemption code is inactive"
       };
     }
 
@@ -186,7 +186,7 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     if (codeInfo.expiresAt && new Date() > codeInfo.expiresAt) {
       return {
         success: false,
-        message: "兑换码已过期"
+        message: "Redemption code has expired"
       };
     }
 
@@ -194,7 +194,7 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     if (codeInfo.maxUses && codeInfo.currentUses >= codeInfo.maxUses) {
       return {
         success: false,
-        message: "兑换码使用次数已达上限"
+        message: "Redemption code usage limit reached"
       };
     }
 
@@ -212,7 +212,7 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     if (existingRedemption.length > 0) {
       return {
         success: false,
-        message: "您已使用过此兑换码"
+        message: "You have already used this redemption code"
       };
     }
 
@@ -235,7 +235,7 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     if (!pointsResult.success) {
       return {
         success: false,
-        message: "兑换失败，积分更新错误"
+        message: "Redemption failed, points update error"
       };
     }
 
@@ -250,13 +250,13 @@ export async function redeemCode(code: string): Promise<{ success: boolean; poin
     return {
       success: true,
       points: codeInfo.pointsValue,
-      message: "兑换成功"
+      message: "Redemption successful"
     };
   } catch (error) {
     console.error("兑换码兑换失败:", error);
     return {
       success: false,
-      message: "兑换失败"
+      message: "Redemption failed"
     };
   }
 }
@@ -271,7 +271,7 @@ export async function getPointTransactions(limit: number = 20): Promise<{ succes
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -285,13 +285,13 @@ export async function getPointTransactions(limit: number = 20): Promise<{ succes
     return {
       success: true,
       transactions: transactions as PointTransaction[],
-      message: "获取积分历史成功"
+      message: "Point history retrieved successfully"
     };
   } catch (error) {
     console.error("获取积分历史失败:", error);
     return {
       success: false,
-      message: "获取积分历史失败"
+      message: "Failed to retrieve point history"
     };
   }
 }
@@ -306,7 +306,7 @@ export async function getCheckinHistory(limit: number = 30): Promise<{ success: 
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -320,13 +320,13 @@ export async function getCheckinHistory(limit: number = 30): Promise<{ success: 
     return {
       success: true,
       checkins: checkins as CheckinRecord[],
-      message: "获取签到历史成功"
+      message: "Check-in history retrieved successfully"
     };
   } catch (error) {
     console.error("获取签到历史失败:", error);
     return {
       success: false,
-      message: "获取签到历史失败"
+      message: "Failed to retrieve check-in history"
     };
   }
 }
@@ -351,7 +351,7 @@ export async function getPointsSummary(): Promise<{
     if (!userId) {
       return {
         success: false,
-        message: "用户未登录"
+        message: "User not logged in"
       };
     }
 
@@ -360,7 +360,7 @@ export async function getPointsSummary(): Promise<{
     if (!userResult.success || !userResult.user) {
       return {
         success: false,
-        message: "获取用户信息失败"
+        message: "Failed to retrieve user information"
       };
     }
 
@@ -395,13 +395,13 @@ export async function getPointsSummary(): Promise<{
         membershipType: user.membershipType,
         membershipExpiry: user.membershipExpiry,
       },
-      message: "获取积分统计成功"
+      message: "Point statistics retrieved successfully"
     };
   } catch (error) {
     console.error("获取积分统计失败:", error);
     return {
       success: false,
-      message: "获取积分统计失败"
+      message: "Failed to retrieve point statistics"
     };
   }
 } 

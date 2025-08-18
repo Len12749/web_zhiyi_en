@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const { userId } = auth();
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "用户未登录" },
+        { success: false, message: "User not logged in" },
         { status: 401 }
       );
     }
@@ -26,14 +26,14 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json(
-        { success: false, message: "没有找到文件" },
+        { success: false, message: "No file found" },
         { status: 400 }
       );
     }
 
     if (!taskType) {
       return NextResponse.json(
-        { success: false, message: "没有指定任务类型" },
+        { success: false, message: "No task type specified" },
         { status: 400 }
       );
     }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             { 
               success: false, 
-              message: `PDF页数超出限制。当前文件有 ${pageCountResult.pageCount} 页，最多支持 ${maxPages} 页。` 
+              message: `PDF page limit exceeded. Current file has ${pageCountResult.pageCount} pages, maximum supported is ${maxPages} pages.` 
             },
             { status: 400 }
           );
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { 
             success: false, 
-            message: `PDF页数检测失败: ${pageCountResult.error}。请确保PDF文件完整且未损坏。` 
+            message: `PDF page detection failed: ${pageCountResult.error}. Please ensure the PDF file is complete and not corrupted.` 
           },
           { status: 400 }
         );
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "文件上传成功",
+      message: "File uploaded successfully",
       data: {
         storagePath: relativePath,
         originalName: file.name,
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('文件上传错误:', error);
     return NextResponse.json(
-      { success: false, message: "文件上传失败，请重试" },
+      { success: false, message: "File upload failed, please try again" },
       { status: 500 }
     );
   }

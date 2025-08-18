@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     if (!externalTaskId || !status) {
       return NextResponse.json(
-        { success: false, message: '缺少 externalTaskId 或 status' },
+        { success: false, message: 'Missing externalTaskId or status' },
         { status: 400 }
       )
     }
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     if (taskRows.length === 0) {
       return NextResponse.json(
-        { success: false, message: '未找到匹配的任务' },
+        { success: false, message: 'No matching task found' },
         { status: 404 }
       )
     }
@@ -57,20 +57,20 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error(`[Webhook] 完成任务失败 [${task.id}]:`, error)
         // 如果完成流程失败，标记任务为失败并返还积分
-        await failTask(task.id, 'COMPLETION_ERROR', error instanceof Error ? error.message : '完成处理失败')
-        return NextResponse.json({ success: true, message: '任务完成失败，已返还积分' })
+        await failTask(task.id, 'COMPLETION_ERROR', error instanceof Error ? error.message : 'Processing completion failed')
+        return NextResponse.json({ success: true, message: 'Task completion failed, points refunded' })
       }
     } else if (status === 'failed') {
-      await failTask(task.id, 'EXTERNAL_TASK_FAILED', message || '外部任务失败')
+              await failTask(task.id, 'EXTERNAL_TASK_FAILED', message || 'External task failed')
       return NextResponse.json({ success: true })
     }
 
     return NextResponse.json(
-      { success: false, message: '未知的状态' },
+              { success: false, message: 'Unknown status' },
       { status: 400 }
     )
   } catch (error) {
     console.error('[Webhook] 处理失败:', error)
-    return NextResponse.json({ success: false, message: '服务器错误' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 })
   }
 }
