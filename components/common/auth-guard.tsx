@@ -18,7 +18,7 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">加载中...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
@@ -48,10 +48,10 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
               <Lock className="w-10 h-10 text-blue-600 dark:text-blue-400" />
             </motion.div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              需要登录
+              Login Required
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-8">
-              此功能需要登录后才能使用，请先登录您的账户
+              This feature requires login to access. Please sign in to your account first.
             </p>
           </div>
 
@@ -64,15 +64,15 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
             <SignInButton mode="modal">
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
                 <LogIn className="w-5 h-5" />
-                <span>登录账户</span>
+                <span>Sign In</span>
               </button>
             </SignInButton>
             
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              还没有账户？{' '}
+              Don't have an account?{' '}
               <SignInButton mode="modal">
                 <button className="text-blue-600 hover:text-blue-700 font-medium">
-                  立即注册
+                  Sign Up Now
                 </button>
               </SignInButton>
             </p>

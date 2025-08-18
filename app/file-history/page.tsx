@@ -43,11 +43,11 @@ interface FileHistoryItem {
 }
 
 const taskTypeNames: Record<TaskType, string> = {
-  'pdf-to-markdown': 'PDF解析',
-  'image-to-markdown': '手写图片识别',
-  'markdown-translation': 'Markdown翻译',
-  'pdf-translation': 'PDF保留排版翻译',
-  'format-conversion': '格式转换'
+  'pdf-to-markdown': 'PDF Parsing',
+  'image-to-markdown': 'Image Recognition',
+  'markdown-translation': 'Markdown Translation',
+  'pdf-translation': 'PDF Translation',
+  'format-conversion': 'Format Conversion'
 };
 
 const statusColors: Record<TaskStatus, string> = {
@@ -136,14 +136,14 @@ export default function FileHistoryPage() {
         
         if (response.status === 402) {
           // 积分不足的情况
-          alert(errorData.message || "您的积分不足，无法下载此文件");
+                          alert(errorData.message || "Insufficient points to download this file");
         } else {
-          alert(errorData.message || "文件下载失败，请稍后再试");
+          alert(errorData.message || "File download failed, please try again later");
         }
       }
     } catch (error) {
       console.error('下载失败:', error);
-      alert("下载过程中发生错误，请稍后再试");
+      alert("An error occurred during download, please try again later");
     }
   };
 
@@ -158,7 +158,7 @@ export default function FileHistoryPage() {
     );
     
     if (completedFiles.length === 0) {
-      alert('没有可下载的已完成文件（可能文件已过期）');
+      alert('No completed files available for download (files may have expired)');
       return;
     }
 
@@ -174,15 +174,15 @@ export default function FileHistoryPage() {
         await new Promise(resolve => setTimeout(resolve, 500)); // 防止并发过多
         await handleDownload(file.id, file.resultFilename!);
       }
-      alert(`成功下载 ${completedFiles.length} 个文件`);
+      alert(`Successfully downloaded ${completedFiles.length} files`);
     } catch (error) {
       console.error('批量下载失败:', error);
-      alert('批量下载失败');
+      alert('Batch download failed');
     }
   };
 
   const handleDelete = async (fileId: number) => {
-    if (!confirm('确定要删除这个任务吗？此操作不可撤销。')) {
+    if (!confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
       return;
     }
 
@@ -195,18 +195,18 @@ export default function FileHistoryPage() {
         setFiles(prev => prev.filter(file => file.id !== fileId));
         setSelectedFiles(prev => prev.filter(id => id !== fileId));
       } else {
-        alert('删除失败');
+        alert('Delete failed');
       }
     } catch (error) {
       console.error('删除失败:', error);
-      alert('删除失败');
+      alert('Delete failed');
     }
   };
 
   const handleBatchDelete = async () => {
     if (selectedFiles.length === 0) return;
     
-    if (!confirm(`确定要删除选中的 ${selectedFiles.length} 个任务吗？此操作不可撤销。`)) {
+    if (!confirm(`Are you sure you want to delete the selected ${selectedFiles.length} tasks? This action cannot be undone.`)) {
       return;
     }
 
@@ -221,7 +221,7 @@ export default function FileHistoryPage() {
       setSelectedFiles([]);
     } catch (error) {
       console.error('批量删除失败:', error);
-      alert('批量删除失败');
+      alert('Batch delete failed');
     }
   };
 
@@ -260,7 +260,7 @@ export default function FileHistoryPage() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">加载文件历史中...</p>
+                            <p className="text-gray-600 dark:text-gray-400">Loading file history...</p>
           </div>
         </div>
       </AuthGuard>
@@ -281,10 +281,10 @@ export default function FileHistoryPage() {
               <History className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              文件历史
+              File History
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              查看和管理您处理过的所有文件，支持重新下载和删除
+              View and manage all your processed files, supports re-download and deletion
             </p>
           </motion.div>
 
@@ -301,7 +301,7 @@ export default function FileHistoryPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="搜索文件名或任务类型..."
+                  placeholder="Search filename or task type..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -314,10 +314,10 @@ export default function FileHistoryPage() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">所有状态</option>
-                <option value="completed">已完成</option>
-                <option value="processing">处理中</option>
-                <option value="failed">失败</option>
+                <option value="all">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="processing">Processing</option>
+                <option value="failed">Failed</option>
               </select>
 
               {/* 批量管理按钮 */}
@@ -327,7 +327,7 @@ export default function FileHistoryPage() {
                 size="sm"
               >
                 <Settings className="h-4 w-4 mr-2" />
-                {isBatchMode ? '退出批量管理' : '批量管理'}
+                {isBatchMode ? 'Exit Batch Mode' : 'Batch Management'}
               </Button>
 
               {/* 批量操作 */}
@@ -335,14 +335,14 @@ export default function FileHistoryPage() {
                 <div className="flex gap-2">
                   <Button onClick={handleBatchDownload} variant="outline" size="sm">
                     <Package className="h-4 w-4 mr-2" />
-                    批量下载 ({selectedFiles.filter(id => {
+                    Batch Download ({selectedFiles.filter(id => {
                       const file = filteredFiles.find(f => f.id === id);
                       return file?.taskStatus === 'completed' && file?.resultFilename;
                     }).length})
                   </Button>
                   <Button onClick={handleBatchDelete} variant="outline" size="sm">
                     <Trash2 className="h-4 w-4 mr-2" />
-                    删除 ({selectedFiles.length})
+                    Delete ({selectedFiles.length})
                   </Button>
                 </div>
               )}
@@ -368,13 +368,13 @@ export default function FileHistoryPage() {
                   />
                 )}
                 <div className={`grid grid-cols-12 gap-4 w-full text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${!isBatchMode ? 'ml-0' : ''}`}>
-                  <div className="col-span-3">文件信息</div>
-                  <div className="col-span-2">类型</div>
-                  <div className="col-span-2">状态</div>
-                  <div className="col-span-1">时间</div>
-                  <div className="col-span-1">积分</div>
-                  <div className="col-span-1">支付状态</div>
-                  <div className="col-span-2">操作</div>
+                              <div className="col-span-3">File Information</div>
+            <div className="col-span-2">Type</div>
+            <div className="col-span-2">Status</div>
+            <div className="col-span-1">Time</div>
+            <div className="col-span-1">Points</div>
+            <div className="col-span-1">Payment Status</div>
+            <div className="col-span-2">Actions</div>
                 </div>
               </div>
             </div>
@@ -421,7 +421,7 @@ export default function FileHistoryPage() {
                               {file.resultFileSize && ` → ${formatFileSize(file.resultFileSize)}`}
                             </p>
                             {expired && file.taskStatus === 'completed' && (
-                              <p className="text-xs text-red-500">已过期</p>
+                              <p className="text-xs text-red-500">Expired</p>
                             )}
                           </div>
                         </div>
@@ -438,9 +438,9 @@ export default function FileHistoryPage() {
                           <div className="flex items-center space-x-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[file.taskStatus]}`}>
                               <StatusIcon className={`h-3 w-3 mr-1 ${(file.taskStatus === 'processing' || file.taskStatus === 'pending') ? 'animate-spin' : ''}`} />
-                              {file.taskStatus === 'completed' && '已完成'}
-                              {(file.taskStatus === 'processing' || file.taskStatus === 'pending') && '处理中'}
-                              {file.taskStatus === 'failed' && '失败'}
+                              {file.taskStatus === 'completed' && 'Completed'}
+                              {(file.taskStatus === 'processing' || file.taskStatus === 'pending') && 'Processing'}
+                              {file.taskStatus === 'failed' && 'Failed'}
                             </span>
                           </div>
                           {file.taskStatus === 'failed' && file.errorMessage && (
@@ -457,7 +457,7 @@ export default function FileHistoryPage() {
                           </p>
                           {file.completedAt && (
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              完成于 {formatTime(file.completedAt).split(' ')[1]}
+                              Completed at {formatTime(file.completedAt).split(' ')[1]}
                             </p>
                           )}
                         </div>
@@ -473,7 +473,7 @@ export default function FileHistoryPage() {
                         <div className="col-span-1">
                           {file.taskStatus === 'completed' ? (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${file.hasBeenDownloaded ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'}`}>
-                              {file.hasBeenDownloaded ? '已支付' : '未支付'}
+                              {file.hasBeenDownloaded ? 'Paid' : 'Unpaid'}
                             </span>
                           ) : (
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -489,7 +489,7 @@ export default function FileHistoryPage() {
                               <button
                                 onClick={() => handleDownload(file.id, file.resultFilename!)}
                                 className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                                title="下载"
+                                title="Download"
                               >
                                 <Download className="h-4 w-4" />
                               </button>
@@ -497,7 +497,7 @@ export default function FileHistoryPage() {
                             <button
                               onClick={() => handleDelete(file.id)}
                               className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                              title="删除"
+                              title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -515,12 +515,12 @@ export default function FileHistoryPage() {
               <div className="px-6 py-12 text-center">
                 <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  {searchTerm || filterStatus !== 'all' ? '没有找到匹配的文件' : '还没有处理过文件'}
+                  {searchTerm || filterStatus !== 'all' ? 'No matching files found' : 'No files processed yet'}
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400">
                   {searchTerm || filterStatus !== 'all' 
-                    ? '尝试调整搜索条件或过滤器' 
-                    : '开始上传和处理您的第一个文件吧'
+                    ? 'Try adjusting your search criteria or filters' 
+                    : 'Start by uploading and processing your first file'
                   }
                 </p>
               </div>
@@ -535,14 +535,14 @@ export default function FileHistoryPage() {
             className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800"
           >
             <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-              文件存储说明
+              File Storage Information
             </h4>
             <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-              <li>• 处理完成的文件将保留7天，请及时下载</li>
-              <li>• 您可以随时删除不需要的文件释放存储空间</li>
-              <li>• 首次下载才会支付积分，已支付的文件可以重复下载，不会重复扣除积分</li>
-              <li>• 处理失败的文件不消耗积分，可以重新处理</li>
-              <li>• 支持批量下载和删除操作，提高操作效率</li>
+              <li>• Completed files are retained for 7 days, please download promptly</li>
+              <li>• You can delete unwanted files at any time to free up storage space</li>
+              <li>• Points are only charged on first download, paid files can be downloaded repeatedly without additional charges</li>
+              <li>• Failed files don't consume points and can be reprocessed</li>
+              <li>• Supports batch download and delete operations for improved efficiency</li>
             </ul>
           </motion.div>
         </div>

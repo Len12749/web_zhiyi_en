@@ -105,7 +105,7 @@ export default function NotificationsPage() {
   const handleBatchDelete = async () => {
     if (selectedNotifications.length === 0) return;
     
-    if (!confirm(`确定要删除选中的 ${selectedNotifications.length} 条通知吗？此操作不可撤销。`)) {
+    if (!confirm(`Are you sure you want to delete the selected ${selectedNotifications.length} notifications? This action cannot be undone.`)) {
       return;
     }
 
@@ -153,7 +153,7 @@ export default function NotificationsPage() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">加载通知中...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading notifications...</p>
           </div>
         </div>
       </AuthGuard>
@@ -174,10 +174,10 @@ export default function NotificationsPage() {
               <Bell className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              通知中心
+              Notification Center
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              查看系统通知和任务处理状态更新
+              View system notifications and task processing status updates
             </p>
           </motion.div>
 
@@ -197,7 +197,7 @@ export default function NotificationsPage() {
                   size="sm"
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  {isBatchMode ? '退出批量管理' : '批量管理'}
+                  {isBatchMode ? 'Exit Batch Mode' : 'Batch Management'}
                 </Button>
 
                 {/* 批量操作 */}
@@ -205,7 +205,7 @@ export default function NotificationsPage() {
                   <div className="flex gap-2">
                     <Button onClick={handleBatchDelete} variant="outline" size="sm">
                       <Trash2 className="h-4 w-4 mr-2" />
-                      删除 ({selectedNotifications.length})
+                      Delete ({selectedNotifications.length})
                     </Button>
                   </div>
                 )}
@@ -220,7 +220,7 @@ export default function NotificationsPage() {
                     onChange={handleSelectAll}
                     className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">全选</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Select All</span>
                 </div>
               )}
             </div>
@@ -237,10 +237,10 @@ export default function NotificationsPage() {
               <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center shadow-sm border border-gray-200 dark:border-gray-700">
                 <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  暂无通知
+                  No Notifications
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400">
-                  当系统有重要更新或任务状态变化时，我们会及时通知您
+                  We will notify you promptly when there are important system updates or task status changes
                 </p>
               </div>
             ) : (
@@ -286,7 +286,7 @@ export default function NotificationsPage() {
                               {formatTime(notification.createdAt)}
                               {notification.taskId && (
                                 <span className="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-                                  任务 #{notification.taskId}
+                                  Task #{notification.taskId}
                                 </span>
                               )}
                             </div>
@@ -298,7 +298,7 @@ export default function NotificationsPage() {
                               <button
                                 onClick={() => handleDelete(notification.id)}
                                 className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                                title="删除"
+                                title="Delete"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -321,13 +321,13 @@ export default function NotificationsPage() {
             className="mt-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800"
           >
             <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-              通知设置
+              Notification Settings
             </h4>
             <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-              <li>• 任务完成、失败或需要您关注时会发送通知</li>
-              <li>• 重要的系统公告和维护信息也会通过通知发送</li>
-              <li>• 通知将保留30天，您可以随时删除不需要的通知</li>
-              <li>• 使用批量管理功能可以高效管理多条通知</li>
+              <li>• Notifications will be sent when tasks complete, fail, or require your attention</li>
+              <li>• Important system announcements and maintenance information will also be sent via notifications</li>
+              <li>• Notifications are retained for 30 days, you can delete unwanted notifications at any time</li>
+              <li>• Use batch management feature to efficiently manage multiple notifications</li>
             </ul>
           </motion.div>
         </div>

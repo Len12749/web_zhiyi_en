@@ -44,10 +44,10 @@ export default function FormatConversionPage() {
 
   // 支持的目标格式
   const formats = [
-    { code: 'word', name: 'Word文档 (.docx)', icon: '📄' },
-    { code: 'html', name: 'HTML网页 (.html)', icon: '🌐' },
-    { code: 'pdf', name: 'PDF文档 (.pdf)', icon: '📕' },
-    { code: 'latex', name: 'LaTeX文档 (.tex)', icon: '📜' },
+  { code: 'word', name: 'Word Document (.docx)', icon: '📄' },
+  { code: 'html', name: 'HTML Page (.html)', icon: '🌐' },
+  { code: 'pdf', name: 'PDF Document (.pdf)', icon: '📕' },
+  { code: 'latex', name: 'LaTeX Document (.tex)', icon: '📜' },
   ];
 
   // 拖拽处理
@@ -73,7 +73,7 @@ export default function FormatConversionPage() {
     const validation = validateFileFormat(file, 'format-conversion' as TaskType);
     
     if (!validation.isValid) {
-      setErrorMessage(validation.error || '文件格式验证失败');
+      setErrorMessage(validation.error || 'File format validation failed');
       return;
     }
     
@@ -113,7 +113,7 @@ export default function FormatConversionPage() {
       taskId: null,
       status: 'uploading',
       progress: 0,
-      message: '正在上传文件...',
+      message: 'Uploading file...',
     });
 
     try {
@@ -134,14 +134,14 @@ export default function FormatConversionPage() {
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json().catch(() => ({}));
         console.error('上传失败:', errorData);
-        throw new Error(errorData.message || '文件上传失败');
+        throw new Error(errorData.message || 'File upload failed');
       }
 
       const uploadResult = await uploadResponse.json();
       console.log('上传结果:', uploadResult);
       
       if (!uploadResult.success) {
-        throw new Error(uploadResult.message || '文件上传失败');
+        throw new Error(uploadResult.message || 'File upload failed');
       }
 
       // 2. 构建处理参数
@@ -169,7 +169,7 @@ export default function FormatConversionPage() {
           taskId: result.taskId,
           status: 'processing',
           progress: 0,
-          message: '任务已创建，开始转换...',
+          message: 'Task created, starting conversion...',
         });
 
         // 4. 建立SSE连接监听状态更新
@@ -193,7 +193,7 @@ export default function FormatConversionPage() {
           taskId: null,
           status: 'failed',
           progress: 0,
-          message: result.message || '任务创建失败',
+          message: result.message || 'Task creation failed',
         });
       }
     } catch (error) {
@@ -202,7 +202,7 @@ export default function FormatConversionPage() {
         taskId: null,
         status: 'failed',
         progress: 0,
-        message: error instanceof Error ? error.message : '处理失败，请重试',
+        message: error instanceof Error ? error.message : 'Processing failed, please try again',
       });
     }
   };
@@ -232,11 +232,11 @@ export default function FormatConversionPage() {
               <Repeat className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              格式转换
+              Format Conversion
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              将Markdown文件转换为Word、PDF、HTML、LaTeX等不同格式
-            </p>
+                      <p className="text-gray-600 dark:text-gray-400">
+            Convert Markdown files to Word, PDF, HTML, LaTeX and other formats
+          </p>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -248,9 +248,9 @@ export default function FormatConversionPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
               >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  上传Markdown文件
-                </h2>
+                              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Upload Markdown File
+              </h2>
                 
                 <div
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -279,7 +279,7 @@ export default function FormatConversionPage() {
                         variant="outline"
                         size="sm"
                       >
-                        重新选择
+                                                  Reselect
                       </Button>
                     </div>
                   ) : (
@@ -287,7 +287,7 @@ export default function FormatConversionPage() {
                       <Upload className="h-12 w-12 text-gray-400 mx-auto" />
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                          拖拽Markdown文件到此处，或
+                          Drag Markdown files here, or
                         </p>
                         <Button
                           variant="outline"
@@ -295,7 +295,7 @@ export default function FormatConversionPage() {
                           className="bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
                         >
                           <Upload className="h-4 w-4 mr-2" />
-                          选择Markdown文件
+                          Select Markdown File
                         </Button>
                         <input
                           id="markdown-file-input"
@@ -306,7 +306,7 @@ export default function FormatConversionPage() {
                         />
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        仅支持 .md、.markdown 格式，最大 100MB
+                        Supports .md, .markdown formats only, max 100MB
                       </p>
                     </div>
                   )}
@@ -335,7 +335,7 @@ export default function FormatConversionPage() {
                   className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    处理状态
+                    Processing Status
                   </h3>
                   
                                   <div className="space-y-4">
@@ -348,9 +348,9 @@ export default function FormatConversionPage() {
                       <AlertCircle className="h-5 w-5 text-red-600" />
                     )}
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {processingStatus.status === 'uploading' ? '上传中' : 
-                       processingStatus.status === 'processing' ? '处理中' : 
-                       processingStatus.status === 'completed' ? '已完成' : 
+                                          {processingStatus.status === 'uploading' ? 'Uploading' :
+                     processingStatus.status === 'processing' ? 'Processing' :
+                     processingStatus.status === 'completed' ? 'Completed' : 
                        processingStatus.message}
                     </span>
                   </div>
@@ -369,26 +369,26 @@ export default function FormatConversionPage() {
                                 
                                 if (response.status === 402) {
                                   // 积分不足的情况
-                                  alert(errorData.message || "您的积分不足，无法下载此文件");
+                                  alert(errorData.message || "Insufficient points to download this file");
                                 } else {
-                                  alert(errorData.message || "文件下载失败，请稍后再试");
+                                  alert(errorData.message || "File download failed, please try again later");
                                 }
                               }
                             } catch (error) {
                               console.error('下载失败:', error);
-                              alert("下载过程中发生错误，请稍后再试");
+                              alert("An error occurred during download, please try again later");
                             }
                           }}
                           className="flex-1"
                         >
                           <Download className="h-4 w-4 mr-2" />
-                          下载结果
+                          Download Result
                         </Button>
                         <Button
                           onClick={resetForm}
                           variant="outline"
                         >
-                          处理新文件
+                          Process New File
                         </Button>
                       </div>
                     )}
@@ -399,7 +399,7 @@ export default function FormatConversionPage() {
                         variant="outline"
                         className="w-full"
                       >
-                        重新开始
+                        Start Over
                       </Button>
                     )}
                   </div>
@@ -421,20 +421,20 @@ export default function FormatConversionPage() {
                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                     </svg>
-                    积分消耗预览
+                    Points Cost Preview
                   </h4>
                   
                   <div className="space-y-3">
                     <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">文件：</span>
+                          <span className="text-gray-600 dark:text-gray-400">File:</span>
                           <span className="font-medium text-gray-900 dark:text-white truncate max-w-32" title={selectedFile.name}>
                             {selectedFile.name}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">大小：</span>
+                          <span className="text-gray-600 dark:text-gray-400">Size:</span>
                           <span className="font-medium text-gray-900 dark:text-white">
                             {formatFileSize(selectedFile.size)}
                           </span>
@@ -444,10 +444,10 @@ export default function FormatConversionPage() {
                     
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
                       <div className="text-green-800 dark:text-green-200 font-medium">
-                        本次消耗：{calculatePoints('format-conversion', selectedFile.size)}积分
+                        Cost: {calculatePoints('format-conversion', selectedFile.size)} points
                       </div>
                       <div className="text-green-600 dark:text-green-400 text-sm mt-1">
-                        按文件大小计费：1积分/KB
+                        Charged by file size: 1 point/KB
                       </div>
                     </div>
                   </div>
@@ -459,16 +459,16 @@ export default function FormatConversionPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
               >
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <Settings className="h-5 w-5 mr-2" />
-                  转换设置
-                </h3>
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Conversion Settings
+              </h3>
 
                 <div className="space-y-6">
                   {/* 目标格式 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      目标格式
+                      Target Format
                     </label>
                     <div className="space-y-2">
                       {formats.map(format => (
@@ -501,12 +501,12 @@ export default function FormatConversionPage() {
                     {processingStatus.status === 'processing' || processingStatus.status === 'uploading' ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        转换中...
+                        Converting...
                       </>
                     ) : (
                       <>
                         <Repeat className="h-4 w-4 mr-2" />
-                        开始转换
+                        Start Conversion
                       </>
                     )}
                   </Button>
@@ -521,12 +521,12 @@ export default function FormatConversionPage() {
                 className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800"
               >
                 <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-                  积分消耗说明
+                  Points Cost Information
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• 格式转换：1积分/次</li>
-                  <li>• 支持多种输出格式</li>
-                  <li>• 首次下载时扣除积分</li>
+                  <li>• Format Conversion: 1 point/conversion</li>
+                  <li>• Supports multiple output formats</li>
+                  <li>• Points deducted on first download</li>
                 </ul>
               </motion.div>
             </div>

@@ -48,14 +48,14 @@ export default function MarkdownTranslationPage() {
 
   // 支持的语言列表
   const languages = [
-    { code: 'en', name: '英语' },
-    { code: 'zh', name: '中文' },
-    { code: 'ja', name: '日语' },
-    { code: 'ko', name: '韩语' },
-    { code: 'fr', name: '法语' },
-    { code: 'de', name: '德语' },
-    { code: 'es', name: '西班牙语' },
-    { code: 'ru', name: '俄语' },
+  { code: 'en', name: 'English' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'ru', name: 'Russian' },
   ];
 
   // 拖拽处理
@@ -81,7 +81,7 @@ export default function MarkdownTranslationPage() {
     const validation = validateFileFormat(file, 'markdown-translation' as TaskType);
     
     if (!validation.isValid) {
-      setErrorMessage(validation.error || '文件格式验证失败');
+      setErrorMessage(validation.error || 'File format validation failed');
       return;
     }
     
@@ -132,7 +132,7 @@ export default function MarkdownTranslationPage() {
       taskId: null,
       status: 'uploading',
       progress: 0,
-      message: '正在上传文件...',
+              message: 'Uploading file...',
     });
 
     try {
@@ -151,14 +151,14 @@ export default function MarkdownTranslationPage() {
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json().catch(() => ({}));
         console.error('上传失败:', errorData);
-        throw new Error(errorData.message || '文件上传失败');
+        throw new Error(errorData.message || 'File upload failed');
       }
 
       const uploadResult = await uploadResponse.json();
       console.log('上传结果:', uploadResult);
       
       if (!uploadResult.success) {
-        throw new Error(uploadResult.message || '文件上传失败');
+        throw new Error(uploadResult.message || 'File upload failed');
       }
 
       // 获取字符数
@@ -191,7 +191,7 @@ export default function MarkdownTranslationPage() {
           taskId: result.taskId,
           status: 'processing',
           progress: 0,
-          message: '任务已创建，开始翻译...',
+          message: 'Task created, starting translation...',
         });
 
         // 建立SSE连接监听状态更新
@@ -215,7 +215,7 @@ export default function MarkdownTranslationPage() {
           taskId: null,
           status: 'failed',
           progress: 0,
-          message: result.message || '任务创建失败',
+          message: result.message || 'Task creation failed',
         });
       }
     } catch (error) {
@@ -224,7 +224,7 @@ export default function MarkdownTranslationPage() {
         taskId: null,
         status: 'failed',
         progress: 0,
-        message: error instanceof Error ? error.message : '处理失败，请重试',
+        message: error instanceof Error ? error.message : 'Processing failed, please try again',
       });
     }
   };
@@ -254,10 +254,10 @@ export default function MarkdownTranslationPage() {
               <Languages className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Markdown翻译
+              Markdown Translation
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              将Markdown文件翻译为目标语言，保留原有的格式和结构
+              Translate Markdown files to target language while preserving original format and structure
             </p>
           </motion.div>
 
@@ -271,7 +271,7 @@ export default function MarkdownTranslationPage() {
                 className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
               >
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  上传Markdown文件
+                  Upload Markdown File
                 </h2>
                 
                 <div
@@ -296,7 +296,7 @@ export default function MarkdownTranslationPage() {
                           {formatFileSize(selectedFile.size)}
                         </p>
                         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                          {fileCharCount?.toLocaleString() || '...'} 字符
+                          {fileCharCount?.toLocaleString() || '...'} characters
                         </p>
                       </div>
                       <Button
@@ -304,7 +304,7 @@ export default function MarkdownTranslationPage() {
                         variant="outline"
                         size="sm"
                       >
-                        重新选择
+                        Reselect
                       </Button>
                     </div>
                   ) : (
@@ -312,7 +312,7 @@ export default function MarkdownTranslationPage() {
                       <Upload className="h-12 w-12 text-gray-400 mx-auto" />
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                          拖拽Markdown文件到此处，或
+                          Drag Markdown files here, or
                         </p>
                         <Button
                           variant="outline"
@@ -320,7 +320,7 @@ export default function MarkdownTranslationPage() {
                           className="bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
                         >
                           <Upload className="h-4 w-4 mr-2" />
-                          选择Markdown文件
+                          Select Markdown File
                         </Button>
                         <input
                           id="markdown-file-input"
@@ -331,7 +331,7 @@ export default function MarkdownTranslationPage() {
                         />
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        支持.md、.markdown格式，最大 100MB
+                        Supports .md, .markdown formats, max 100MB
                       </p>
                     </div>
                   )}
@@ -360,7 +360,7 @@ export default function MarkdownTranslationPage() {
                   className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    处理状态
+                    Processing Status
                   </h3>
                   
                                   <div className="space-y-4">
@@ -373,9 +373,9 @@ export default function MarkdownTranslationPage() {
                       <AlertCircle className="h-5 w-5 text-red-600" />
                     )}
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {processingStatus.status === 'uploading' ? '上传中' : 
-                       processingStatus.status === 'processing' ? '处理中' : 
-                       processingStatus.status === 'completed' ? '已完成' : 
+                                            {processingStatus.status === 'uploading' ? 'Uploading' :
+                       processingStatus.status === 'processing' ? 'Processing' :
+                       processingStatus.status === 'completed' ? 'Completed' :
                        processingStatus.message}
                     </span>
                   </div>
@@ -394,26 +394,26 @@ export default function MarkdownTranslationPage() {
                                 
                                 if (response.status === 402) {
                                   // 积分不足的情况
-                                  alert(errorData.message || "您的积分不足，无法下载此文件");
+                                  alert(errorData.message || "Insufficient points to download this file");
                                 } else {
-                                  alert(errorData.message || "文件下载失败，请稍后再试");
+                                  alert(errorData.message || "File download failed, please try again later");
                                 }
                               }
                             } catch (error) {
                               console.error('下载失败:', error);
-                              alert("下载过程中发生错误，请稍后再试");
+                              alert("An error occurred during download, please try again later");
                             }
                           }}
                           className="flex-1"
                         >
                           <Download className="h-4 w-4 mr-2" />
-                          下载结果
+                          Download Result
                         </Button>
                         <Button
                           onClick={resetForm}
                           variant="outline"
                         >
-                          处理新文件
+                          Process New File
                         </Button>
                       </div>
                     )}
@@ -424,7 +424,7 @@ export default function MarkdownTranslationPage() {
                         variant="outline"
                         className="w-full"
                       >
-                        重新开始
+                        Start Over
                       </Button>
                     )}
                   </div>
@@ -432,7 +432,7 @@ export default function MarkdownTranslationPage() {
               )}
             </div>
 
-            {/* 右侧：翻译设置和积分预览 */}
+            {/* 右侧：Translation Settings和积分预览 */}
             <div className="space-y-6">
               {/* 积分预览 */}
               {selectedFile && (
@@ -446,22 +446,22 @@ export default function MarkdownTranslationPage() {
                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                     </svg>
-                    积分消耗预览
+                    Points Cost Preview
                   </h4>
                   
                   <div className="space-y-3">
                     <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">文件：</span>
+                          <span className="text-gray-600 dark:text-gray-400">File:</span>
                           <span className="font-medium text-gray-900 dark:text-white truncate max-w-32" title={selectedFile.name}>
                             {selectedFile.name}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">字符数：</span>
+                          <span className="text-gray-600 dark:text-gray-400">Characters:</span>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {fileCharCount?.toLocaleString() || '计算中...'} 字符
+                            {fileCharCount?.toLocaleString() || 'Calculating...'} characters
                           </span>
                         </div>
                       </div>
@@ -469,7 +469,7 @@ export default function MarkdownTranslationPage() {
                     
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
                       <div className="text-green-600 dark:text-green-400 text-sm">
-                        本次消耗：{calculatePoints('markdown-translation', selectedFile.size)}积分
+                        Cost: {calculatePoints('markdown-translation', selectedFile.size)} points
                       </div>
                     </div>
                   </div>
@@ -483,14 +483,14 @@ export default function MarkdownTranslationPage() {
               >
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                   <Settings className="h-5 w-5 mr-2" />
-                  翻译设置
+                  Translation Settings
                 </h3>
 
                 <div className="space-y-6">
                   {/* 源语言 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      源语言
+                      Source Language
                     </label>
                     <select
                       value={sourceLanguage}
@@ -508,7 +508,7 @@ export default function MarkdownTranslationPage() {
                   {/* 目标语言 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      目标语言
+                      Target Language
                     </label>
                     <select
                       value={targetLanguage}
@@ -532,25 +532,25 @@ export default function MarkdownTranslationPage() {
                     {processingStatus.status === 'processing' || processingStatus.status === 'uploading' ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        翻译中...
+                                                   Translating...
                       </>
                     ) : (
                       <>
                         <Globe className="h-4 w-4 mr-2" />
-                        开始翻译
+                        Start Translation
                       </>
                     )}
                   </Button>
                   
                   {sourceLanguage === targetLanguage && (
                     <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                      源语言和目标语言不能相同
+                      Source and target languages cannot be the same
                     </p>
                   )}
                 </div>
               </motion.div>
 
-              {/* 积分消耗说明 */}
+              {/* Points Cost Information */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -558,12 +558,12 @@ export default function MarkdownTranslationPage() {
                 className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800"
               >
                 <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-                  积分消耗说明
+                  Points Cost Information
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• Markdown翻译：2积分/万字符</li>
-                  <li>• 保留原文档格式结构</li>
-                  <li>• 首次下载时扣除积分</li>
+                  <li>• Markdown Translation: 2 points/10k characters</li>
+                  <li>• Preserves original document format and structure</li>
+                  <li>• Points deducted on first download</li>
                 </ul>
               </motion.div>
             </div>

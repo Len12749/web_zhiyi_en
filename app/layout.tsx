@@ -15,10 +15,10 @@ if (typeof window === 'undefined') {
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "智译 - 智能文档处理服务",
-  description: "基于AI的文档处理平台，支持PDF解析、手写图片识别、文档翻译、格式转换等功能",
-  keywords: ["AI", "文档处理", "PDF解析", "翻译", "Markdown"],
-  authors: [{ name: "智译" }],
+  title: "ZhiYi - Intelligent Document Processing Service",
+  description: "AI-based document processing platform supporting PDF parsing, handwritten image recognition, document translation, format conversion and more",
+  keywords: ["AI", "Document Processing", "PDF Parsing", "Translation", "Markdown"],
+  authors: [{ name: "ZhiYi" }],
 };
 
 export const viewport: Viewport = {
@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="zh-CN" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
         <body className={inter.className}>
           <Providers>
             <Navigation />

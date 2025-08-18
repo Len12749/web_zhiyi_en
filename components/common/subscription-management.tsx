@@ -12,26 +12,26 @@ interface SubscriptionManagementProps {
 
 const subscriptionPlans: SubscriptionPlan[] = [
   {
-    name: '普通版',
+    name: 'Standard',
     price: {
       monthly: 10,
       yearly: 100
     },
     features: [
-      '每月2000积分',
-      '高级用户标识'
+      '2,000 points monthly',
+      'Premium user badge'
     ],
     color: 'blue'
   },
   {
-    name: '高级版',
+    name: 'Premium',
     price: {
       monthly: 30,
       yearly: 300
     },
     features: [
-      '每月5000积分',
-      '高级用户标识'
+      '5,000 points monthly',
+      'Premium user badge'
     ],
     color: 'purple',
     recommended: true
@@ -46,15 +46,15 @@ export function SubscriptionManagement({ membershipType, membershipExpiry }: Sub
   const isStandard = membershipType === 'standard';
   const isPremium = membershipType === 'premium';
 
-  const currentPlan = isFree ? '免费版' : isStandard ? '普通版' : '高级版';
-  const expiryDate = membershipExpiry ? new Date(membershipExpiry).toLocaleDateString() : '无';
+  const currentPlan = isFree ? 'Free' : isStandard ? 'Standard' : 'Premium';
+  const expiryDate = membershipExpiry ? new Date(membershipExpiry).toLocaleDateString() : 'None';
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-semibold text-gray-900 dark:text-white flex items-center">
           <Crown className="h-5 w-5 mr-2 text-yellow-500" />
-          会员订阅
+          Subscription
         </h3>
       </div>
 
@@ -63,10 +63,10 @@ export function SubscriptionManagement({ membershipType, membershipExpiry }: Sub
           <div className="flex justify-between items-center">
             <div>
               <p className="font-medium text-blue-700 dark:text-blue-300">
-                当前会员: {currentPlan}
+                Current Plan: {currentPlan}
               </p>
               <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                到期时间: {expiryDate}
+                Expires: {expiryDate}
               </p>
             </div>
             <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full">
@@ -81,7 +81,7 @@ export function SubscriptionManagement({ membershipType, membershipExpiry }: Sub
           <div 
             key={plan.name}
             className={`p-4 rounded-lg border ${
-              (isStandard && plan.name === '普通版') || (isPremium && plan.name === '高级版')
+              (isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium')
                 ? 'border-yellow-400 dark:border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10'
                 : 'border-gray-200 dark:border-gray-700'
             }`}
@@ -90,20 +90,20 @@ export function SubscriptionManagement({ membershipType, membershipExpiry }: Sub
               <h4 className={`font-medium text-${plan.color}-600 dark:text-${plan.color}-400`}>
                 {plan.name}
               </h4>
-              {((isStandard && plan.name === '普通版') || (isPremium && plan.name === '高级版')) && (
+              {((isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium')) && (
                 <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full">
-                  当前方案
+                  Current Plan
                 </span>
               )}
             </div>
             <p className="text-lg font-bold mb-2">
-              ${plan.price.monthly}<span className="text-sm text-gray-500 dark:text-gray-400">/月</span>
+              ${plan.price.monthly}<span className="text-sm text-gray-500 dark:text-gray-400">/month</span>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-              或 ${plan.price.yearly}/年
+              or ${plan.price.yearly}/year
             </p>
             <Button
-              variant={(isStandard && plan.name === '普通版') || (isPremium && plan.name === '高级版') ? "outline" : "default"}
+              variant={(isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium') ? "outline" : "default"}
               size="sm"
               className="w-full"
               onClick={() => {
@@ -112,9 +112,9 @@ export function SubscriptionManagement({ membershipType, membershipExpiry }: Sub
               }}
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              {((isStandard && plan.name === '普通版') || (isPremium && plan.name === '高级版')) 
-                ? '续订会员' 
-                : '订阅会员'}
+              {((isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium')) 
+                ? 'Renew Subscription' 
+                : 'Subscribe'}
             </Button>
           </div>
         ))}

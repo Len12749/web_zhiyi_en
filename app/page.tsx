@@ -12,100 +12,100 @@ import { useScrollAnimation } from '@/lib/hooks/use-scroll-animation';
 const features = [
   {
     id: 'pdf-to-markdown',
-    title: 'PDF解析',
-    description: '利用自研模型将PDF解析成可编辑的Markdown文本，同时支持翻译。利用大模型的推理能力，数学公式输出规范，并可以选择把表格解析成markdown格式或图片格式。',
+    title: 'PDF Parsing',
+    description: 'Convert PDFs into editable Markdown text with our proprietary model, with translation support. Leveraging large language models for standardized mathematical formula output, with options to parse tables as markdown or images.',
     icon: FileText,
     href: '/pdf-to-markdown',
     gradient: 'from-blue-500 to-cyan-500',
-    points: '2积分/页，含翻译3积分/页',
+    points: '2 points/page, 3 points/page with translation',
   },
   {
     id: 'image-to-markdown',
-    title: '手写图片识别',
-    description: '利用大模型将上传的图片解析成Markdown文本，支持多种图片格式，智能识别文本内容。',
+    title: 'Image Recognition',
+    description: 'Convert uploaded images into Markdown text using large language models, supporting various image formats with intelligent text recognition.',
     icon: Image,
     href: '/image-to-markdown',
     gradient: 'from-purple-500 to-pink-500',
-    points: '5积分/张',
+    points: '5 points/image',
   },
   {
     id: 'markdown-translation',
-    title: 'Markdown翻译',
-    description: '利用自研翻译策略结合大语言模型对Markdown文件进行翻译，具有良好的上下文一致性并支持多种语言间的互译。',
+    title: 'Markdown Translation',
+    description: 'Translate Markdown files using our proprietary translation strategy combined with large language models, providing excellent context consistency and supporting translation between multiple languages.',
     icon: Languages,
     href: '/markdown-translation',
     gradient: 'from-green-500 to-emerald-500',
-    points: '2积分/万字符',
+    points: '2 points/10k characters',
   },
   {
     id: 'pdf-translation',
-    title: 'PDF保留排版翻译',
-    description: '利用自研模型对PDF进行保留原排版翻译，保持文档的原始格式和布局，支持多语言翻译。',
+    title: 'PDF Translation',
+    description: 'Translate PDFs while preserving the original layout using our proprietary model, maintaining document format and structure with support for multiple languages.',
     icon: Globe,
     href: '/pdf-translation',
     gradient: 'from-orange-500 to-red-500',
-    points: '2积分/页',
+    points: '2 points/page',
   },
   {
     id: 'format-conversion',
-    title: '格式转换',
-    description: '将Markdown转换成word，pdf，html，latex等不同格式，满足各种文档输出需求。',
+    title: 'Format Conversion',
+    description: 'Convert Markdown to various formats including Word, PDF, HTML, and LaTeX to meet different document output requirements.',
     icon: RefreshCw,
     href: '/format-conversion',
     gradient: 'from-indigo-500 to-purple-500',
-    points: '1积分/次',
+    points: '1 point/conversion',
   },
   {
     id: 'file-history',
-    title: '文件历史',
-    description: '所有被处理过的文件将会保留七天，七天内可供下载和主动删除，方便管理处理记录。',
+    title: 'File History',
+    description: 'All processed files are retained for seven days, available for download and manual deletion within this period for convenient management of processing records.',
     icon: History,
     href: '/file-history',
     gradient: 'from-gray-500 to-slate-500',
-    points: '免费查看',
+    points: 'Free to view',
   },
 ];
 
 const benefits = [
   {
     icon: Zap,
-    title: '高效处理',
-    description: '基于大模型语言，快速准确地处理各类文档',
+    title: 'Efficient Processing',
+    description: 'Fast and accurate document processing based on large language models',
   },
   {
     icon: Shield,
-    title: '安全可靠',
-    description: '数据加密传输，文件自动清理，保护隐私安全',
+    title: 'Safe & Reliable',
+    description: 'Encrypted data transmission, automatic file cleanup, protecting your privacy',
   },
   {
     icon: Clock,
-    title: '7天保存',
-    description: '处理结果保存7天，随时下载，方便管理',
+    title: '7-Day Storage',
+    description: 'Results stored for 7 days, download anytime for convenient management',
   },
 ];
 
 const subscriptionPlans: SubscriptionPlan[] = [
   {
-    name: '普通版',
+    name: 'Standard',
     price: {
       monthly: 10,
       yearly: 100
     },
     features: [
-      '每月4000积分',
-      '高级用户标识'
+      '4,000 points monthly',
+      'Premium user badge'
     ],
     color: 'blue'
   },
   {
-    name: '高级版',
+    name: 'Premium',
     price: {
       monthly: 30,
       yearly: 300
     },
     features: [
-      '每月10000积分',
-      '高级用户标识'
+      '10,000 points monthly',
+      'Premium user badge'
     ],
     color: 'purple'
   }
@@ -138,25 +138,25 @@ export default function HomePage() {
           >
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                智译
+                ZhiYi
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              基于大语言模型的智能文档处理服务平台，让文档处理变得简单高效
+              Intelligent document processing service platform based on large language models, making document processing simple and efficient
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button asChild size="lg" className="text-lg px-8 py-6">
                 <Link href="/pdf-to-markdown">
-                  开始使用
+                  Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               
               <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
                 <Link href="/file-history">
-                  查看历史
+                  View History
                 </Link>
               </Button>
             </div>
@@ -173,7 +173,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">核心功能</h2>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Core Features</h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -225,8 +225,8 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">积分系统</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">简单透明的积分机制，让您的每一分都物有所值</p>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Points System</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">Simple and transparent points mechanism, making every point valuable</p>
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -238,15 +238,15 @@ export default function HomePage() {
             >
               <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center mb-6">
                 <Zap className="h-5 w-5 mr-2" />
-                获得积分
+                Earn Points
               </h3>
               <ul className="space-y-3">
                 {[
-                  { text: '注册即送', points: '100积分' },
-                  { text: '每日签到领取', points: '10积分' },
-                  { text: '特殊节日免费赠送积分', points: null },
-                  { text: '兑换码', points: null },
-                  { text: '充值', points: null },
+                  { text: 'Registration bonus', points: '100 points' },
+                  { text: 'Daily check-in', points: '10 points' },
+                  { text: 'Special holiday free points', points: null },
+                  { text: 'Redemption codes', points: null },
+                  { text: 'Recharge', points: null },
                 ].map((item, index) => (
                   <li key={index} className="flex items-center text-gray-700 dark:text-gray-300">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
@@ -267,16 +267,16 @@ export default function HomePage() {
             >
               <h3 className="text-xl font-semibold text-green-600 dark:text-green-400 flex items-center mb-6">
                 <Shield className="h-5 w-5 mr-2" />
-                消费标准
+                Usage Rates
               </h3>
               <ul className="space-y-3">
                 {[
-                  { service: 'PDF解析', cost: '2积分/页' },
-                  { service: 'PDF解析+翻译', cost: '3积分/页' },
-                  { service: '手写图片识别', cost: '5积分/张' },
-                  { service: 'Markdown翻译', cost: '2积分/万字符' },
-                  { service: 'PDF保留排版翻译', cost: '2积分/页' },
-                  { service: '格式转换', cost: '1积分/次' },
+                  { service: 'PDF Parsing', cost: '2 points/page' },
+                  { service: 'PDF Parsing + Translation', cost: '3 points/page' },
+                  { service: 'Image Recognition', cost: '5 points/image' },
+                  { service: 'Markdown Translation', cost: '2 points/10k chars' },
+                  { service: 'PDF Translation', cost: '2 points/page' },
+                  { service: 'Format Conversion', cost: '1 point/conversion' },
                 ].map((item, index) => (
                   <li key={index} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
                     <span>{item.service}</span>
@@ -295,14 +295,14 @@ export default function HomePage() {
           >
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 max-w-2xl mx-auto mb-4">
               <h4 className="text-md font-medium text-blue-900 dark:text-blue-300 mb-2">
-                积分扣除说明
+                Points Deduction Policy
               </h4>
               <p className="text-sm text-blue-800 dark:text-blue-400 mb-2 text-left">
-                我们采用"先处理后付费"模式：
+                We use a "process first, pay later" model:
               </p>
               <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 text-left">
-                <li className="text-left">• 上传文件时仅检查积分是否足够，但不会立即扣除</li>
-                <li className="text-left">• 首次下载文件时才会扣除相应积分</li>
+                <li className="text-left">• When uploading files, we only check if you have enough points, but don't deduct immediately</li>
+                <li className="text-left">• Points are only deducted when you download the file for the first time</li>
               </ul>
             </div>
 
@@ -310,13 +310,13 @@ export default function HomePage() {
               isSignedIn ? (
                 <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                   <Link href="/dashboard">
-                    查看我的积分
+                    View My Points
                   </Link>
                 </Button>
               ) : (
                 <SignInButton mode="modal">
                   <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg font-medium">
-                    登录查看积分
+                    Sign In to View Points
                   </Button>
                 </SignInButton>
               )
@@ -334,8 +334,8 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">会员订阅</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">选择适合您的订阅计划，享受更多积分</p>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Subscription Plans</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">Choose a subscription plan that suits you and enjoy more points</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -351,10 +351,10 @@ export default function HomePage() {
                 <h3 className={`text-2xl font-bold mb-4 text-${plan.color}-600 dark:text-${plan.color}-400`}>{plan.name}</h3>
                 <div className="mb-6">
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    ${plan.price.monthly}<span className="text-lg text-gray-500 dark:text-gray-400">/月</span>
+                    ${plan.price.monthly}<span className="text-lg text-gray-500 dark:text-gray-400">/month</span>
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    或 ${plan.price.yearly}/年
+                    or ${plan.price.yearly}/year
                   </p>
                 </div>
                 <ul className="space-y-3 mb-8">
@@ -377,7 +377,7 @@ export default function HomePage() {
                   }}
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
-                  订阅{plan.name}
+                  Subscribe to {plan.name}
                 </Button>
               </motion.div>
             ))}
@@ -394,8 +394,8 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">为什么选择智译？</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">专业、安全、高效的文档处理服务</p>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Why Choose ZhiYi?</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">Professional, secure, and efficient document processing services</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

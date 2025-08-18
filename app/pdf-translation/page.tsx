@@ -48,20 +48,20 @@ export default function PDFTranslationPage() {
 
   // 源语言列表 (输入语言简化为英文和中文)
   const sourceLanguages = [
-    { code: 'en', name: '英语' },
-    { code: 'zh', name: '中文' },
-  ];
+  { code: 'en', name: 'English' },
+  { code: 'zh', name: 'Chinese' },
+];
 
   // 目标语言列表 (与后端PDF保留排版翻译服务的LANGUAGE_MAPPING保持一致)
   const targetLanguages = [
-    { code: 'zh', name: '中文' },
-    { code: 'en', name: '英语' },
-    { code: 'ja', name: '日语' },
-    { code: 'ko', name: '韩语' },
-    { code: 'fr', name: '法语' },
-    { code: 'de', name: '德语' },
-    { code: 'es', name: '西班牙语' },
-    { code: 'ru', name: '俄语' },
+    { code: 'zh', name: 'Chinese' },
+    { code: 'en', name: 'English' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'ru', name: 'Russian' },
   ];
 
   // 检测PDF页数
@@ -76,7 +76,7 @@ export default function PDFTranslationPage() {
       // 检查页数限制
       const config = FILE_FORMAT_CONFIG['pdf-translation'];
       if (config.maxPages && pages > config.maxPages) {
-        setErrorMessage(`PDF页数超出限制。文件有 ${pages} 页，最多支持 ${config.maxPages} 页。请选择页数较少的PDF文件。`);
+        setErrorMessage(`PDF page limit exceeded. File has ${pages} pages, maximum supported is ${config.maxPages} pages. Please select a PDF file with fewer pages.`);
         setSelectedFile(null);
         setPageCount(null);
         return;
@@ -86,7 +86,7 @@ export default function PDFTranslationPage() {
       console.log(`PDF页数检测完成: ${pages}页`);
     } catch (error) {
       console.error('PDF页数检测失败:', error);
-      setErrorMessage('PDF页数检测失败，请确保文件格式正确');
+      setErrorMessage('PDF page detection failed, please ensure the file format is correct');
       setSelectedFile(null);
       setPageCount(null);
     } finally {
@@ -117,7 +117,7 @@ export default function PDFTranslationPage() {
     const validation = validateFileFormat(file, 'pdf-translation' as TaskType);
     
     if (!validation.isValid) {
-      setErrorMessage(validation.error || '文件格式验证失败');
+      setErrorMessage(validation.error || 'File format validation failed');
       return;
     }
     
@@ -154,7 +154,7 @@ export default function PDFTranslationPage() {
       taskId: null,
       status: 'uploading',
       progress: 0,
-      message: '正在上传文件...',
+              message: 'Uploading file...',
     });
 
     try {
@@ -169,20 +169,20 @@ export default function PDFTranslationPage() {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('文件上传失败');
+        throw new Error('File upload failed');
       }
 
       const uploadResult = await uploadResponse.json();
       
       // 验证PDF页数检测
       if (uploadResult.data?.needsPageDetection && !uploadResult.data?.additionalInfo?.pageCount) {
-        throw new Error('PDF页数检测失败，无法计算准确积分。请重试或联系客服。');
+        throw new Error('PDF page detection failed, unable to calculate accurate points. Please retry or contact support.');
       }
 
       // 获取实际页数
       const pageCount = uploadResult.data?.additionalInfo?.pageCount;
       if (!pageCount) {
-        throw new Error('无法获取PDF页数信息，请重新上传文件。');
+        throw new Error('Unable to get PDF page count information, please re-upload the file.');
       }
       
       // 2. 构建处理参数
@@ -212,7 +212,7 @@ export default function PDFTranslationPage() {
           taskId: result.taskId,
           status: 'processing',
           progress: 0,
-          message: '任务已创建，开始翻译...',
+          message: 'Task created, starting translation...',
         });
 
         // 4. 建立SSE连接监听状态更新
@@ -236,7 +236,7 @@ export default function PDFTranslationPage() {
           taskId: null,
           status: 'failed',
           progress: 0,
-          message: result.message || '任务创建失败',
+          message: result.message || 'Task creation failed',
         });
       }
     } catch (error) {
@@ -245,7 +245,7 @@ export default function PDFTranslationPage() {
         taskId: null,
         status: 'failed',
         progress: 0,
-        message: error instanceof Error ? error.message : '处理失败，请重试',
+        message: error instanceof Error ? error.message : 'Processing failed, please try again',
       });
     }
   };
@@ -277,11 +277,11 @@ export default function PDFTranslationPage() {
               <Globe className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              PDF保留排版翻译
+              PDF Translation
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              将PDF文档翻译为目标语言，保留原有的版式和排版
-            </p>
+                      <p className="text-gray-600 dark:text-gray-400">
+            Translate PDF documents to target language while preserving original layout and formatting
+          </p>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -293,9 +293,9 @@ export default function PDFTranslationPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
               >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  上传PDF文件
-                </h2>
+                              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Upload PDF File
+              </h2>
                 
                 <div
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -324,7 +324,7 @@ export default function PDFTranslationPage() {
                         variant="outline"
                         size="sm"
                       >
-                        重新选择
+                                                        Reselect
                       </Button>
                     </div>
                   ) : (
@@ -332,7 +332,7 @@ export default function PDFTranslationPage() {
                       <Upload className="h-12 w-12 text-gray-400 mx-auto" />
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                          拖拽PDF文件到此处，或
+                          Drag PDF files here, or
                         </p>
                         <Button
                           variant="outline"
@@ -340,7 +340,7 @@ export default function PDFTranslationPage() {
                           className="bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
                         >
                           <Upload className="h-4 w-4 mr-2" />
-                          选择PDF文件
+                          Select PDF File
                         </Button>
                         <input
                           id="pdf-file-input"
@@ -351,7 +351,7 @@ export default function PDFTranslationPage() {
                         />
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        支持PDF格式，最大 300MB，最多 800页
+                        Supports PDF format, max 300MB, up to 800 pages
                       </p>
                     </div>
                   )}
@@ -380,7 +380,7 @@ export default function PDFTranslationPage() {
                   className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    处理状态
+                    Processing Status
                   </h3>
                   
                                   <div className="space-y-4">
@@ -393,9 +393,9 @@ export default function PDFTranslationPage() {
                       <AlertCircle className="h-5 w-5 text-red-600" />
                     )}
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {processingStatus.status === 'uploading' ? '上传中' : 
-                       processingStatus.status === 'processing' ? '处理中' : 
-                       processingStatus.status === 'completed' ? '已完成' : 
+                                          {processingStatus.status === 'uploading' ? 'Uploading' :
+                     processingStatus.status === 'processing' ? 'Processing' :
+                     processingStatus.status === 'completed' ? 'Completed' : 
                        processingStatus.message}
                     </span>
                   </div>
@@ -414,26 +414,26 @@ export default function PDFTranslationPage() {
                                 
                                 if (response.status === 402) {
                                   // 积分不足的情况
-                                  alert(errorData.message || "您的积分不足，无法下载此文件");
+                                  alert(errorData.message || "Insufficient points to download this file");
                                 } else {
-                                  alert(errorData.message || "文件下载失败，请稍后再试");
+                                  alert(errorData.message || "File download failed, please try again later");
                                 }
                               }
                             } catch (error) {
                               console.error('下载失败:', error);
-                              alert("下载过程中发生错误，请稍后再试");
+                              alert("An error occurred during download, please try again later");
                             }
                           }}
                           className="flex-1"
                         >
                           <Download className="h-4 w-4 mr-2" />
-                          下载结果
+                          Download Result
                         </Button>
                         <Button
                           onClick={resetForm}
                           variant="outline"
                         >
-                          处理新文件
+                          Process New File
                         </Button>
                       </div>
                     )}
@@ -444,7 +444,7 @@ export default function PDFTranslationPage() {
                         variant="outline"
                         className="w-full"
                       >
-                        重新开始
+                        Start Over
                       </Button>
                     )}
                   </div>
@@ -466,20 +466,20 @@ export default function PDFTranslationPage() {
                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                     </svg>
-                    积分消耗预览
+                    Points Cost Preview
                   </h4>
                   
                   <div className="space-y-3">
                     <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">文件：</span>
+                          <span className="text-gray-600 dark:text-gray-400">File:</span>
                           <span className="font-medium text-gray-900 dark:text-white truncate max-w-32" title={selectedFile.name}>
                             {selectedFile.name}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">大小：</span>
+                          <span className="text-gray-600 dark:text-gray-400">Size:</span>
                           <span className="font-medium text-gray-900 dark:text-white">
                             {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                           </span>
@@ -489,10 +489,10 @@ export default function PDFTranslationPage() {
                     
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center border border-green-200 dark:border-green-800">
                       <div className="text-green-800 dark:text-green-200 font-medium">
-                        {isDetectingPages ? '页数检测中...' : `检测页数：${pageCount || 'N/A'}页`}
+                        {isDetectingPages ? 'Detecting pages...' : `Detected pages: ${pageCount || 'N/A'} pages`}
                       </div>
                       <div className="text-green-600 dark:text-green-400 text-sm mt-1">
-                        {isDetectingPages ? '检测完成后显示积分消耗' : `本次消耗：${calculatePoints('pdf-translation', selectedFile.size, pageCount || 0)}积分`}
+                        {isDetectingPages ? 'Points cost will be shown after detection' : `Cost: ${calculatePoints('pdf-translation', selectedFile.size, pageCount || 0)} points`}
                       </div>
                     </div>
                   </div>
@@ -504,16 +504,16 @@ export default function PDFTranslationPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
               >
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <Settings className="h-5 w-5 mr-2" />
-                  翻译设置
-                </h3>
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Translation Settings
+              </h3>
 
                 <div className="space-y-6">
                   {/* 源语言 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      源语言
+                      Source Language
                     </label>
                     <select
                       value={sourceLanguage}
@@ -531,7 +531,7 @@ export default function PDFTranslationPage() {
                   {/* 目标语言 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      目标语言
+                      Target Language
                     </label>
                     <select
                       value={targetLanguage}
@@ -555,19 +555,19 @@ export default function PDFTranslationPage() {
                     {processingStatus.status === 'processing' || processingStatus.status === 'uploading' ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        翻译中...
+                        Translating...
                       </>
                     ) : (
                       <>
                         <Globe className="h-4 w-4 mr-2" />
-                        开始翻译
+                        Start Translation
                       </>
                     )}
                   </Button>
                   
                   {sourceLanguage === targetLanguage && (
                     <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                      源语言和目标语言不能相同
+                      Source and target languages cannot be the same
                     </p>
                   )}
                 </div>
@@ -581,12 +581,12 @@ export default function PDFTranslationPage() {
                 className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800"
               >
                 <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-                  积分消耗说明
+                  Points Cost Information
                 </h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• PDF保留排版翻译：2积分/页</li>
-                  <li>• 保留原文档排版</li>
-                  <li>• 首次下载时扣除积分</li>
+                  <li>• PDF Translation: 2 points/page</li>
+                  <li>• Preserves original document layout</li>
+                  <li>• Points deducted on first download</li>
                 </ul>
               </motion.div>
             </div>

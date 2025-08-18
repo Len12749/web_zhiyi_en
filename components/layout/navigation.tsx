@@ -21,13 +21,13 @@ import { ThemeToggle } from '../ui/theme-toggle';
 import { UserButton, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
 
 const navigationItems = [
-  { href: '/', label: '首页', icon: Home },
-  { href: '/pdf-to-markdown', label: 'PDF解析', icon: FileText },
-  { href: '/image-to-markdown', label: '手写图片识别', icon: Image },
-  { href: '/markdown-translation', label: 'Markdown翻译', icon: Languages },
-  { href: '/pdf-translation', label: 'PDF保留排版翻译', icon: Globe },
-  { href: '/format-conversion', label: '格式转换', icon: RefreshCw },
-  { href: '/file-history', label: '文件历史', icon: History },
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/pdf-to-markdown', label: 'PDF Parsing', icon: FileText },
+  { href: '/image-to-markdown', label: 'Image Recognition', icon: Image },
+  { href: '/markdown-translation', label: 'Markdown Translation', icon: Languages },
+  { href: '/pdf-translation', label: 'PDF Translation', icon: Globe },
+  { href: '/format-conversion', label: 'Format Conversion', icon: RefreshCw },
+  { href: '/file-history', label: 'File History', icon: History },
 ];
 
 export function Navigation() {
@@ -40,7 +40,7 @@ export function Navigation() {
         <div className="flex h-20 items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
-            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">智译</div>
+            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">ZhiYi</div>
           </Link>
 
           {/* Desktop Navigation - Icon + Label - 绝对居中 */}
@@ -116,12 +116,12 @@ export function Navigation() {
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors">
-                    登录
+                    Sign In
                   </button>
                 </SignInButton>
                 <SignUpButton mode="modal">
                   <button className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md transition-colors shadow-md hover:shadow-lg">
-                    注册
+                    Sign Up
                   </button>
                 </SignUpButton>
               </SignedOut>
@@ -133,13 +133,13 @@ export function Navigation() {
                   <Link
                     href="/notifications"
                     className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                    aria-label="通知中心"
+                    aria-label="Notifications"
                   >
                     <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </Link>
                   {/* Tooltip */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    通知中心
+                    Notifications
                     {/* Tooltip arrow */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
                   </div>
@@ -150,13 +150,13 @@ export function Navigation() {
                   <Link
                     href="/dashboard"
                     className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                    aria-label="个人中心"
+                    aria-label="Dashboard"
                   >
                     <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </Link>
                   {/* Tooltip */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    个人中心
+                    Dashboard
                     {/* Tooltip arrow */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
                   </div>
@@ -212,7 +212,7 @@ export function Navigation() {
                   {/* 移动端主题切换 */}
                   <div className="px-3 py-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">主题设置</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme Settings</span>
                       <ThemeToggle />
                     </div>
                   </div>
@@ -225,7 +225,7 @@ export function Navigation() {
                       className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                     >
                       <Bell className="h-4 w-4" />
-                      <span>通知中心</span>
+                      <span>Notifications</span>
                     </Link>
                     <Link
                       href="/dashboard"
@@ -233,7 +233,7 @@ export function Navigation() {
                       className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                     >
                       <User className="h-4 w-4" />
-                      <span>个人中心</span>
+                      <span>Dashboard</span>
                     </Link>
                   </SignedIn>
 
@@ -245,7 +245,7 @@ export function Navigation() {
                         className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors w-full text-left"
                       >
                         <User className="h-4 w-4" />
-                        <span>登录</span>
+                        <span>Sign In</span>
                       </button>
                     </SignInButton>
                     <SignUpButton mode="modal">
@@ -254,7 +254,7 @@ export function Navigation() {
                         className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transition-colors w-full text-left shadow-md hover:shadow-lg"
                       >
                         <User className="h-4 w-4" />
-                        <span>注册</span>
+                        <span>Sign Up</span>
                       </button>
                     </SignUpButton>
                   </SignedOut>

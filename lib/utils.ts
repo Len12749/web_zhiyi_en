@@ -42,10 +42,10 @@ export function formatRelativeTime(date: Date | string): string {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
   
-  if (days > 0) return `${days}天前`;
-  if (hours > 0) return `${hours}小时前`;
-  if (minutes > 0) return `${minutes}分钟前`;
-  return '刚刚';
+  if (days > 0) return `${days} days ago`;
+  if (hours > 0) return `${hours} hours ago`;
+  if (minutes > 0) return `${minutes} minutes ago`;
+  return 'Just now';
 }
 
 // 文件扩展名获取
@@ -155,7 +155,7 @@ export async function withRetry<T>(
     try {
       // 添加超时控制
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('操作超时')), timeout);
+        setTimeout(() => reject(new Error('Operation timeout')), timeout);
       });
 
       const result = await Promise.race([operation(), timeoutPromise]);
@@ -170,7 +170,7 @@ export async function withRetry<T>(
 
       // 计算延迟时间（指数退避）
       const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay);
-      console.warn(`操作失败，第 ${attempt} 次重试，等待 ${delay}ms...`, getErrorMessage(error));
+      console.warn(`Operation failed, retry ${attempt}, waiting ${delay}ms...`, getErrorMessage(error));
       
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -374,32 +374,32 @@ export const FILE_FORMAT_CONFIG = {
     extensions: ['.pdf'],
     maxSize: 300 * 1024 * 1024, // 300MB
     maxPages: 800,
-    description: 'PDF文件'
+    description: 'PDF file'
   },
   'pdf-translation': {
     mimeTypes: ['application/pdf'],
     extensions: ['.pdf'],
     maxSize: 300 * 1024 * 1024, // 300MB
     maxPages: 800,
-    description: 'PDF文件'
+    description: 'PDF file'
   },
   'image-to-markdown': {
     mimeTypes: ['image/jpeg', 'image/jpg', 'image/png'],
     extensions: ['.jpg', '.jpeg', '.png'],
     maxSize: 100 * 1024 * 1024, // 100MB
-    description: '图片文件 (JPG, PNG)'
+    description: 'Image file (JPG, PNG)'
   },
   'markdown-translation': {
     mimeTypes: ['text/markdown', 'text/plain', 'application/octet-stream'],
     extensions: ['.md', '.markdown'], // 后端实际只支持.md和.markdown
     maxSize: 100 * 1024 * 1024, // 100MB
-    description: 'Markdown文件 (.md, .markdown)'
+    description: 'Markdown file (.md, .markdown)'
   },
   'format-conversion': {
     mimeTypes: ['text/markdown', 'text/plain', 'application/octet-stream'],
     extensions: ['.md', '.markdown'], // 后端实际只支持.md和.markdown
     maxSize: 100 * 1024 * 1024, // 100MB
-    description: 'Markdown文件 (.md, .markdown)'
+    description: 'Markdown file (.md, .markdown)'
   }
 } as const;
 
@@ -415,19 +415,19 @@ export function validateFileFormat(
   const config = FILE_FORMAT_CONFIG[taskType];
   
   if (!config) {
-    return { isValid: false, error: '不支持的任务类型' };
+    return { isValid: false, error: 'Unsupported task type' };
   }
 
   // 检查文件是否为空
   if (file.size === 0) {
-    return { isValid: false, error: '不能上传空文件，请选择有内容的文件' };
+    return { isValid: false, error: 'Cannot upload empty file, please select a file with content' };
   }
 
   // 检查文件大小
   if (file.size > config.maxSize) {
     return { 
       isValid: false, 
-      error: `文件大小超出限制。请选择小于 ${config.maxSize / (1024 * 1024)}MB 的${config.description}。` 
+      error: `File size exceeds limit. Please select a file smaller than ${config.maxSize / (1024 * 1024)}MB.` 
     };
   }
 
@@ -444,7 +444,7 @@ export function validateFileFormat(
     if (!isValidExtension) {
       return { 
         isValid: false, 
-        error: `不支持的文件类型。允许的格式：${(config.extensions as readonly string[]).join(', ')}` 
+        error: `Unsupported file type. Allowed formats: ${(config.extensions as readonly string[]).join(', ')}` 
       };
     }
   } else {
@@ -453,7 +453,7 @@ export function validateFileFormat(
     if (!isValidType) {
       return { 
         isValid: false, 
-        error: `不支持的文件类型。允许的格式：${(config.extensions as readonly string[]).join(', ')}` 
+        error: `Unsupported file type. Allowed formats: ${(config.extensions as readonly string[]).join(', ')}` 
       };
     }
   }

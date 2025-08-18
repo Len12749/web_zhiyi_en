@@ -72,11 +72,14 @@ export default function GlobalNotification() {
 
               console.log('🔔 处理新通知:', notification);
 
+              // 翻译通知内容
+              const translated = translateNotification(notification.title, notification.message);
+
               const notificationItem: NotificationItem = {
                 id: notification.id.toString(),
                 type: getNotificationType(notification.type),
-                title: notification.title,
-                message: notification.message,
+                title: translated.title,
+                message: translated.message,
                 timestamp: new Date(notification.createdAt),
                 autoClose: true,
                 duration: 5000,
@@ -212,17 +215,122 @@ export default function GlobalNotification() {
     }
   };
 
+  // 翻译函数：将后端发送的中文通知翻译为英文
+  const translateNotification = (title: string, message: string) => {
+    // 翻译标题
+    const titleTranslations: { [key: string]: string } = {
+      '格式转换失败': 'Format Conversion Failed',
+      '格式转换成功': 'Format Conversion Successful',
+      '格式转换完成': 'Format Conversion Completed',
+      'PDF翻译失败': 'PDF Translation Failed',
+      'PDF翻译成功': 'PDF Translation Successful',
+      'PDF翻译完成': 'PDF Translation Completed',
+      'PDF保留排版翻译失败': 'PDF Translation Failed',
+      'PDF保留排版翻译成功': 'PDF Translation Successful',
+      'PDF保留排版翻译完成': 'PDF Translation Completed',
+      'PDF解析失败': 'PDF Parsing Failed',
+      'PDF解析成功': 'PDF Parsing Successful',
+      'PDF解析完成': 'PDF Parsing Completed',
+      'Markdown翻译失败': 'Markdown Translation Failed',
+      'Markdown翻译成功': 'Markdown Translation Successful',
+      'Markdown翻译完成': 'Markdown Translation Completed',
+      '图片识别失败': 'Image Recognition Failed',
+      '图片识别成功': 'Image Recognition Successful',
+      '图片识别完成': 'Image Recognition Completed',
+      '任务失败': 'Task Failed',
+      '任务成功': 'Task Successful',
+      '任务完成': 'Task Completed',
+      '处理失败': 'Processing Failed',
+      '处理成功': 'Processing Successful',
+      '处理完成': 'Processing Completed',
+      '上传成功': 'Upload Successful',
+      '上传完成': 'Upload Completed',
+      '下载成功': 'Download Successful',
+      '下载完成': 'Download Completed',
+      '文件处理失败': 'File Processing Failed',
+      '文件处理成功': 'File Processing Successful',
+      '文件处理完成': 'File Processing Completed'
+    };
+
+    // 翻译消息内容
+    let translatedMessage = message
+      // 成功完成的消息
+      .replace(/您的文件\s*['"]([^'"]+)['"]\s*已成功处理完成，可以下载了/, "Your file '$1' has been successfully processed and is ready for download")
+      .replace(/文件\s*['"]([^'"]+)['"]\s*已成功处理完成/, "File '$1' has been successfully processed")
+      .replace(/文件\s*['"]([^'"]+)['"]\s*处理完成/, "File '$1' processing completed")
+      .replace(/您的文件已经处理完成/, "Your file has been processed")
+      .replace(/处理完成，可以下载/, "Processing completed, ready for download")
+      .replace(/可以下载了/, "ready for download")
+      .replace(/已完成处理/, "processing completed")
+      
+      // 失败的消息
+      .replace(/文件\s*['"]([^'"]+)['"]\s*处理失败/, "File '$1' processing failed")
+      .replace(/文件\s*['"]([^'"]+)['"]\s*处理成功/, "File '$1' processing successful")
+      .replace(/文件\s*([^：]+)：\s*(.+)/, "File $1: $2") // 处理 "文件 xxx: 错误信息" 格式
+      
+      // 积分相关
+      .replace(/未消耗积分/, "No points consumed")
+      .replace(/已消耗\s*(\d+)\s*积分/, "Consumed $1 points")
+      .replace(/积分不足/, "Insufficient points")
+      
+      // 通用错误
+      .replace(/任务创建失败/, "Task creation failed")
+      .replace(/上传失败/, "Upload failed")
+      .replace(/网络错误/, "Network error")
+      .replace(/服务器错误/, "Server error")
+      .replace(/文件格式不支持/, "File format not supported")
+      .replace(/文件太大/, "File too large")
+      .replace(/处理超时/, "Processing timeout")
+      .replace(/连接超时/, "Connection timeout")
+      .replace(/下载失败/, "Download failed")
+      .replace(/解析失败/, "Parsing failed")
+      .replace(/翻译失败/, "Translation failed")
+      .replace(/转换失败/, "Conversion failed")
+      .replace(/识别失败/, "Recognition failed")
+      .replace(/获取失败/, "Failed to retrieve")
+      .replace(/保存失败/, "Save failed")
+      .replace(/删除失败/, "Delete failed")
+      .replace(/fetch failed/, "fetch failed"); // 保持英文错误信息不变
+
+    // 如果标题包含中文但不在翻译字典中，尝试简单的模式匹配
+    let translatedTitle = titleTranslations[title] || title;
+    
+    // 通用翻译模式
+    if (translatedTitle === title && /[\u4e00-\u9fff]/.test(title)) {
+      translatedTitle = title
+        .replace(/(.+)失败$/, '$1 Failed')
+        .replace(/(.+)成功$/, '$1 Successful') 
+        .replace(/(.+)完成$/, '$1 Completed')
+        .replace(/PDF保留排版翻译/, 'PDF Translation')
+        .replace(/PDF翻译/, 'PDF Translation')
+        .replace(/PDF解析/, 'PDF Parsing')
+        .replace(/Markdown翻译/, 'Markdown Translation')
+        .replace(/格式转换/, 'Format Conversion')
+        .replace(/图片识别/, 'Image Recognition')
+        .replace(/文件处理/, 'File Processing')
+        .replace(/任务/, 'Task')
+        .replace(/处理/, 'Processing')
+        .replace(/上传/, 'Upload')
+        .replace(/下载/, 'Download');
+    }
+
+    return {
+      title: translatedTitle,
+      message: translatedMessage
+    };
+  };
+
   const formatTime = (timestamp: Date) => {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - timestamp.getTime()) / 1000);
     
-    if (diffInSeconds < 60) return '刚刚';
+    if (diffInSeconds < 60) return 'Just now';
     
     const minutes = Math.floor(diffInSeconds / 60);
     const hours = Math.floor(minutes / 60);
     
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
+    if (minutes < 60) return `${minutes} minutes ago`;
+    if (hours < 24) return `${hours} hours ago`;
     return timestamp.toLocaleDateString();
   };
 

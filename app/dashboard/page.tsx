@@ -84,7 +84,7 @@ const useAsyncOperation = <T,>(initialData: T | null = null) => {
       }));
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setState(prev => ({
         ...prev,
         loading: false,
@@ -127,43 +127,43 @@ export default function DashboardPage() {
   // 快捷操作配置
   const quickActions = [
     {
-      title: 'PDF解析',
-      description: '将PDF转换为Markdown',
+      title: 'PDF Parsing',
+      description: 'Convert PDF to Markdown',
       icon: FileText,
       href: '/pdf-to-markdown',
       color: 'bg-blue-500',
     },
     {
-      title: '手写图片识别',
-      description: '智能识别图片内容',
+      title: 'Image Recognition',
+      description: 'Intelligent image content recognition',
       icon: Image,
       href: '/image-to-markdown',
       color: 'bg-green-500',
     },
     {
-      title: 'Markdown翻译',
-      description: '保留格式的文档翻译',
+      title: 'Markdown Translation',
+      description: 'Document translation with preserved formatting',
       icon: Languages,
       href: '/markdown-translation',
       color: 'bg-purple-500',
     },
     {
-      title: 'PDF保留排版翻译',
-      description: '保留排版的PDF翻译',
+      title: 'PDF Translation',
+      description: 'PDF translation with preserved layout',
       icon: Globe,
       href: '/pdf-translation',
       color: 'bg-orange-500',
     },
     {
-      title: '格式转换',
-      description: '多种文档格式转换',
+      title: 'Format Conversion',
+      description: 'Convert between multiple document formats',
       icon: RefreshCw,
       href: '/format-conversion',
       color: 'bg-red-500',
     },
     {
-      title: '文件历史',
-      description: '查看处理历史记录',
+      title: 'File History',
+      description: 'View processing history records',
       icon: History,
       href: '/file-history',
       color: 'bg-gray-500',
@@ -173,7 +173,7 @@ export default function DashboardPage() {
   // 初始化用户和获取积分信息
   const initializeUserAndFetchPoints = useCallback(async () => {
     if (!user?.id || !user?.emailAddresses[0]?.emailAddress) {
-      throw new Error('用户信息不完整');
+      throw new Error('Incomplete user information');
     }
 
     // 并发执行用户初始化和积分获取
@@ -201,7 +201,7 @@ export default function DashboardPage() {
     }
 
     if (!pointsResult.value.success) {
-      throw new Error(pointsResult.value.message || '获取积分信息失败');
+              throw new Error(pointsResult.value.message || 'Failed to get points information');
     }
 
     return pointsResult.value.data || (pointsResult.value as any).summary;
@@ -228,7 +228,7 @@ export default function DashboardPage() {
       });
 
       if (!response.success) {
-        throw new Error(response.message || '签到失败');
+        throw new Error(response.message || 'Check-in failed');
       }
 
       // 乐观更新本地状态
@@ -248,7 +248,7 @@ export default function DashboardPage() {
 
       setCheckinAction({ loading: false, error: null });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '签到失败';
+      const errorMessage = error instanceof Error ? error.message : 'Check-in failed';
       setCheckinAction({ loading: false, error: errorMessage });
       console.error('签到失败:', error);
     }
@@ -271,7 +271,7 @@ export default function DashboardPage() {
       });
 
       if (!response.success) {
-        throw new Error(response.message || '兑换失败');
+        throw new Error(response.message || 'Redemption failed');
       }
 
       // 乐观更新本地状态
@@ -285,7 +285,7 @@ export default function DashboardPage() {
       }
 
       setRedeemSuccess(true);
-      setRedeemMessage(`兑换成功！获得 ${earnedPoints || 0} 积分`);
+      setRedeemMessage(`Redemption successful! Earned ${earnedPoints || 0} points`);
       setRedeemCode('');
       setRedeemAction({ loading: false, error: null });
 
@@ -296,7 +296,7 @@ export default function DashboardPage() {
       }, 3000);
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '兑换失败，请稍后重试';
+      const errorMessage = error instanceof Error ? error.message : 'Redemption failed, please try again later';
       setRedeemAction({ loading: false, error: errorMessage });
       setRedeemSuccess(false);
       setRedeemMessage(errorMessage);
@@ -320,7 +320,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">加载中...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
@@ -333,14 +333,14 @@ export default function DashboardPage() {
         <div className="text-center max-w-md mx-auto p-6">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            加载失败
+            Loading Failed
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {pointsSummary.error}
           </p>
           <Button onClick={retryPointsLoad} className="w-full">
             <RefreshCw className="h-4 w-4 mr-2" />
-            重试
+                                      Retry
           </Button>
         </div>
       </div>
@@ -357,10 +357,10 @@ export default function DashboardPage() {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            个人中心
+            Dashboard
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            欢迎回来，{user?.firstName || user?.emailAddresses[0]?.emailAddress}
+            Welcome back, {user?.firstName || user?.emailAddresses[0]?.emailAddress}
           </p>
         </motion.div>
 
@@ -380,12 +380,12 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex items-center">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {user?.firstName || '用户'}
+                      {user?.firstName || 'User'}
                     </h3>
                     {pointsSummary.data?.membershipType && pointsSummary.data.membershipType !== 'free' && (
                       <span className="ml-2 flex items-center px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs rounded-full">
                         <Crown className="h-3 w-3 mr-1" />
-                        {pointsSummary.data.membershipType === 'standard' ? '普通会员' : '高级会员'}
+                        {pointsSummary.data.membershipType === 'standard' ? 'Standard Member' : 'Premium Member'}
                       </span>
                     )}
                   </div>
@@ -394,7 +394,7 @@ export default function DashboardPage() {
                   </p>
                   {pointsSummary.data?.membershipExpiry && pointsSummary.data.membershipType !== 'free' && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      会员到期: {new Date(pointsSummary.data.membershipExpiry).toLocaleDateString()}
+                      Expires: {new Date(pointsSummary.data.membershipExpiry).toLocaleDateString()}
                     </p>
                   )}
                 </div>
@@ -411,16 +411,16 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center">
                   <Coins className="h-5 w-5 mr-2 text-yellow-500" />
-                  积分余额
+                  Points Balance
                   {pointsSummary.retryCount > 0 && (
                     <span className="ml-2 text-xs text-orange-500">
-                      (已重试 {pointsSummary.retryCount} 次)
+                      (Retried {pointsSummary.retryCount} times)
                     </span>
                   )}
                 </h3>
                 {pointsSummary.data?.hasInfinitePoints && (
                   <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs rounded-full">
-                    无限积分
+                    Unlimited Points
                   </span>
                 )}
               </div>
@@ -440,13 +440,13 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center">
                   <Calendar className="h-5 w-5 mr-2 text-green-500" />
-                  每日签到
+                  Daily Check-in
                 </h3>
                 <Gift className="h-5 w-5 text-green-500" />
               </div>
               
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                每日签到可获得 10 积分奖励
+                Earn 10 points daily by checking in
               </p>
 
               {checkinAction.error && (
@@ -466,17 +466,17 @@ export default function DashboardPage() {
                 {checkinAction.loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    签到中...
+                    Checking in...
                   </>
                 ) : pointsSummary.data?.todayChecked ? (
                   <>
                     <Zap className="h-4 w-4 mr-2" />
-                    今日已签到
+                    Already Checked In Today
                   </>
                 ) : (
                   <>
                     <Gift className="h-4 w-4 mr-2" />
-                    立即签到
+                    Check In Now
                   </>
                 )}
               </Button>
@@ -505,13 +505,13 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center">
                   <Gift className="h-5 w-5 mr-2 text-purple-500" />
-                  兑换码
+                  Redemption Code
                 </h3>
                 <TrendingUp className="h-5 w-5 text-purple-500" />
               </div>
               
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                输入兑换码获得积分奖励
+                Enter a redemption code to earn points
               </p>
 
               <div className="space-y-3">
@@ -520,7 +520,7 @@ export default function DashboardPage() {
                     type="text"
                     value={redeemCode}
                     onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
-                    placeholder="输入兑换码"
+                    placeholder="Enter code"
                     className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                     disabled={redeemAction.loading}
                     maxLength={20}
@@ -534,10 +534,10 @@ export default function DashboardPage() {
                     {redeemAction.loading ? (
                       <>
                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                        兑换中
+                        Redeeming
                       </>
                     ) : (
-                      '兑换'
+                      'Redeem'
                     )}
                   </Button>
                 </div>
@@ -567,7 +567,7 @@ export default function DashboardPage() {
               transition={{ delay: 0.3 }}
             >
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                快捷操作
+                Quick Actions
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
