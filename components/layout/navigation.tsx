@@ -10,6 +10,7 @@ import {
   Globe, 
   RefreshCw, 
   History, 
+  Crown,
   Bell, 
   User, 
   Menu,
@@ -28,6 +29,7 @@ const navigationItems = [
   { href: '/pdf-translation', label: 'PDF Translation', icon: Globe },
   { href: '/format-conversion', label: 'Format Conversion', icon: RefreshCw },
   { href: '/file-history', label: 'File History', icon: History },
+  { href: '/subscription', label: 'Subscription', icon: Crown },
 ];
 
 export function Navigation() {
