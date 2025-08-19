@@ -57,6 +57,8 @@ export async function GET(request: NextRequest) {
       email: userData.email,
       avatar: userData.avatar,
       organization: userData.organization,
+      type: userData.type || 'normal',
+      isAdmin: userData.isAdmin || false,
       createdTime: userData.createdTime,
       updatedTime: userData.updatedTime,
     };
@@ -68,12 +70,16 @@ export async function GET(request: NextRequest) {
     const cookieOptions = getSessionCookieOptions();
     const response = NextResponse.redirect(`${casdoorConfig.homeUrl}/dashboard`);
     
+    // 记录登录成功
+    console.log('用户登录成功:', userInfo.name);
+    
     response.cookies.set(cookieOptions.name, sessionToken, {
       httpOnly: cookieOptions.httpOnly,
       secure: cookieOptions.secure,
       sameSite: cookieOptions.sameSite,
       path: cookieOptions.path,
       maxAge: cookieOptions.maxAge,
+      domain: cookieOptions.domain, // 添加域名设置
     });
 
     return response;

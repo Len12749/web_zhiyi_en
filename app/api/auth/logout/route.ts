@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
       sameSite: cookieOptions.sameSite,
       path: cookieOptions.path,
       maxAge: 0, // 立即过期
+      domain: cookieOptions.domain, // 添加域名设置
     });
 
     return response;

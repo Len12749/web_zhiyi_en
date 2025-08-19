@@ -65,6 +65,21 @@ export function getCurrentUser(request?: NextRequest): CasdoorUser | null {
 
 // 创建会话 Cookie 选项
 export function getSessionCookieOptions() {
+  // 从环境变量中提取域名
+  let domain = undefined;
+  if (process.env.CASDOOR_HOME_URL) {
+    try {
+      const url = new URL(process.env.CASDOOR_HOME_URL);
+      domain = url.hostname;
+      // 如果是localhost，不设置domain
+      if (domain === 'localhost') {
+        domain = undefined;
+      }
+    } catch (e) {
+      console.error('Invalid CASDOOR_HOME_URL:', e);
+    }
+  }
+
   return {
     name: SESSION_COOKIE_NAME,
     value: '',
@@ -73,6 +88,7 @@ export function getSessionCookieOptions() {
     sameSite: 'lax' as const,
     path: '/',
     maxAge: 7 * 24 * 60 * 60, // 7天
+    domain, // 添加域名设置
   };
 }
 
