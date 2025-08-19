@@ -15,7 +15,8 @@ import {
   User, 
   Menu,
   X,
-  Home
+  Home,
+  LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '../ui/theme-toggle';
@@ -37,7 +38,13 @@ const navigationItems = [
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isSignedIn } = useUser();
+  const { signOut } = useAuth();
   const pathname = usePathname();
+
+  const handleSignOut = async () => {
+    setIsMobileMenuOpen(false);
+    await signOut();
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200/40 dark:border-gray-700/40 bg-white/95 dark:bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
@@ -245,6 +252,15 @@ export function Navigation() {
                         <User className="h-4 w-4" />
                         <span>Dashboard</span>
                       </Link>
+                      
+                      {/* 退出登录按钮 - 移动端底部 */}
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full text-left border-t border-gray-200 dark:border-gray-700 pt-4 mt-4"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
+                      </button>
                     </>
                   )}
 

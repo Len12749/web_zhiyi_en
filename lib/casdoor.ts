@@ -4,8 +4,8 @@ export const casdoorConfig = {
   clientId: process.env.NEXT_PUBLIC_CASDOOR_CLIENT_ID || '',
   organization: process.env.NEXT_PUBLIC_CASDOOR_ORGANIZATION || 'zhiyi-org',
   application: process.env.NEXT_PUBLIC_CASDOOR_APPLICATION || 'zhiyi-platform',
-  redirectUri: process.env.CASDOOR_REDIRECT_URI || 'https://www.zpdf.cc/api/auth/callback/casdoor',
-  homeUrl: process.env.CASDOOR_HOME_URL || 'https://www.zpdf.cc',
+  redirectUri: process.env.CASDOOR_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/casdoor',
+  homeUrl: process.env.CASDOOR_HOME_URL || 'http://localhost:3000',
 };
 
 // 生成登录 URL
