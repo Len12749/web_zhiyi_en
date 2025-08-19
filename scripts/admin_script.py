@@ -2,6 +2,7 @@
 """
 智译平台积分系统管理脚本
 交互式界面，用户友好的积分管理工具
+适配 Casdoor 身份认证系统
 
 使用前请确保安装依赖：
 pip install psycopg2-binary
@@ -17,7 +18,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
 # 数据库连接配置
-DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres")
 
 def get_db_connection():
     """获取数据库连接"""
@@ -294,18 +295,13 @@ class PointsManager:
             return False
 
     def find_user(self, identifier: str) -> Optional[Dict[str, Any]]:
-        """查找用户 (通过邮箱或Clerk ID)"""
+        """查找用户 (通过用户ID)"""
         try:
-            if '@' in identifier:
-                self.cursor.execute("""
-                    SELECT id, clerk_id, email, points, has_infinite_points, created_at
-                    FROM users WHERE email = %s
-                """, (identifier,))
-            else:
-                self.cursor.execute("""
-                    SELECT id, clerk_id, email, points, has_infinite_points, created_at
-                    FROM users WHERE clerk_id = %s
-                """, (identifier,))
+            self.cursor.execute("""
+                SELECT id, user_id, points, has_infinite_points, membership_type, 
+                       membership_expiry, created_at, updated_at
+                FROM users WHERE user_id = %s
+            """, (identifier,))
             return self.cursor.fetchone()
         except psycopg2.Error as e:
             print(f"❌ 查找用户失败: {e}")
@@ -323,7 +319,8 @@ class PointsManager:
         """列出用户"""
         try:
             self.cursor.execute("""
-                SELECT id, clerk_id, email, points, has_infinite_points, created_at
+                SELECT id, user_id, points, has_infinite_points, membership_type, 
+                       membership_expiry, created_at
                 FROM users
                 ORDER BY created_at DESC
                 LIMIT %s
@@ -337,21 +334,23 @@ class PointsManager:
 
             print(f"\n👥 用户列表 (最近 {limit} 个):")
             print("-" * 120)
-            print(f"{'ID':<6} {'Clerk ID':<28} {'邮箱':<30} {'积分':<8} {'无限积分':<10} {'注册时间'}")
+            print(f"{'ID':<6} {'用户ID':<28} {'积分':<8} {'无限积分':<10} {'会员类型':<10} {'会员到期':<12} {'注册时间'}")
             print("-" * 120)
 
             for user in users:
                 infinite_icon = "🌟 是" if user['has_infinite_points'] else "❌ 否"
                 created_str = user['created_at'].strftime('%Y-%m-%d %H:%M')
+                membership_type = user['membership_type'] or "免费版"
+                expiry_str = user['membership_expiry'].strftime('%Y-%m-%d') if user['membership_expiry'] else "无限期"
                 
-                print(f"{user['id']:<6} {user['clerk_id']:<28} {user['email']:<30} {user['points']:<8} {infinite_icon:<10} {created_str}")
+                print(f"{user['id']:<6} {user['user_id']:<28} {user['points']:<8} {infinite_icon:<10} {membership_type:<10} {expiry_str:<12} {created_str}")
 
         except psycopg2.Error as e:
             print(f"❌ 获取用户列表失败: {e}")
 
     def get_user_details_interactive(self):
         """交互式查看用户详情"""
-        user_identifier = get_user_input("请输入用户邮箱或Clerk ID")
+        user_identifier = get_user_input("请输入用户ID")
         if user_identifier is None:
             return
         
@@ -365,7 +364,7 @@ class PointsManager:
                 print(f"❌ 找不到用户: {user_identifier}")
                 return
 
-            clerk_id = user['clerk_id']
+            user_id = user['user_id']
 
             # 获取积分交易历史
             self.cursor.execute("""
@@ -374,7 +373,7 @@ class PointsManager:
                 WHERE user_id = %s
                 ORDER BY created_at DESC
                 LIMIT 10
-            """, (clerk_id,))
+            """, (user_id,))
             
             transactions = self.cursor.fetchall()
 
@@ -385,16 +384,17 @@ class PointsManager:
                 WHERE user_id = %s
                 ORDER BY checkin_date DESC
                 LIMIT 5
-            """, (clerk_id,))
+            """, (user_id,))
             
             checkins = self.cursor.fetchall()
 
             # 显示用户信息
             print(f"\n👤 用户详细信息:")
-            print(f"   📧 邮箱: {user['email']}")
-            print(f"   🆔 Clerk ID: {user['clerk_id']}")
+            print(f"   🆔 用户ID: {user['user_id']}")
             print(f"   💰 当前积分: {user['points']}")
             print(f"   🌟 无限积分: {'是' if user['has_infinite_points'] else '否'}")
+            print(f"   🔰 会员类型: {user['membership_type'] or '免费版'}")
+            print(f"   ⏰ 会员到期: {user['membership_expiry'].strftime('%Y-%m-%d') if user['membership_expiry'] else '无限期'}")
             print(f"   📅 注册时间: {user['created_at'].strftime('%Y-%m-%d %H:%M:%S')}")
 
             print(f"\n💰 最近积分交易:")
@@ -422,7 +422,7 @@ class PointsManager:
         print("\n💰 修改用户积分")
         print("-"*30)
         
-        user_identifier = get_user_input("请输入用户邮箱或Clerk ID")
+        user_identifier = get_user_input("请输入用户ID")
         if user_identifier is None:
             return
         
@@ -432,9 +432,10 @@ class PointsManager:
             print(f"❌ 找不到用户: {user_identifier}")
             return
         
-        print(f"\n👤 找到用户: {user['email']}")
+        print(f"\n👤 找到用户: {user['user_id']}")
         print(f"   当前积分: {user['points']}")
         print(f"   无限积分: {'是' if user['has_infinite_points'] else '否'}")
+        print(f"   会员类型: {user['membership_type'] or '免费版'}")
         
         points_change = get_user_input("积分变化量 (正数增加，负数扣除)", input_type=int)
         if points_change is None:
@@ -448,7 +449,7 @@ class PointsManager:
         new_points = user['points'] + points_change
         
         print(f"\n📋 即将执行操作:")
-        print(f"   用户: {user['email']}")
+        print(f"   用户ID: {user['user_id']}")
         print(f"   当前积分: {user['points']}")
         print(f"   {action}积分: {abs(points_change)}")
         print(f"   操作后积分: {new_points}")
@@ -465,7 +466,7 @@ class PointsManager:
                 print(f"❌ 找不到用户: {user_identifier}")
                 return False
 
-            clerk_id = user['clerk_id']
+            user_id = user['user_id']
             current_points = user['points']
             new_points = current_points + points_change
 
@@ -477,19 +478,19 @@ class PointsManager:
             self.cursor.execute("""
                 UPDATE users 
                 SET points = %s, updated_at = NOW()
-                WHERE clerk_id = %s
-            """, (new_points, clerk_id))
+                WHERE user_id = %s
+            """, (new_points, user_id))
 
             # 记录积分交易
             transaction_type = "ADMIN_EARN" if points_change > 0 else "ADMIN_CONSUME"
             self.cursor.execute("""
                 INSERT INTO point_transactions (user_id, amount, transaction_type, description)
                 VALUES (%s, %s, %s, %s)
-            """, (clerk_id, points_change, transaction_type, description))
+            """, (user_id, points_change, transaction_type, description))
 
             action = "增加" if points_change > 0 else "扣除"
             print(f"\n✅ 积分操作成功!")
-            print(f"   用户: {user['email']}")
+            print(f"   用户ID: {user_id}")
             print(f"   {action}积分: {abs(points_change)}")
             print(f"   原积分: {current_points}")
             print(f"   新积分: {new_points}")
@@ -504,7 +505,7 @@ class PointsManager:
         print("\n🌟 设置/取消无限积分权限")
         print("-"*30)
         
-        user_identifier = get_user_input("请输入用户邮箱或Clerk ID")
+        user_identifier = get_user_input("请输入用户ID")
         if user_identifier is None:
             return
         
@@ -514,8 +515,9 @@ class PointsManager:
             print(f"❌ 找不到用户: {user_identifier}")
             return
         
-        print(f"\n👤 找到用户: {user['email']}")
+        print(f"\n👤 找到用户: {user['user_id']}")
         print(f"   当前积分: {user['points']}")
+        print(f"   会员类型: {user['membership_type'] or '免费版'}")
         print(f"   当前无限积分状态: {'已开启' if user['has_infinite_points'] else '未开启'}")
         
         if user['has_infinite_points']:
@@ -536,25 +538,25 @@ class PointsManager:
                 print(f"❌ 找不到用户: {user_identifier}")
                 return False
 
-            clerk_id = user['clerk_id']
+            user_id = user['user_id']
 
             # 更新无限积分状态
             self.cursor.execute("""
                 UPDATE users 
                 SET has_infinite_points = %s, updated_at = NOW()
-                WHERE clerk_id = %s
-            """, (infinite, clerk_id))
+                WHERE user_id = %s
+            """, (infinite, user_id))
 
             # 记录操作日志
             description = "管理员设置无限积分" if infinite else "管理员取消无限积分"
             self.cursor.execute("""
                 INSERT INTO point_transactions (user_id, amount, transaction_type, description)
                 VALUES (%s, 0, 'ADMIN_CONFIG', %s)
-            """, (clerk_id, description))
+            """, (user_id, description))
 
             action = "设置" if infinite else "取消"
             print(f"\n✅ 无限积分权限操作成功!")
-            print(f"   用户: {user['email']}")
+            print(f"   用户ID: {user_id}")
             print(f"   操作: {action}无限积分权限")
             return True
 
@@ -621,11 +623,16 @@ def main():
 🛠️  智译平台积分系统管理工具
 =====================================
 本工具提供交互式界面管理积分系统
+适配 Casdoor 身份认证系统
 
 功能包括:
 • 💳 兑换码管理 (创建/查看/激活/删除)
 • 👤 用户积分管理 (查看/修改积分)
 • 🌟 无限积分权限设置
+• 🔰 会员管理 (查看会员状态)
+
+环境变量:
+• DATABASE_URL: 数据库连接字符串 (默认: postgresql://postgres:postgres@127.0.0.1:54322/postgres)
 
 请确保已安装依赖: pip install psycopg2-binary
 =====================================
