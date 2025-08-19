@@ -27,7 +27,7 @@ const features = [
     icon: Image,
     href: '/image-to-markdown',
     gradient: 'from-purple-500 to-pink-500',
-    points: '5 points/image',
+    points: '2 points/image',
   },
   {
     id: 'markdown-translation',
@@ -93,7 +93,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
       yearly: 100
     },
     features: [
-      '4,000 points monthly',
+      '2,000 points monthly',
       'Premium user badge'
     ],
     color: 'blue'
@@ -274,7 +274,7 @@ export default function HomePage() {
                 {[
                   { service: 'PDF Parsing', cost: '2 points/page' },
                   { service: 'PDF Parsing + Translation', cost: '3 points/page' },
-                  { service: 'Image Recognition', cost: '5 points/image' },
+                                          { service: 'Image Recognition', cost: '2 points/image' },
                   { service: 'Markdown Translation', cost: '2 points/10k chars' },
                   { service: 'PDF Translation', cost: '2 points/page' },
                   { service: 'Format Conversion', cost: '1 point/conversion' },

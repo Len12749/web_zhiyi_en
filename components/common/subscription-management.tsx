@@ -30,7 +30,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
       yearly: 300
     },
     features: [
-      '5,000 points monthly',
+      '10,000 points monthly',
       'Premium user badge'
     ],
     color: 'purple',

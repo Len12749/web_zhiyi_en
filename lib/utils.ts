@@ -85,7 +85,7 @@ export function calculatePoints(
       return enableTranslation ? pageCount * 3 : pageCount * 2;
       
     case 'image-to-markdown':
-      return 5; // 固定5积分每张图片
+      return 2; // 固定2积分每张图片
       
     case 'markdown-translation':
 
