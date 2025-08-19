@@ -1,11 +1,11 @@
 // Casdoor 配置
 export const casdoorConfig = {
-  get endpoint() { return process.env.NEXT_PUBLIC_CASDOOR_ENDPOINT! },
-  get clientId() { return process.env.NEXT_PUBLIC_CASDOOR_CLIENT_ID! },
-  get organization() { return process.env.NEXT_PUBLIC_CASDOOR_ORGANIZATION! },
-  get application() { return process.env.NEXT_PUBLIC_CASDOOR_APPLICATION! },
-  get redirectUri() { return process.env.CASDOOR_REDIRECT_URI! },
-  get homeUrl() { return process.env.CASDOOR_HOME_URL! },
+  endpoint: process.env.NEXT_PUBLIC_CASDOOR_ENDPOINT || 'http://localhost:8000',
+  clientId: process.env.NEXT_PUBLIC_CASDOOR_CLIENT_ID || '',
+  organization: process.env.NEXT_PUBLIC_CASDOOR_ORGANIZATION || 'zhiyi-org',
+  application: process.env.NEXT_PUBLIC_CASDOOR_APPLICATION || 'zhiyi-platform',
+  redirectUri: process.env.CASDOOR_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/casdoor',
+  homeUrl: process.env.CASDOOR_HOME_URL || 'http://localhost:3000',
 };
 
 // 生成登录 URL
