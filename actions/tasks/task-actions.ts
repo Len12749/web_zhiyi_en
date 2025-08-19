@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs";
+import { auth } from "@/lib/auth-server";
 import { db } from "@/db";
 import { processingTasks } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@/lib/auth-server";
 import { notificationSSEManager, generateRandomString } from "@/lib/sse/notification-manager";
 
 // 强制动态渲染

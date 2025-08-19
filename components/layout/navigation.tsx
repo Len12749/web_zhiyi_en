@@ -19,7 +19,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '../ui/theme-toggle';
-import { UserButton, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
+import { useUser, useAuth } from '@/hooks/use-auth';
+import { getSignInUrl, getSignUpUrl } from '@/lib/casdoor';
+import { UserButton } from '../common/user-button';
 
 const navigationItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -34,6 +36,7 @@ const navigationItems = [
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isSignedIn } = useUser();
   const pathname = usePathname();
 
   return (
@@ -115,21 +118,24 @@ export function Navigation() {
               <ThemeToggle />
               
               {/* Always show login/signup buttons for signed out users */}
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors">
-                    Sign In
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md transition-colors shadow-md hover:shadow-lg">
-                    Sign Up
-                  </button>
-                </SignUpButton>
-              </SignedOut>
+              {!isSignedIn && (
+                <>
+                  <Link href={getSignInUrl('zhiyi-platform')}>
+                    <button className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors">
+                      Sign In
+                    </button>
+                  </Link>
+                  <Link href={getSignUpUrl('zhiyi-platform')}>
+                    <button className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md transition-colors shadow-md hover:shadow-lg">
+                      Sign Up
+                    </button>
+                  </Link>
+                </>
+              )}
 
               {/* Show additional features for signed in users */}
-              <SignedIn>
+              {isSignedIn && (
+                <>
                 {/* Notifications */}
                 <div className="relative group">
                   <Link
@@ -173,7 +179,8 @@ export function Navigation() {
                     }
                   }}
                 />
-              </SignedIn>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -220,46 +227,50 @@ export function Navigation() {
                   </div>
                   
                   {/* Signed In - Mobile */}
-                  <SignedIn>
-                    <Link
-                      href="/notifications"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <Bell className="h-4 w-4" />
-                      <span>Notifications</span>
-                    </Link>
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <User className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </SignedIn>
+                  {isSignedIn && (
+                    <>
+                      <Link
+                        href="/notifications"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <Bell className="h-4 w-4" />
+                        <span>Notifications</span>
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </>
+                  )}
 
                   {/* Signed Out - Mobile */}
-                  <SignedOut>
-                    <SignInButton mode="modal">
-                      <button 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors w-full text-left"
-                      >
-                        <User className="h-4 w-4" />
-                        <span>Sign In</span>
-                      </button>
-                    </SignInButton>
-                    <SignUpButton mode="modal">
-                      <button 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transition-colors w-full text-left shadow-md hover:shadow-lg"
-                      >
-                        <User className="h-4 w-4" />
-                        <span>Sign Up</span>
-                      </button>
-                    </SignUpButton>
-                  </SignedOut>
+                  {!isSignedIn && (
+                    <>
+                      <Link href={getSignInUrl('zhiyi-platform')}>
+                        <button 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors w-full text-left"
+                        >
+                          <User className="h-4 w-4" />
+                          <span>Sign In</span>
+                        </button>
+                      </Link>
+                      <Link href={getSignUpUrl('zhiyi-platform')}>
+                        <button 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transition-colors w-full text-left shadow-md hover:shadow-lg"
+                        >
+                          <User className="h-4 w-4" />
+                          <span>Sign Up</span>
+                        </button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>

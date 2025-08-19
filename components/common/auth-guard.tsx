@@ -1,8 +1,10 @@
 'use client';
 
-import { useUser, SignInButton } from '@clerk/nextjs';
+import { useUser } from '@/hooks/use-auth';
+import { getSignInUrl } from '@/lib/casdoor';
 import { motion } from 'framer-motion';
 import { Lock, LogIn } from 'lucide-react';
+import Link from 'next/link';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -61,20 +63,18 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="space-y-4"
           >
-            <SignInButton mode="modal">
+            <Link href={getSignInUrl('zhiyi-platform')}>
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
                 <LogIn className="w-5 h-5" />
                 <span>Sign In</span>
               </button>
-            </SignInButton>
+            </Link>
             
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Don't have an account?{' '}
-              <SignInButton mode="modal">
-                <button className="text-blue-600 hover:text-blue-700 font-medium">
-                  Sign Up Now
-                </button>
-              </SignInButton>
+              <Link href={getSignInUrl('zhiyi-platform')} className="text-blue-600 hover:text-blue-700 font-medium">
+                Sign Up Now
+              </Link>
             </p>
           </motion.div>
         </motion.div>

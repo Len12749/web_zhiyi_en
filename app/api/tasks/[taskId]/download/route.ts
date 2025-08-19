@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@/lib/auth-server";
 import { getTaskById } from "@/actions/tasks/task-actions";
 import { readFile } from "fs/promises";
 import { join } from "path";

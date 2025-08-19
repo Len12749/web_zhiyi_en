@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@/lib/auth-server";
 import { getPointsSummary } from "@/actions/points/point-actions";
 import { getErrorMessage } from "@/lib/utils";
 

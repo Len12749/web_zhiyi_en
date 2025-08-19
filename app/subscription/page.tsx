@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/use-auth';
 import { motion } from 'framer-motion';
 import { 
   Crown, 
@@ -126,7 +126,7 @@ export default function SubscriptionPage() {
 
   // 初始化用户和获取积分信息
   const initializeUserAndFetchPoints = useCallback(async () => {
-    if (!user?.id || !user?.emailAddresses[0]?.emailAddress) {
+    if (!user?.id) {
       throw new Error('Incomplete user information');
     }
 
@@ -135,8 +135,8 @@ export default function SubscriptionPage() {
       makeApiRequest('/api/user/init', {
         method: 'POST',
         body: JSON.stringify({
-          clerkId: user.id,
-          email: user.emailAddresses[0].emailAddress,
+          userId: user.id,
+          email: user.email || user.name || '',
         }),
       }),
       makeApiRequest<PointsSummary>('/api/points/summary')

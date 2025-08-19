@@ -9,7 +9,7 @@ import {
   Info, 
   AlertTriangle
 } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/use-auth';
 
 export interface NotificationItem {
   id: string;

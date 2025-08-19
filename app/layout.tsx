@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs';
+// import { ClerkProvider } from '@clerk/nextjs'; // 已替换为 Casdoor
 import { Providers } from '../components/providers';
 import { Navigation } from '../components/layout/navigation';
 import GlobalNotification from '../components/common/global-notification';
@@ -32,18 +32,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>
-          <Providers>
-            <Navigation />
-            <main>
-              {children}
-            </main>
-            <GlobalNotification />
-          </Providers>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <Providers>
+          <Navigation />
+          <main>
+            {children}
+          </main>
+          <GlobalNotification />
+        </Providers>
+      </body>
+    </html>
   );
 } 

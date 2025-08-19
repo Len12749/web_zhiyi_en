@@ -1,12 +1,13 @@
 CREATE TABLE IF NOT EXISTS "users" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"clerk_id" varchar(255) NOT NULL,
-	"email" varchar(255) NOT NULL,
-	"points" integer DEFAULT 20 NOT NULL,
+	"user_id" varchar(255) NOT NULL,
+	"points" integer DEFAULT 100 NOT NULL,
 	"has_infinite_points" boolean DEFAULT false,
+	"membership_type" varchar(50) DEFAULT 'free',
+	"membership_expiry" date,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now(),
-	CONSTRAINT "users_clerk_id_unique" UNIQUE("clerk_id")
+	CONSTRAINT "users_user_id_unique" UNIQUE("user_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "processing_tasks" (
@@ -20,8 +21,8 @@ CREATE TABLE IF NOT EXISTS "processing_tasks" (
 	"input_storage_path" varchar(500) NOT NULL,
 	"processing_params" jsonb DEFAULT '{}'::jsonb,
 	"external_task_id" varchar(255),
-	"estimated_points" integer DEFAULT 0,
-	"actual_points_used" integer DEFAULT 0,
+	"required_points" integer DEFAULT 0,
+	"has_been_downloaded" boolean DEFAULT false,
 	"result_storage_path" varchar(500),
 	"result_file_size" bigint,
 	"result_filename" varchar(255),
@@ -49,7 +50,7 @@ CREATE TABLE IF NOT EXISTS "user_checkins" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" varchar(255) NOT NULL,
 	"checkin_date" date NOT NULL,
-	"points_earned" integer DEFAULT 5,
+	"points_earned" integer DEFAULT 10,
 	"created_at" timestamp DEFAULT now(),
 	CONSTRAINT "user_checkins_user_id_checkin_date_unique" UNIQUE("user_id","checkin_date")
 );
@@ -78,13 +79,13 @@ CREATE TABLE IF NOT EXISTS "notifications" (
 );
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "processing_tasks" ADD CONSTRAINT "processing_tasks_user_id_users_clerk_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("clerk_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "processing_tasks" ADD CONSTRAINT "processing_tasks_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "point_transactions" ADD CONSTRAINT "point_transactions_user_id_users_clerk_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("clerk_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "point_transactions" ADD CONSTRAINT "point_transactions_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -102,13 +103,13 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "user_checkins" ADD CONSTRAINT "user_checkins_user_id_users_clerk_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("clerk_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "user_checkins" ADD CONSTRAINT "user_checkins_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_clerk_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("clerk_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

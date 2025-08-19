@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@/lib/auth-server";
 import { createProcessingTask } from "@/actions/tasks/task-actions";
 import { sseConnectionManager } from "@/lib/sse/connection-manager";
 import { TaskProcessor, TaskType, TaskParams } from "@/lib/processing/task-processor";

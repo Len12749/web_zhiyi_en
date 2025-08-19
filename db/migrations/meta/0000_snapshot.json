@@ -1,11 +1,11 @@
 {
-  "id": "05be2941-1d4e-4dd4-aeef-8fd66dbacc68",
+  "id": "1f84e97c-5198-43af-a7fd-86c6b456acd0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
   "tables": {
-    "code_redemptions": {
-      "name": "code_redemptions",
+    "users": {
+      "name": "users",
       "schema": "",
       "columns": {
         "id": {
@@ -14,27 +14,36 @@
           "primaryKey": true,
           "notNull": true
         },
-        "code_id": {
-          "name": "code_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
         "user_id": {
           "name": "user_id",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "points_earned": {
-          "name": "points_earned",
+        "points": {
+          "name": "points",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": 100
         },
-        "transaction_id": {
-          "name": "transaction_id",
-          "type": "integer",
+        "has_infinite_points": {
+          "name": "has_infinite_points",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "membership_type": {
+          "name": "membership_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'free'"
+        },
+        "membership_expiry": {
+          "name": "membership_expiry",
+          "type": "date",
           "primaryKey": false,
           "notNull": false
         },
@@ -44,141 +53,27 @@
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "code_redemptions_code_id_redeem_codes_id_fk": {
-          "name": "code_redemptions_code_id_redeem_codes_id_fk",
-          "tableFrom": "code_redemptions",
-          "tableTo": "redeem_codes",
-          "columnsFrom": [
-            "code_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "code_redemptions_user_id_users_clerk_id_fk": {
-          "name": "code_redemptions_user_id_users_clerk_id_fk",
-          "tableFrom": "code_redemptions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "clerk_id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "code_redemptions_transaction_id_point_transactions_id_fk": {
-          "name": "code_redemptions_transaction_id_point_transactions_id_fk",
-          "tableFrom": "code_redemptions",
-          "tableTo": "point_transactions",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "code_redemptions_code_id_user_id_unique": {
-          "name": "code_redemptions_code_id_user_id_unique",
+        "users_user_id_unique": {
+          "name": "users_user_id_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "code_id",
             "user_id"
           ]
         }
       }
-    },
-    "point_transactions": {
-      "name": "point_transactions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "task_id": {
-          "name": "task_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "amount": {
-          "name": "amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "transaction_type": {
-          "name": "transaction_type",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "point_transactions_user_id_users_clerk_id_fk": {
-          "name": "point_transactions_user_id_users_clerk_id_fk",
-          "tableFrom": "point_transactions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "clerk_id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "point_transactions_task_id_processing_tasks_id_fk": {
-          "name": "point_transactions_task_id_processing_tasks_id_fk",
-          "tableFrom": "point_transactions",
-          "tableTo": "processing_tasks",
-          "columnsFrom": [
-            "task_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
     },
     "processing_tasks": {
       "name": "processing_tasks",
@@ -208,13 +103,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
-        },
-        "progress_percent": {
-          "name": "progress_percent",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
         },
         "status_message": {
           "name": "status_message",
@@ -253,19 +141,19 @@
           "primaryKey": false,
           "notNull": false
         },
-        "estimated_points": {
-          "name": "estimated_points",
+        "required_points": {
+          "name": "required_points",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "default": 0
         },
-        "actual_points_used": {
-          "name": "actual_points_used",
-          "type": "integer",
+        "has_been_downloaded": {
+          "name": "has_been_downloaded",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false,
-          "default": 0
+          "default": false
         },
         "result_storage_path": {
           "name": "result_storage_path",
@@ -333,15 +221,15 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "processing_tasks_user_id_users_clerk_id_fk": {
-          "name": "processing_tasks_user_id_users_clerk_id_fk",
+        "processing_tasks_user_id_users_user_id_fk": {
+          "name": "processing_tasks_user_id_users_user_id_fk",
           "tableFrom": "processing_tasks",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
           "columnsTo": [
-            "clerk_id"
+            "user_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -349,6 +237,170 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
+    },
+    "point_transactions": {
+      "name": "point_transactions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redeem_code_id": {
+          "name": "redeem_code_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transaction_type": {
+          "name": "transaction_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "point_transactions_user_id_users_user_id_fk": {
+          "name": "point_transactions_user_id_users_user_id_fk",
+          "tableFrom": "point_transactions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "point_transactions_task_id_processing_tasks_id_fk": {
+          "name": "point_transactions_task_id_processing_tasks_id_fk",
+          "tableFrom": "point_transactions",
+          "tableTo": "processing_tasks",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "point_transactions_redeem_code_id_redeem_codes_id_fk": {
+          "name": "point_transactions_redeem_code_id_redeem_codes_id_fk",
+          "tableFrom": "point_transactions",
+          "tableTo": "redeem_codes",
+          "columnsFrom": [
+            "redeem_code_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "user_checkins": {
+      "name": "user_checkins",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "checkin_date": {
+          "name": "checkin_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "points_earned": {
+          "name": "points_earned",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 10
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_checkins_user_id_users_user_id_fk": {
+          "name": "user_checkins_user_id_users_user_id_fk",
+          "tableFrom": "user_checkins",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_checkins_user_id_checkin_date_unique": {
+          "name": "user_checkins_user_id_checkin_date_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "checkin_date"
+          ]
+        }
+      }
     },
     "redeem_codes": {
       "name": "redeem_codes",
@@ -419,8 +471,8 @@
         }
       }
     },
-    "user_checkins": {
-      "name": "user_checkins",
+    "notifications": {
+      "name": "notifications",
       "schema": "",
       "columns": {
         "id": {
@@ -435,18 +487,36 @@
           "primaryKey": false,
           "notNull": true
         },
-        "checkin_date": {
-          "name": "checkin_date",
-          "type": "date",
+        "task_id": {
+          "name": "task_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true
         },
-        "points_earned": {
-          "name": "points_earned",
-          "type": "integer",
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false,
-          "default": 5
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_read": {
+          "name": "is_read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -458,95 +528,22 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_checkins_user_id_users_clerk_id_fk": {
-          "name": "user_checkins_user_id_users_clerk_id_fk",
-          "tableFrom": "user_checkins",
+        "notifications_user_id_users_user_id_fk": {
+          "name": "notifications_user_id_users_user_id_fk",
+          "tableFrom": "notifications",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
           "columnsTo": [
-            "clerk_id"
+            "user_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "user_checkins_user_id_checkin_date_unique": {
-          "name": "user_checkins_user_id_checkin_date_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "checkin_date"
-          ]
-        }
-      }
-    },
-    "users": {
-      "name": "users",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "clerk_id": {
-          "name": "clerk_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "points": {
-          "name": "points",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 20
-        },
-        "has_infinite_points": {
-          "name": "has_infinite_points",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "users_clerk_id_unique": {
-          "name": "users_clerk_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "clerk_id"
-          ]
-        }
-      }
+      "uniqueConstraints": {}
     }
   },
   "enums": {},

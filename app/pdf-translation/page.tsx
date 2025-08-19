@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/use-auth';
 import { motion } from 'framer-motion';
 import { useSSEWithReconnect } from '@/lib/hooks/use-sse-with-reconnect';
 import { 

@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useUser, SignInButton } from '@clerk/nextjs';
+import { useUser } from '@/hooks/use-auth';
+import { getSignInUrl } from '@/lib/casdoor';
 import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap, Shield, Clock, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -314,11 +315,11 @@ export default function HomePage() {
                   </Link>
                 </Button>
               ) : (
-                <SignInButton mode="modal">
-                  <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg font-medium">
+                <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg font-medium">
+                  <Link href={getSignInUrl('zhiyi-platform')}>
                     Sign In to View Points
-                  </Button>
-                </SignInButton>
+                  </Link>
+                </Button>
               )
             )}
           </motion.div>

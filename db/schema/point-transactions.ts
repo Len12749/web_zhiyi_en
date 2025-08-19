@@ -5,7 +5,7 @@ import { redeemCodes } from './redeem-codes';
 
 export const pointTransactions = pgTable('point_transactions', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.clerkId, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.userId, { onDelete: 'cascade' }),
   taskId: integer('task_id').references(() => processingTasks.id, { onDelete: 'set null' }),
   redeemCodeId: integer('redeem_code_id').references(() => redeemCodes.id, { onDelete: 'set null' }),
   amount: integer('amount').notNull(),

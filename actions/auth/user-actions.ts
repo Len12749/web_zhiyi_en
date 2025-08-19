@@ -1,14 +1,14 @@
 "use server";
 
-import { auth } from "@clerk/nextjs";
+import { auth } from "@/lib/auth-server";
 import { db } from "@/db";
 import { users, pointTransactions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export interface User {
   id: number;
-  clerkId: string;
-  email: string;
+  userId: string;
+  email?: string;
   points: number;
   hasInfinitePoints: boolean;
   createdAt: Date;
@@ -18,13 +18,13 @@ export interface User {
 /**
  * 初始化用户 - 首次登录时调用
  */
-export async function initializeUser(clerkId: string, email: string): Promise<{ success: boolean; user?: User; message: string }> {
+export async function initializeUser(userId: string, email: string): Promise<{ success: boolean; user?: User; message: string }> {
   try {
     // 检查用户是否已存在
     const existingUser = await db
       .select()
       .from(users)
-      .where(eq(users.clerkId, clerkId))
+      .where(eq(users.userId, userId))
       .limit(1);
 
     if (existingUser.length > 0) {
@@ -39,7 +39,7 @@ export async function initializeUser(clerkId: string, email: string): Promise<{ 
     const newUser = await db
       .insert(users)
       .values({
-        clerkId,
+        userId: userId,
         email,
         points: 20, // 初始20积分
         hasInfinitePoints: false,
@@ -48,7 +48,7 @@ export async function initializeUser(clerkId: string, email: string): Promise<{ 
 
     // 记录初始积分交易
     await db.insert(pointTransactions).values({
-      userId: clerkId,
+      userId: userId,
       amount: 20,
       transactionType: "INITIAL",
       description: "新用户注册赠送积分",
@@ -85,7 +85,7 @@ export async function getCurrentUser(): Promise<{ success: boolean; user?: User;
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.clerkId, userId))
+      .where(eq(users.userId, userId))
       .limit(1);
 
     if (user.length === 0) {
@@ -112,13 +112,13 @@ export async function getCurrentUser(): Promise<{ success: boolean; user?: User;
 /**
  * 更新用户积分
  */
-export async function updateUserPoints(clerkId: string, pointsChange: number, description: string): Promise<{ success: boolean; newBalance?: number; message: string }> {
+export async function updateUserPoints(userId: string, pointsChange: number, description: string): Promise<{ success: boolean; newBalance?: number; message: string }> {
   try {
     // 获取当前用户
     const currentUser = await db
       .select()
       .from(users)
-      .where(eq(users.clerkId, clerkId))
+      .where(eq(users.userId, userId))
       .limit(1);
 
     if (currentUser.length === 0) {
@@ -133,7 +133,7 @@ export async function updateUserPoints(clerkId: string, pointsChange: number, de
     // 如果用户有无限积分，只记录交易但不改变余额
     if (user.hasInfinitePoints && pointsChange < 0) {
       await db.insert(pointTransactions).values({
-        userId: clerkId,
+        userId: userId,
         amount: pointsChange,
         transactionType: pointsChange > 0 ? "EARN" : "CONSUME",
         description,
@@ -162,11 +162,11 @@ export async function updateUserPoints(clerkId: string, pointsChange: number, de
         points: newBalance,
         updatedAt: new Date()
       })
-      .where(eq(users.clerkId, clerkId));
+      .where(eq(users.userId, userId));
 
     // 记录积分交易
     await db.insert(pointTransactions).values({
-      userId: clerkId,
+      userId: userId,
       amount: pointsChange,
       transactionType: pointsChange > 0 ? "EARN" : "CONSUME",
       description,

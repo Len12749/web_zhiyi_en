@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/use-auth';
 import { motion } from 'framer-motion';
 import { 
   User, 
@@ -172,7 +172,7 @@ export default function DashboardPage() {
 
   // 初始化用户和获取积分信息
   const initializeUserAndFetchPoints = useCallback(async () => {
-    if (!user?.id || !user?.emailAddresses[0]?.emailAddress) {
+    if (!user?.id) {
       throw new Error('Incomplete user information');
     }
 
@@ -181,8 +181,8 @@ export default function DashboardPage() {
       makeApiRequest('/api/user/init', {
         method: 'POST',
         body: JSON.stringify({
-          clerkId: user.id,
-          email: user.emailAddresses[0].emailAddress,
+          userId: user.id,
+          email: user.email || user.name || '',
         }),
       }),
       makeApiRequest<PointsSummary>('/api/points/summary')
@@ -360,7 +360,7 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Welcome back, {user?.firstName || user?.emailAddresses[0]?.emailAddress}
+            Welcome back, {user?.displayName || user?.name || user?.email}
           </p>
         </motion.div>
 
@@ -380,7 +380,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex items-center">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {user?.firstName || 'User'}
+                      {user?.displayName || user?.name || 'User'}
                     </h3>
                     {pointsSummary.data?.membershipType && pointsSummary.data.membershipType !== 'free' && (
                       <span className="ml-2 flex items-center px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs rounded-full">
@@ -389,9 +389,11 @@ export default function DashboardPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {user?.emailAddresses[0]?.emailAddress}
-                  </p>
+                  {user?.email && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {user.email}
+                    </p>
+                  )}
                   {pointsSummary.data?.membershipExpiry && pointsSummary.data.membershipType !== 'free' && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Expires: {new Date(pointsSummary.data.membershipExpiry).toLocaleDateString()}

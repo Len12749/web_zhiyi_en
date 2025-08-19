@@ -85,6 +85,22 @@ services/md_translate/File/
 services/*/config.env
 services/*/md_translate/File/
 
+# 临时脚本和测试文件
+*-test.js
+*-test.ts
+test-*.js
+test-*.ts
+check-*.js
+check-*.ts
+clean-*.js
+clean-*.ts
+debug-*.js
+debug-*.ts
+*-debug.js
+*-debug.ts
+*.tmp.*
+*.temp.*
+
 # 测试文件（保留一些示例）
 test*.pdf
 output*.pdf

@@ -3,7 +3,7 @@ import { users } from './users';
 
 export const processingTasks = pgTable('processing_tasks', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.clerkId, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.userId, { onDelete: 'cascade' }),
   
   // 任务信息
   taskType: varchar('task_type', { length: 50 }).notNull(), // pdf_to_markdown, translation, etc.

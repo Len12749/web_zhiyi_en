@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs";
+import { auth, currentUser } from "@/lib/auth-server";
 import { initializeUser } from "@/actions/auth/user-actions";
 
 // 强制动态渲染，避免静态生成错误
@@ -10,14 +10,14 @@ export async function POST(request: NextRequest) {
     const { userId } = auth();
     const user = await currentUser();
 
-    if (!userId || !user?.emailAddresses[0]?.emailAddress) {
+    if (!userId) {
       return NextResponse.json(
         { success: false, message: "User not authenticated" },
         { status: 401 }
       );
     }
 
-    const email = user.emailAddresses[0].emailAddress;
+    const email = user?.email || user?.name || 'no-email@local.user';
 
     // 初始化用户
     const result = await initializeUser(userId, email);

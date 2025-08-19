@@ -1,0 +1,85 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { casdoorConfig } from '@/lib/casdoor';
+import { createSessionToken, getSessionCookieOptions } from '@/lib/auth';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+
+    if (!code) {
+      return NextResponse.redirect(`${casdoorConfig.homeUrl}/login?error=missing_code`);
+    }
+
+    // 向 Casdoor 交换访问令牌
+    const tokenResponse = await fetch(`${casdoorConfig.endpoint}/api/login/oauth/access_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        grant_type: 'authorization_code',
+        client_id: casdoorConfig.clientId,
+        client_secret: process.env.CASDOOR_CLIENT_SECRET,
+        code,
+        redirect_uri: casdoorConfig.redirectUri,
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      console.error('Token exchange failed:', await tokenResponse.text());
+      return NextResponse.redirect(`${casdoorConfig.homeUrl}/login?error=token_exchange_failed`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    
+    // 使用访问令牌获取用户信息
+    const userResponse = await fetch(`${casdoorConfig.endpoint}/api/get-account`, {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+      },
+    });
+
+    if (!userResponse.ok) {
+      console.error('User info fetch failed:', await userResponse.text());
+      return NextResponse.redirect(`${casdoorConfig.homeUrl}/login?error=user_info_failed`);
+    }
+
+    const userData = await userResponse.json();
+    const userInfo = {
+      id: userData.name, // Casdoor 使用 name 作为唯一标识符
+      name: userData.name,
+      displayName: userData.displayName || userData.name,
+      email: userData.email,
+      avatar: userData.avatar,
+      organization: userData.organization,
+      createdTime: userData.createdTime,
+      updatedTime: userData.updatedTime,
+    };
+
+    // 创建会话 token
+    const sessionToken = createSessionToken(userInfo);
+
+    // 设置会话 cookie
+    const cookieOptions = getSessionCookieOptions();
+    const response = NextResponse.redirect(`${casdoorConfig.homeUrl}/dashboard`);
+    
+    response.cookies.set(cookieOptions.name, sessionToken, {
+      httpOnly: cookieOptions.httpOnly,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      path: cookieOptions.path,
+      maxAge: cookieOptions.maxAge,
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error('Casdoor callback error:', error);
+    return NextResponse.redirect(`${casdoorConfig.homeUrl}/login?error=auth_failed`);
+  }
+}

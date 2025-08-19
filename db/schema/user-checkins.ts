@@ -3,7 +3,7 @@ import { users } from './users';
 
 export const userCheckins = pgTable('user_checkins', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.clerkId, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.userId, { onDelete: 'cascade' }),
   checkinDate: date('checkin_date').notNull(),
   pointsEarned: integer('points_earned').default(10),
   createdAt: timestamp('created_at').defaultNow(),

@@ -4,7 +4,7 @@ import { processingTasks } from './processing-tasks';
 
 export const notifications = pgTable('notifications', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.clerkId, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.userId, { onDelete: 'cascade' }),
   taskId: varchar('task_id', { length: 255 }), // 存储字符串格式的taskId，不设置外键约束
   
   // 通知内容

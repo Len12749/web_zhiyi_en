@@ -8,8 +8,8 @@ import './sse/init';
 if (typeof window === 'undefined') {
   const requiredEnvVars = [
     'DATABASE_URL',
-    'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-    'CLERK_SECRET_KEY',
+    'NEXT_PUBLIC_CASDOOR_CLIENT_ID',
+    'CASDOOR_CLIENT_SECRET',
     'DATA_STORAGE_PATH'
   ];
   
