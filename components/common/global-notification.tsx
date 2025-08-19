@@ -249,7 +249,8 @@ export default function GlobalNotification() {
       '下载完成': 'Download Completed',
       '文件处理失败': 'File Processing Failed',
       '文件处理成功': 'File Processing Successful',
-      '文件处理完成': 'File Processing Completed'
+      '文件处理完成': 'File Processing Completed',
+      '签到成功': 'Check-in Successful'
     };
 
     // 翻译消息内容
@@ -262,6 +263,9 @@ export default function GlobalNotification() {
       .replace(/处理完成，可以下载/, "Processing completed, ready for download")
       .replace(/可以下载了/, "ready for download")
       .replace(/已完成处理/, "processing completed")
+      
+      // 签到相关消息
+      .replace(/每日签到完成，获得\s*(\d+)\s*积分奖励！/, "Daily check-in completed, earned $1 points!")
       
       // 失败的消息
       .replace(/文件\s*['"]([^'"]+)['"]\s*处理失败/, "File '$1' processing failed")
