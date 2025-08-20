@@ -16,7 +16,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
     price: { monthly: 5, yearly: 50 },
     features: [
       '800 points monthly',
-      'Points roll over within membership period'
+      'Points accumulate and never expire'
     ],
     color: 'gray'
   },
@@ -25,7 +25,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
     price: { monthly: 10, yearly: 100 },
     features: [
       '2,000 points monthly',
-      'Points roll over within membership period'
+      'Points accumulate and never expire'
     ],
     color: 'blue'
   },
@@ -34,7 +34,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
     price: { monthly: 30, yearly: 300 },
     features: [
       '10,000 points monthly',
-      'Points roll over within membership period'
+      'Points accumulate and never expire'
     ],
     color: 'purple',
     recommended: true
