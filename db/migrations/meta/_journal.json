@@ -8,6 +8,13 @@
       "when": 1755578221877,
       "tag": "0000_deep_wild_child",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1755578221877,
+      "tag": "0001_add_email_to_users",
+      "breakpoints": true
     }
   ]
 }

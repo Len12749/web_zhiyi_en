@@ -24,7 +24,7 @@ export const config = {
   
   // 积分系统配置
   points: {
-    initial: 20,           // 注册初始积分
+    initial: 100,          // 注册初始积分
     dailyCheckin: 5,       // 每日签到积分
     
     // 消费标准

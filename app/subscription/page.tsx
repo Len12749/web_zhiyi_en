@@ -8,7 +8,8 @@ import {
   Zap,
   AlertCircle,
   RefreshCw,
-  CheckCircle
+  CheckCircle,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthGuard } from '@/components/common/auth-guard';
@@ -35,30 +36,51 @@ interface AsyncState<T> {
 // 订阅计划配置
 const subscriptionPlans: SubscriptionPlan[] = [
   {
+    name: 'Basic',
+    price: { monthly: 5, yearly: 50 },
+    features: [
+      '800 points monthly',
+      'Points roll over within membership period'
+    ],
+    color: 'gray'
+  },
+  {
     name: 'Standard',
-    price: {
-      monthly: 10,
-      yearly: 100
-    },
+    price: { monthly: 10, yearly: 100 },
     features: [
       '2,000 points monthly',
-      'Premium user badge'
+      'Points roll over within membership period'
     ],
     color: 'blue'
   },
   {
     name: 'Premium',
-    price: {
-      monthly: 30,
-      yearly: 300
-    },
+    price: { monthly: 30, yearly: 300 },
     features: [
       '10,000 points monthly',
-      'Premium user badge'
+      'Points roll over within membership period'
     ],
     color: 'purple'
+  },
+  {
+    name: 'Add-on Pack (Members Only)',
+    price: { monthly: 10, yearly: 10 },
+    oneTime: true,
+    oneTimePrice: 10,
+    features: [
+      '2,000 points one-time',
+      'Purchasable only during active subscription'
+    ],
+    color: 'yellow'
   }
 ];
+
+const buttonColorMap: Record<string, string> = {
+  gray: 'bg-gray-500 hover:bg-gray-600',
+  blue: 'bg-blue-500 hover:bg-blue-600',
+  purple: 'bg-purple-500 hover:bg-purple-600',
+  yellow: 'bg-yellow-500 hover:bg-yellow-600',
+};
 
 // 简化的异步状态管理 Hook
 const useAsyncOperation = <T,>(initialData: T | null = null) => {
@@ -288,72 +310,59 @@ export default function SubscriptionPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className={`relative bg-white dark:bg-slate-800 rounded-lg p-8 shadow-sm border ${
-                  (isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium')
-                    ? 'ring-2 ring-yellow-100 dark:ring-yellow-900/20 border-yellow-400 dark:border-yellow-500'
-                    : 'border-gray-200 dark:border-gray-700'
-                }`}
+                className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 relative h-full flex flex-col"
               >
+                <h3 className={`text-2xl font-bold mb-4 text-${plan.color}-600 dark:text-${plan.color}-400`}>{plan.name}</h3>
 
-
-                {((isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium')) && (
-                  <div className="absolute -top-4 right-4">
-                    <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Current Plan
-                    </span>
-                  </div>
-                )}
-
-                <div className="text-center mb-6">
-                  <h3 className={`text-2xl font-bold text-${plan.color}-600 dark:text-${plan.color}-400 mb-2`}>
-                    {plan.name}
-                  </h3>
-                  <div className="mb-4">
-                    <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                      ${plan.price.monthly}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">/month</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    or ${plan.price.yearly}/year (Save 16.7%)
-                  </p>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-center">
-                      <div className={`w-5 h-5 rounded-full bg-${plan.color}-100 dark:bg-${plan.color}-900/20 flex items-center justify-center mr-3 flex-shrink-0`}>
-                        <CheckCircle className={`w-3 h-3 text-${plan.color}-500`} />
+                <div className="mb-6">
+                  {plan.oneTime ? (
+                    <>
+                      <div className="flex items-end space-x-2">
+                        <span className="text-5xl font-extrabold text-gray-900 dark:text-white">${plan.oneTimePrice}</span>
+                        <span className="text-base text-gray-500 dark:text-gray-400 mb-1">/one-time</span>
                       </div>
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                    </div>
-                  ))}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 invisible" aria-hidden="true">
+                        <span className="inline-flex items-center space-x-1">
+                          <span className="text-2xl font-bold text-gray-900 dark:text-white">$300</span>
+                          <span className="text-gray-500 dark:text-gray-400">/year</span>
+                        </span>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-end space-x-2">
+                        <span className="text-5xl font-extrabold text-gray-900 dark:text-white">${plan.price.monthly}</span>
+                        <span className="text-base text-gray-500 dark:text-gray-400 mb-1">/month</span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="inline-flex items-center space-x-1">
+                          <span className="text-2xl font-bold text-gray-900 dark:text-white">${plan.price.yearly}</span>
+                          <span className="text-gray-500 dark:text-gray-400">/year</span>
+                        </span>
+                      </p>
+                    </>
+                  )}
                 </div>
 
-                <Button
+                <ul className="space-y-3 mb-8 flex-1">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center text-gray-700 dark:text-gray-300">
+                      <div className={`w-5 h-5 rounded-full bg-${plan.color}-100 dark:bg-${plan.color}-900/20 flex items-center justify-center mr-3`}>
+                        <svg className={`w-3 h-3 text-${plan.color}-500`} fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <Button 
+                  className={`w-full ${buttonColorMap[plan.color]} text-white py-2 px-4 rounded-lg transition-colors`}
                   onClick={() => handleSubscribe(plan)}
-                  className={`w-full py-3 ${
-                    (isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium')
-                      ? 'bg-yellow-500 hover:bg-yellow-600'
-                      : plan.color === 'purple' 
-                        ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-                  size="lg"
                 >
-                  {((isStandard && plan.name === 'Standard') || (isPremium && plan.name === 'Premium')) 
-                    ? (
-                      <>
-                        <Zap className="h-4 w-4 mr-2" />
-                        Renew Subscription
-                      </>
-                    ) : (
-                      <>
-                        <Crown className="h-4 w-4 mr-2" />
-                        Subscribe Now
-                      </>
-                    )
-                  }
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Subscribe to {plan.name}
                 </Button>
               </motion.div>
             ))}

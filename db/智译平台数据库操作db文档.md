@@ -52,20 +52,24 @@ export * from './schema';
 ```typescript
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  clerkId: varchar('clerk_id', { length: 255 }).notNull().unique(),
-  email: varchar('email', { length: 255 }).notNull(),
-  points: integer('points').default(20).notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull().unique(),
+  email: varchar('email', { length: 255 }),
+  points: integer('points').default(100).notNull(),
   hasInfinitePoints: boolean('has_infinite_points').default(false),
+  membershipType: varchar('membership_type', { length: 50 }).default('free'),
+  membershipExpiry: date('membership_expiry'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 ```
 
 - `id`: 自增主键
-- `clerkId`: Clerk认证系统的用户ID，唯一
-- `email`: 用户邮箱
-- `points`: 用户积分余额，默认20积分
+- `userId`: 外部身份标识（Casdoor 用户名），唯一
+- `email`: 用户邮箱（可为空，Casdoor 注册有邮箱时写入）
+- `points`: 用户积分余额，默认100积分
 - `hasInfinitePoints`: 是否拥有无限积分
+- `membershipType`: 会员类型
+- `membershipExpiry`: 会员过期日期
 - `createdAt`: 创建时间
 - `updatedAt`: 更新时间
 
@@ -76,7 +80,7 @@ export const users = pgTable('users', {
 ```typescript
 export const processingTasks = pgTable('processing_tasks', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.clerkId, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.userId, { onDelete: 'cascade' }),
   
   // 任务信息
   taskType: varchar('task_type', { length: 50 }).notNull(), // pdf_to_markdown, translation, etc.
@@ -131,7 +135,7 @@ export const processingTasks = pgTable('processing_tasks', {
 ```typescript
 export const pointTransactions = pgTable('point_transactions', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.clerkId, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.userId, { onDelete: 'cascade' }),
   taskId: integer('task_id').references(() => processingTasks.id, { onDelete: 'set null' }),
   amount: integer('amount').notNull(),
   transactionType: varchar('transaction_type', { length: 50 }).notNull(),
@@ -275,7 +279,7 @@ const tasks = await db.query.processingTasks.findMany({
 const newUser = await db.insert(users).values({
   clerkId,
   email,
-  points: 20,
+  points: 100,
 }).returning();
 
 // 创建新任务

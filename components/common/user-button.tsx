@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useUser, useAuth } from '@/hooks/use-auth';
-import { LogOut, Settings, User as UserIcon, ChevronDown } from 'lucide-react';
+import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import { getSignOutUrl } from '@/lib/casdoor';
 
 interface UserButtonProps {
@@ -90,15 +90,6 @@ export function UserButton({ afterSignOutUrl = '/', appearance }: UserButtonProp
 
             {/* 菜单项 */}
             <div className="py-1">
-              <Link
-                href="/dashboard"
-                className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                <Settings className="h-4 w-4 mr-3" />
-                Account Settings
-              </Link>
-              
               <Link
                 href="/dashboard"
                 className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

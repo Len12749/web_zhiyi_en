@@ -10,6 +10,9 @@ export interface SubscriptionPlan {
     monthly: number;
     yearly: number;
   };
+  // Add-on 一次性套餐支持（存在即视为一次性套餐，不展示月/年切换）
+  oneTime?: boolean;
+  oneTimePrice?: number;
   features: string[];
   color: string;
   recommended?: boolean;
@@ -27,8 +30,9 @@ export function SubscriptionCard({ plan, isOpen, onClose, yearlyBilling = false 
   
   const [isYearlyBilling, setIsYearlyBilling] = React.useState(yearlyBilling);
   
-  const price = isYearlyBilling ? plan.price.yearly : plan.price.monthly;
-  const period = isYearlyBilling ? 'year' : 'month';
+  const isOneTime = !!plan.oneTime;
+  const price = isOneTime ? (plan.oneTimePrice || 0) : (isYearlyBilling ? plan.price.yearly : plan.price.monthly);
+  const period = isOneTime ? 'one-time' : (isYearlyBilling ? 'year' : 'month');
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -49,23 +53,25 @@ export function SubscriptionCard({ plan, isOpen, onClose, yearlyBilling = false 
           </p>
         </div>
 
-        <div className="flex justify-center space-x-4 mb-6">
-          <button 
-            onClick={() => setIsYearlyBilling(false)}
-            className={`px-4 py-2 rounded-lg ${!isYearlyBilling ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-          >
-            Monthly
-          </button>
-          <button 
-            onClick={() => setIsYearlyBilling(true)}
-            className={`px-4 py-2 rounded-lg ${isYearlyBilling ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-          >
-            Yearly
-            <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
-              Save 16.7%
-            </span>
-          </button>
-        </div>
+        {!isOneTime && (
+          <div className="flex justify-center space-x-4 mb-6">
+            <button 
+              onClick={() => setIsYearlyBilling(false)}
+              className={`px-4 py-2 rounded-lg ${!isYearlyBilling ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+            >
+              Monthly
+            </button>
+            <button 
+              onClick={() => setIsYearlyBilling(true)}
+              className={`px-4 py-2 rounded-lg ${isYearlyBilling ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+            >
+              Yearly
+              <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
+                Save 16.7%
+              </span>
+            </button>
+          </div>
+        )}
 
         <div className="mb-6">
           <div className="text-center">
@@ -94,7 +100,7 @@ export function SubscriptionCard({ plan, isOpen, onClose, yearlyBilling = false 
         <Button 
           className={`w-full bg-${plan.color}-500 hover:bg-${plan.color}-600 text-white py-3 px-4 rounded-lg transition-colors font-medium`}
         >
-          Confirm Subscription
+          {isOneTime ? 'Confirm Purchase' : 'Confirm Subscription'}
         </Button>
       </div>
     </div>

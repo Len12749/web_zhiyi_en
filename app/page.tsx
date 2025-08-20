@@ -27,7 +27,7 @@ const features = [
     icon: Image,
     href: '/image-to-markdown',
     gradient: 'from-purple-500 to-pink-500',
-    points: '2 points/image',
+    points: '1 point/image',
   },
   {
     id: 'markdown-translation',
@@ -87,30 +87,52 @@ const benefits = [
 
 const subscriptionPlans: SubscriptionPlan[] = [
   {
+    name: 'Basic',
+    price: { monthly: 5, yearly: 50 },
+    features: [
+      '800 points monthly',
+      'Points roll over within membership period'
+    ],
+    color: 'gray'
+  },
+  {
     name: 'Standard',
-    price: {
-      monthly: 10,
-      yearly: 100
-    },
+    price: { monthly: 10, yearly: 100 },
     features: [
       '2,000 points monthly',
-      'Premium user badge'
+      'Points roll over within membership period'
     ],
     color: 'blue'
   },
   {
     name: 'Premium',
-    price: {
-      monthly: 30,
-      yearly: 300
-    },
+    price: { monthly: 30, yearly: 300 },
     features: [
       '10,000 points monthly',
-      'Premium user badge'
+      'Points roll over within membership period'
     ],
     color: 'purple'
+  },
+  {
+    name: 'Add-on Pack (Members Only)',
+    price: { monthly: 10, yearly: 10 },
+    oneTime: true,
+    oneTimePrice: 10,
+    features: [
+      '2,000 points one-time',
+      'Purchasable only during active subscription'
+    ],
+    color: 'yellow'
   }
 ];
+
+// 按钮配色映射，避免 Tailwind 对动态类名的摇树导致颜色丢失
+const buttonColorMap: Record<string, string> = {
+  gray: 'bg-gray-500 hover:bg-gray-600',
+  blue: 'bg-blue-500 hover:bg-blue-600',
+  purple: 'bg-purple-500 hover:bg-purple-600',
+  yellow: 'bg-yellow-500 hover:bg-yellow-600',
+};
 
 
 
@@ -139,7 +161,7 @@ export default function HomePage() {
           >
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                ZhiYi
+                Zpdf
               </span>
             </h1>
             
@@ -245,7 +267,6 @@ export default function HomePage() {
                 {[
                   { text: 'Registration bonus', points: '100 points' },
                   { text: 'Daily check-in', points: '10 points' },
-                  { text: 'Special holiday free points', points: null },
                   { text: 'Redemption codes', points: null },
                   { text: 'Recharge', points: null },
                 ].map((item, index) => (
@@ -274,7 +295,7 @@ export default function HomePage() {
                 {[
                   { service: 'PDF Parsing', cost: '2 points/page' },
                   { service: 'PDF Parsing + Translation', cost: '3 points/page' },
-                                          { service: 'Image Recognition', cost: '2 points/image' },
+                  { service: 'Image Recognition', cost: '1 point/image' },
                   { service: 'Markdown Translation', cost: '2 points/10k chars' },
                   { service: 'PDF Translation', cost: '2 points/page' },
                   { service: 'Format Conversion', cost: '1 point/conversion' },
@@ -294,18 +315,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: pointsAnimation.isVisible ? 0.6 : 0 }}
             className="text-center space-y-4"
           >
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 max-w-2xl mx-auto mb-4">
-              <h4 className="text-md font-medium text-blue-900 dark:text-blue-300 mb-2">
-                Points Deduction Policy
-              </h4>
-              <p className="text-sm text-blue-800 dark:text-blue-400 mb-2 text-left">
-                We use a "process first, pay later" model:
-              </p>
-              <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 text-left">
-                <li className="text-left">• When uploading files, we only check if you have enough points, but don't deduct immediately</li>
-                <li className="text-left">• Points are only deducted when you download the file for the first time</li>
-              </ul>
-            </div>
+            
 
             {isLoaded && (
               isSignedIn ? (
@@ -351,12 +361,33 @@ export default function HomePage() {
 
                 <h3 className={`text-2xl font-bold mb-4 text-${plan.color}-600 dark:text-${plan.color}-400`}>{plan.name}</h3>
                 <div className="mb-6">
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    ${plan.price.monthly}<span className="text-lg text-gray-500 dark:text-gray-400">/month</span>
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    or ${plan.price.yearly}/year
-                  </p>
+                  {plan.oneTime ? (
+                    <>
+                      <div className="flex items-end space-x-2">
+                        <span className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white">${plan.oneTimePrice}</span>
+                        <span className="text-base md:text-lg text-gray-500 dark:text-gray-400 mb-1">/one-time</span>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 invisible" aria-hidden="true">
+                        <span className="inline-flex items-center space-x-1">
+                          <span className="text-2xl font-bold text-gray-900 dark:text-white">$300</span>
+                          <span className="text-gray-500 dark:text-gray-400">/year</span>
+                        </span>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-end space-x-2">
+                        <span className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white">${plan.price.monthly}</span>
+                        <span className="text-base md:text-lg text-gray-500 dark:text-gray-400 mb-1">/month</span>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <span className="inline-flex items-center space-x-1">
+                          <span className="text-2xl font-bold text-gray-900 dark:text-white">${plan.price.yearly}</span>
+                          <span className="text-gray-500 dark:text-gray-400">/year</span>
+                        </span>
+                      </p>
+                    </>
+                  )}
                 </div>
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, i) => (
@@ -371,7 +402,7 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Button 
-                  className={`w-full bg-${plan.color}-500 hover:bg-${plan.color}-600 text-white py-2 px-4 rounded-lg transition-colors`}
+                  className={`w-full ${buttonColorMap[plan.color]} text-white py-2 px-4 rounded-lg transition-colors`}
                   onClick={() => {
                     setSelectedPlan(plan);
                     setIsSubscriptionCardOpen(true);
@@ -386,41 +417,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section ref={benefitsAnimation.ref} className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={benefitsAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Why Choose ZhiYi?</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">Professional, secure, and efficient document processing services</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon;
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={benefitsAnimation.isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ duration: 0.6, delay: benefitsAnimation.isVisible ? 0.1 * index : 0 }}
-                  className="text-center group bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300"
-                >
-                  <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Icon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">{benefit.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{benefit.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      
 
 
       {/* 订阅卡片弹窗 */}

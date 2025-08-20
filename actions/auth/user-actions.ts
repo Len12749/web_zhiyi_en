@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth-server";
 import { db } from "@/db";
 import { users, pointTransactions } from "@/db/schema";
+import { POINTS_RULES } from "@/lib/constants";
 import { eq } from "drizzle-orm";
 
 export interface User {
@@ -36,22 +37,26 @@ export async function initializeUser(userId: string, email: string): Promise<{ s
     }
 
     // 创建新用户
+    const insertValues: any = {
+      userId: userId,
+      points: POINTS_RULES.INITIAL_POINTS,
+      hasInfinitePoints: false,
+    };
+    if (email) {
+      insertValues.email = email;
+    }
+
     const newUser = await db
       .insert(users)
-      .values({
-        userId: userId,
-        email,
-        points: 20, // 初始20积分
-        hasInfinitePoints: false,
-      })
+      .values(insertValues)
       .returning();
 
     // 记录初始积分交易
     await db.insert(pointTransactions).values({
       userId: userId,
-      amount: 20,
+      amount: POINTS_RULES.INITIAL_POINTS,
       transactionType: "INITIAL",
-      description: "新用户注册赠送积分",
+      description: `新用户注册赠送${POINTS_RULES.INITIAL_POINTS}积分`,
     });
 
     return {

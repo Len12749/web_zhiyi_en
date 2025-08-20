@@ -52,7 +52,7 @@ export function Navigation() {
         <div className="flex h-20 items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
-            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">ZhiYi</div>
+            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">Zpdf</div>
           </Link>
 
           {/* Desktop Navigation - Icon + Label - 绝对居中 */}

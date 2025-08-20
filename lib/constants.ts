@@ -88,7 +88,7 @@ export const SUCCESS_MESSAGES = {
 
 // 积分计算规则
 export const POINTS_RULES = {
-  INITIAL_POINTS: 20,
+  INITIAL_POINTS: 100,
   DAILY_CHECKIN: 5,
   
   // 每页/每KB的积分消费

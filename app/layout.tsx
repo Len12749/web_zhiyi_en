@@ -15,10 +15,10 @@ if (typeof window === 'undefined') {
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ZhiYi - Intelligent Document Processing Service",
+  title: "Zpdf - Intelligent Document Processing Service",
   description: "AI-based document processing platform supporting PDF parsing, handwritten image recognition, document translation, format conversion and more",
   keywords: ["AI", "Document Processing", "PDF Parsing", "Translation", "Markdown"],
-  authors: [{ name: "ZhiYi" }],
+  authors: [{ name: "Zpdf" }],
 };
 
 export const viewport: Viewport = {

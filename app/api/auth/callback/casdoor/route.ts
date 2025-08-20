@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { casdoorConfig } from '@/lib/casdoor';
 import { createSessionToken, getSessionCookieOptions } from '@/lib/auth';
+import { initializeUser } from '@/actions/auth/user-actions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +63,14 @@ export async function GET(request: NextRequest) {
       createdTime: userData.createdTime,
       updatedTime: userData.updatedTime,
     };
+
+    // 初始化用户（仅首次创建，已有用户不更新邮箱）
+    try {
+      await initializeUser(userInfo.id, userInfo.email || '');
+    } catch (e) {
+      console.error('initializeUser failed:', e);
+      // 不阻断登录流程
+    }
 
     // 创建会话 token
     const sessionToken = createSessionToken(userInfo);
