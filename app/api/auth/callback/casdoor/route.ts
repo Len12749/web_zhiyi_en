@@ -51,17 +51,18 @@ export async function GET(request: NextRequest) {
     }
 
     const userData = await userResponse.json();
+    
     const userInfo = {
       id: userData.name, // Casdoor 使用 name 作为唯一标识符
       name: userData.name,
-      displayName: userData.displayName || userData.name,
-      email: userData.email,
-      avatar: userData.avatar,
-      organization: userData.organization,
-      type: userData.type || 'normal',
-      isAdmin: userData.isAdmin || false,
-      createdTime: userData.createdTime,
-      updatedTime: userData.updatedTime,
+      displayName: userData.data?.displayName || userData.name,
+      email: userData.data?.email, // 从 data 对象中获取 email
+      avatar: userData.data?.avatar,
+      organization: userData.data?.owner,
+      type: userData.data?.type || 'normal',
+      isAdmin: userData.data?.isAdmin || false,
+      createdTime: userData.data?.createdTime,
+      updatedTime: userData.data?.updatedTime,
     };
 
     // 初始化用户（仅首次创建，已有用户不更新邮箱）

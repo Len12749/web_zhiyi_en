@@ -14,7 +14,7 @@ export function getSignInUrl(state?: string): string {
     client_id: casdoorConfig.clientId,
     response_type: 'code',
     redirect_uri: casdoorConfig.redirectUri,
-    scope: 'read',
+    scope: 'read profile email', // 增加 profile 和 email 权限
     state: state || casdoorConfig.application,
   });
   return `${casdoorConfig.endpoint}/login/oauth/authorize?${params.toString()}`;
@@ -26,7 +26,7 @@ export function getSignUpUrl(state?: string): string {
     client_id: casdoorConfig.clientId,
     response_type: 'code',
     redirect_uri: casdoorConfig.redirectUri,
-    scope: 'read',
+    scope: 'read profile email', // 增加 profile 和 email 权限
     state: state || casdoorConfig.application,
   });
   return `${casdoorConfig.endpoint}/signup/oauth/authorize?${params.toString()}`;
