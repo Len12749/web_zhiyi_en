@@ -197,9 +197,21 @@ export default function SubscriptionPage() {
 
   // 处理订阅点击
   const handleSubscribe = (plan: SubscriptionPlan) => {
+    // 检查加量包购买权限
+    if (plan.name === 'Add-on Pack (Members Only)') {
+      const membershipType = pointsSummary.data?.membershipType;
+      if (!membershipType || membershipType === 'free') {
+        alert('Add-on pack is only available for active members. Please subscribe to a membership plan first.');
+        return;
+      }
+    }
+
+    // 打开订阅卡片让用户选择计费周期
     setSelectedPlan(plan);
     setIsSubscriptionCardOpen(true);
   };
+
+
 
   // 加载状态
   if (!isLoaded || pointsSummary.loading) {
@@ -238,11 +250,23 @@ export default function SubscriptionPage() {
     );
   }
 
-  const isFree = pointsSummary.data?.membershipType === 'free';
-  const isStandard = pointsSummary.data?.membershipType === 'standard';
-  const isPremium = pointsSummary.data?.membershipType === 'premium';
-  const currentPlan = isFree ? 'Free' : isStandard ? 'Standard' : 'Premium';
-  const expiryDate = pointsSummary.data?.membershipExpiry ? new Date(pointsSummary.data.membershipExpiry).toLocaleDateString() : 'None';
+  const membershipType = pointsSummary.data?.membershipType || 'free';
+  const isFree = membershipType === 'free';
+  const isBasic = membershipType === 'basic';
+  const isStandard = membershipType === 'standard';
+  const isPremium = membershipType === 'premium';
+  
+  // 检查会员是否有效（未过期）
+  const membershipExpiry = pointsSummary.data?.membershipExpiry;
+  const isActiveMember = membershipExpiry && new Date(membershipExpiry) > new Date();
+  
+  const currentPlan = isFree || !isActiveMember ? 'Free' : 
+                     isBasic ? 'Basic' : 
+                     isStandard ? 'Standard' : 'Premium';
+  
+  const expiryDate = membershipExpiry && isActiveMember 
+    ? new Date(membershipExpiry).toLocaleDateString() 
+    : 'None';
 
   return (
     <AuthGuard>
@@ -266,36 +290,58 @@ export default function SubscriptionPage() {
           </motion.div>
 
           {/* 当前订阅状态 */}
-          {!isFree && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mb-8 bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
-                    <Crown className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Current Plan: {currentPlan}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Expires: {expiryDate}
-                    </p>
-                  </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-8 bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  isActiveMember 
+                    ? 'bg-yellow-100 dark:bg-yellow-900' 
+                    : 'bg-gray-100 dark:bg-gray-700'
+                }`}>
+                  <Crown className={`h-6 w-6 ${
+                    isActiveMember 
+                      ? 'text-yellow-600 dark:text-yellow-400' 
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`} />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                    Active
-                  </span>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Current Plan: {currentPlan}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {isActiveMember ? `Expires: ${expiryDate}` : 'No active subscription'}
+                  </p>
+                  {isActiveMember && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Monthly points will be added every 30 days. No points on expiry date.
+                    </p>
+                  )}
                 </div>
               </div>
-            </motion.div>
-          )}
+              <div className="flex items-center space-x-2">
+                {isActiveMember ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                      Active
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-5 w-5 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Free Plan
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
 
           {/* 订阅计划 */}
           <motion.div

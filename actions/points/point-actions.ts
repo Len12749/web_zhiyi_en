@@ -342,6 +342,8 @@ export async function getPointsSummary(): Promise<{
     totalEarned: number;
     totalSpent: number;
     todayChecked: boolean;
+    membershipType?: string;
+    membershipExpiry?: Date | null;
   }; 
   message: string 
 }> {

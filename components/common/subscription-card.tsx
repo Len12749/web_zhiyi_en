@@ -3,6 +3,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { makeApiRequest } from '@/lib/utils';
+import { useUser } from '@/hooks/use-auth';
 
 export interface SubscriptionPlan {
   name: string;
@@ -28,11 +30,55 @@ interface SubscriptionCardProps {
 export function SubscriptionCard({ plan, isOpen, onClose, yearlyBilling = false }: SubscriptionCardProps) {
   if (!isOpen) return null;
   
+  const { user } = useUser();
   const [isYearlyBilling, setIsYearlyBilling] = React.useState(yearlyBilling);
+  const [isProcessing, setIsProcessing] = React.useState(false);
   
   const isOneTime = !!plan.oneTime;
   const price = isOneTime ? (plan.oneTimePrice || 0) : (isYearlyBilling ? plan.price.yearly : plan.price.monthly);
   const period = isOneTime ? 'one-time' : (isYearlyBilling ? 'year' : 'month');
+
+  // 生成商品名称
+  const generateProductName = (): string => {
+    if (plan.name === 'Add-on Pack (Members Only)') {
+      return 'Add-on Pack (Members Only)';
+    }
+    
+    const suffix = isYearlyBilling ? '-year' : '-month';
+    return plan.name + suffix;
+  };
+
+  // 处理购买
+  const handlePurchase = async () => {
+    if (!user) {
+      alert('Please log in to purchase');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      
+      const productName = generateProductName();
+      
+      // 调用购买API
+      const response = await makeApiRequest('/api/subscription/purchase', {
+        method: 'POST',
+        body: JSON.stringify({ productName })
+      });
+
+      if (response.success && (response.data as any)?.buyUrl) {
+        // 跳转到Casdoor支付页面
+        window.location.href = (response.data as any).buyUrl;
+      } else {
+        alert(response.message || 'Failed to initiate payment');
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      alert('Failed to initiate payment. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -98,9 +144,18 @@ export function SubscriptionCard({ plan, isOpen, onClose, yearlyBilling = false 
         </div>
 
         <Button 
-          className={`w-full bg-${plan.color}-500 hover:bg-${plan.color}-600 text-white py-3 px-4 rounded-lg transition-colors font-medium`}
+          className={`w-full bg-${plan.color}-500 hover:bg-${plan.color}-600 text-white py-3 px-4 rounded-lg transition-colors font-medium disabled:opacity-50`}
+          disabled={isProcessing}
+          onClick={handlePurchase}
         >
-          {isOneTime ? 'Confirm Purchase' : 'Confirm Subscription'}
+          {isProcessing ? (
+            <div className="flex items-center justify-center">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Processing...
+            </div>
+          ) : (
+            isOneTime ? 'Confirm Purchase' : 'Confirm Subscription'
+          )}
         </Button>
       </div>
     </div>
