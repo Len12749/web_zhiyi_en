@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Crown } from 'lucide-react';
 import { SubscriptionCard, SubscriptionPlan } from './subscription-card';
+import { LoginReminderCard } from './login-reminder-card';
 
 interface SubscriptionManagementProps {
   membershipType: string;
@@ -55,6 +56,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
 export function SubscriptionManagement({ membershipType, membershipExpiry }: SubscriptionManagementProps) {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [isSubscriptionCardOpen, setIsSubscriptionCardOpen] = useState(false);
+  const [isLoginReminderOpen, setIsLoginReminderOpen] = useState(false);
 
   const isFree = membershipType === 'free';
   const isStandard = membershipType === 'standard';
@@ -126,18 +128,34 @@ export function SubscriptionManagement({ membershipType, membershipExpiry }: Sub
             {/* 简化版：个人中心小卡片不展示功能列表 */}
             <div className="flex-1" />
             <Button size="sm" className={`mt-2 w-full ${plan.color === 'gray' ? 'bg-gray-500 hover:bg-gray-600' : plan.color === 'purple' ? 'bg-purple-500 hover:bg-purple-600' : plan.color === 'yellow' ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
-              onClick={() => { setSelectedPlan(plan); setIsSubscriptionCardOpen(true); }}>
+              onClick={() => { setSelectedPlan(plan); setIsLoginReminderOpen(true); }}>
               <CreditCard className="h-3.5 w-3.5 mr-2" />Subscribe
             </Button>
           </div>
         ))}
       </div>
 
+      {/* 登录提醒卡片 */}
+      <LoginReminderCard
+        isOpen={isLoginReminderOpen}
+        onClose={() => {
+          setIsLoginReminderOpen(false);
+          setSelectedPlan(null);
+        }}
+        onConfirm={() => {
+          setIsLoginReminderOpen(false);
+          setIsSubscriptionCardOpen(true);
+        }}
+      />
+
       {selectedPlan && (
         <SubscriptionCard
           plan={selectedPlan}
           isOpen={isSubscriptionCardOpen}
-          onClose={() => setIsSubscriptionCardOpen(false)}
+          onClose={() => {
+            setIsSubscriptionCardOpen(false);
+            setSelectedPlan(null);
+          }}
         />
       )}
     </div>

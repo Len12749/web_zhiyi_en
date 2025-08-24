@@ -8,6 +8,7 @@ import { FileText, Image, Languages, Globe, RefreshCw, History, ArrowRight, Zap,
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { SubscriptionCard, SubscriptionPlan } from '@/components/common/subscription-card';
+import { LoginReminderCard } from '@/components/common/login-reminder-card';
 import { useScrollAnimation } from '@/lib/hooks/use-scroll-animation';
 
 const features = [
@@ -139,6 +140,7 @@ const buttonColorMap: Record<string, string> = {
 export default function HomePage() {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [isSubscriptionCardOpen, setIsSubscriptionCardOpen] = useState(false);
+  const [isLoginReminderOpen, setIsLoginReminderOpen] = useState(false);
   const { isSignedIn, isLoaded } = useUser();
   
   // 为每个section创建滚动动画hook
@@ -405,7 +407,7 @@ export default function HomePage() {
                   className={`w-full ${buttonColorMap[plan.color]} text-white py-2 px-4 rounded-lg transition-colors`}
                   onClick={() => {
                     setSelectedPlan(plan);
-                    setIsSubscriptionCardOpen(true);
+                    setIsLoginReminderOpen(true);
                   }}
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
@@ -420,12 +422,28 @@ export default function HomePage() {
       
 
 
+      {/* 登录提醒卡片 */}
+      <LoginReminderCard
+        isOpen={isLoginReminderOpen}
+        onClose={() => {
+          setIsLoginReminderOpen(false);
+          setSelectedPlan(null);
+        }}
+        onConfirm={() => {
+          setIsLoginReminderOpen(false);
+          setIsSubscriptionCardOpen(true);
+        }}
+      />
+
       {/* 订阅卡片弹窗 */}
       {selectedPlan && (
         <SubscriptionCard
           plan={selectedPlan}
           isOpen={isSubscriptionCardOpen}
-          onClose={() => setIsSubscriptionCardOpen(false)}
+          onClose={() => {
+            setIsSubscriptionCardOpen(false);
+            setSelectedPlan(null);
+          }}
         />
       )}
     </div>

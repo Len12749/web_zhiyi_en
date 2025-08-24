@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
     
     const buyUrl = generateCasdoorBuyUrl(
       productName,
-      user.id,
       successUrl,
       cancelUrl
     );

@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { AuthGuard } from '@/components/common/auth-guard';
 import { SubscriptionCard, SubscriptionPlan } from '@/components/common/subscription-card';
+import { LoginReminderCard } from '@/components/common/login-reminder-card';
 import { makeApiRequest } from '@/lib/utils';
 
 interface PointsSummary {
@@ -145,6 +146,7 @@ export default function SubscriptionPage() {
   // 订阅卡片状态
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [isSubscriptionCardOpen, setIsSubscriptionCardOpen] = useState(false);
+  const [isLoginReminderOpen, setIsLoginReminderOpen] = useState(false);
 
   // 初始化用户和获取积分信息
   const initializeUserAndFetchPoints = useCallback(async () => {
@@ -206,9 +208,9 @@ export default function SubscriptionPage() {
       }
     }
 
-    // 打开订阅卡片让用户选择计费周期
+    // 先显示登录提醒
     setSelectedPlan(plan);
-    setIsSubscriptionCardOpen(true);
+    setIsLoginReminderOpen(true);
   };
 
 
@@ -418,12 +420,28 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
+      {/* 登录提醒卡片 */}
+      <LoginReminderCard
+        isOpen={isLoginReminderOpen}
+        onClose={() => {
+          setIsLoginReminderOpen(false);
+          setSelectedPlan(null);
+        }}
+        onConfirm={() => {
+          setIsLoginReminderOpen(false);
+          setIsSubscriptionCardOpen(true);
+        }}
+      />
+
       {/* 订阅卡片弹窗 */}
       {selectedPlan && (
         <SubscriptionCard
           plan={selectedPlan}
           isOpen={isSubscriptionCardOpen}
-          onClose={() => setIsSubscriptionCardOpen(false)}
+          onClose={() => {
+            setIsSubscriptionCardOpen(false);
+            setSelectedPlan(null);
+          }}
         />
       )}
     </AuthGuard>

@@ -142,14 +142,12 @@ export function getPaymentPlan(productName: string): PaymentPlan | null {
 // 生成Casdoor购买URL  
 export function generateCasdoorBuyUrl(
   productName: string,
-  userId: string,
   successUrl?: string,
   cancelUrl?: string
 ): string {
   const params = new URLSearchParams({
     organization: casdoorConfig.organization,
     product: productName,
-    user: userId,
     currency: 'USD',
     provider: 'PayPal', // 假设您在Casdoor中配置的支付提供商名称
   });
@@ -161,7 +159,7 @@ export function generateCasdoorBuyUrl(
     params.append('cancelUrl', cancelUrl);
   }
 
-  // 修正：使用正确的产品页面路径
+  // 不再传递user参数，让Casdoor使用当前登录用户
   return `${casdoorConfig.endpoint}/products/${casdoorConfig.organization}/${productName}/buy?${params.toString()}`;
 }
 
