@@ -127,12 +127,12 @@ export function Navigation() {
               {/* Always show login/signup buttons for signed out users */}
               {!isSignedIn && (
                 <>
-                  <Link href={getSignInUrl('zhiyi-platform')}>
+                  <Link href={getSignInUrl('zhiyi')}>
                     <button className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors">
                       Sign In
                     </button>
                   </Link>
-                  <Link href={getSignUpUrl('zhiyi-platform')}>
+                  <Link href={getSignUpUrl('zhiyi')}>
                     <button className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md transition-colors shadow-md hover:shadow-lg">
                       Sign Up
                     </button>
@@ -267,7 +267,7 @@ export function Navigation() {
                   {/* Signed Out - Mobile */}
                   {!isSignedIn && (
                     <>
-                      <Link href={getSignInUrl('zhiyi-platform')}>
+                      <Link href={getSignInUrl('zhiyi')}>
                         <button 
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors w-full text-left"
@@ -276,7 +276,7 @@ export function Navigation() {
                           <span>Sign In</span>
                         </button>
                       </Link>
-                      <Link href={getSignUpUrl('zhiyi-platform')}>
+                      <Link href={getSignUpUrl('zhiyi')}>
                         <button 
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transition-colors w-full text-left shadow-md hover:shadow-lg"

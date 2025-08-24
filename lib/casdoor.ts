@@ -3,7 +3,7 @@ export const casdoorConfig = {
   endpoint: process.env.NEXT_PUBLIC_CASDOOR_ENDPOINT || 'http://localhost:8000',
   clientId: process.env.NEXT_PUBLIC_CASDOOR_CLIENT_ID || '',
   organization: process.env.NEXT_PUBLIC_CASDOOR_ORGANIZATION || 'zhiyi',
-  application: process.env.NEXT_PUBLIC_CASDOOR_APPLICATION || 'zhiyi-platform',
+  application: process.env.NEXT_PUBLIC_CASDOOR_APPLICATION || 'zhiyi',
   redirectUri: process.env.CASDOOR_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/casdoor',
   homeUrl: process.env.CASDOOR_HOME_URL || 'http://localhost:3000',
 };

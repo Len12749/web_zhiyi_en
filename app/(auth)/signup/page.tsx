@@ -14,7 +14,7 @@ function SignUpPageContent() {
 
   useEffect(() => {
     // 重定向到 Casdoor 注册页面
-    const signUpUrl = getSignUpUrl(`zhiyi-platform-${encodeURIComponent(redirectPath)}`);
+    const signUpUrl = getSignUpUrl(`zhiyi-${encodeURIComponent(redirectPath)}`);
     window.location.href = signUpUrl;
   }, [redirectPath]);
 
@@ -58,7 +58,7 @@ function SignUpPageContent() {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             如果页面没有自动跳转，请{' '}
             <button 
-              onClick={() => window.location.href = getSignUpUrl(`zhiyi-platform-${encodeURIComponent(redirectPath)}`)}
+              onClick={() => window.location.href = getSignUpUrl(`zhiyi-${encodeURIComponent(redirectPath)}`)}
               className="text-purple-600 hover:text-purple-700 font-medium underline"
             >
               点击这里手动跳转

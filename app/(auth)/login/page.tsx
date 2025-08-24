@@ -14,7 +14,7 @@ function LoginPageContent() {
 
   useEffect(() => {
     // 重定向到 Casdoor 登录页面
-    const signInUrl = getSignInUrl(`zhiyi-platform-${encodeURIComponent(redirectPath)}`);
+    const signInUrl = getSignInUrl(`zhiyi-${encodeURIComponent(redirectPath)}`);
     window.location.href = signInUrl;
   }, [redirectPath]);
 
@@ -58,7 +58,7 @@ function LoginPageContent() {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             如果页面没有自动跳转，请{' '}
             <button 
-              onClick={() => window.location.href = getSignInUrl(`zhiyi-platform-${encodeURIComponent(redirectPath)}`)}
+              onClick={() => window.location.href = getSignInUrl(`zhiyi-${encodeURIComponent(redirectPath)}`)}
               className="text-blue-600 hover:text-blue-700 font-medium underline"
             >
               点击这里手动跳转
