@@ -169,17 +169,28 @@ export function validateProductPurchase(
   userMembershipType: string | null
 ): { canPurchase: boolean; reason?: string } {
   const plan = getPaymentPlan(productName);
-  
+
   if (!plan) {
     return { canPurchase: false, reason: 'Product not found' };
   }
 
-  // 检查加量包购买权限
+  const hasActiveMembership = userMembershipType && userMembershipType !== 'free';
+
+  // 规则1: 增值包仅限会员购买
   if (plan.planType === 'addon') {
-    if (!userMembershipType || userMembershipType === 'free') {
+    if (!hasActiveMembership) {
       return { 
         canPurchase: false, 
-        reason: 'Add-on pack is only available for active members' 
+        reason: 'Add-on packs are only available for active members.' 
+      };
+    }
+  } 
+  // 规则2: 如果已有有效会员，则不允许购买新的会员方案
+  else { 
+    if (hasActiveMembership) {
+      return {
+        canPurchase: false,
+        reason: 'You already have an active membership. Please wait for it to expire before purchasing a new one.'
       };
     }
   }

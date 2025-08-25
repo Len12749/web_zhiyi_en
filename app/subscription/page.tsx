@@ -199,16 +199,22 @@ export default function SubscriptionPage() {
 
   // 处理订阅点击
   const handleSubscribe = (plan: SubscriptionPlan) => {
-    // 检查加量包购买权限
-    if (plan.name === 'Add-on Pack (Members Only)') {
-      const membershipType = pointsSummary.data?.membershipType;
-      if (!membershipType || membershipType === 'free') {
-        alert('Add-on pack is only available for active members. Please subscribe to a membership plan first.');
-        return;
-      }
+    const membershipType = pointsSummary.data?.membershipType;
+    const hasActiveMembership = membershipType && membershipType !== 'free';
+
+    // 规则1: 如果已有有效会员，则不允许购买新的会员方案
+    if (plan.name !== 'Add-on Pack (Members Only)' && hasActiveMembership) {
+      alert('You already have an active membership. Please wait for it to expire before purchasing a new one.');
+      return;
     }
 
-    // 先显示登录提醒
+    // 规则2: 增值包仅限会员购买
+    if (plan.name === 'Add-on Pack (Members Only)' && !hasActiveMembership) {
+      alert('Add-on packs are only available for active members. Please subscribe to a membership plan first.');
+      return;
+    }
+
+    // 先显示登录提醒/确认弹窗
     setSelectedPlan(plan);
     setIsLoginReminderOpen(true);
   };
